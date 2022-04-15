@@ -1,0 +1,38 @@
+
+# this is a comment
+# and another one
+
+type instant : datetime (format="%Y-%m-%d %H:%M")
+type natural : integer (min=0)
+type time : float (min=1e-15)
+type positive : natural (min=1)
+type thousandth : fixed (decimals=3)
+type coerced : bool (coerce=true)
+
+node point {
+	x: float,
+	y: float,
+	moment: time,
+	alarmed: coerced
+}
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+node colored_point extends point {
+	color: color
+}
+
+root {
+	dummy: integer,
+	dummy2: thousandth,
+	optional path_color: color,
+	points: colored_point[min=2,max=10],
+	colors: color[],
+	start: instant,
+	end: instant
+}
+
