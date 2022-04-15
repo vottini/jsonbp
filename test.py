@@ -7,12 +7,11 @@ if len(sys.argv) < 3:
 	sys.exit(0)
 
 blueprintFile = sys.argv[1]
+prober = jsonbp.load(blueprintFile)
+print(prober)
+
 jsonFile = sys.argv[2]
-
-prober = jsonbp.load(blueprintFile); print(prober)
-
 with open(jsonFile, "r") as fd:
-	jsContents = fd.read()
-	success, payload = prober.deserialize(jsContents)
+	success, payload = prober.deserialize(fd.read())
 	print(f'{success} -> {payload}')
 

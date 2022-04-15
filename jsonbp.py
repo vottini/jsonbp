@@ -80,8 +80,9 @@ t_ignore  = ' \t\r'
 
 #---------------------------------------------------------------
 
-from decimal import Decimal, InvalidOperation
 from sys import maxsize
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
 
 primitive_types = {
 	'integer' : {
@@ -106,20 +107,19 @@ primitive_types = {
 	},
 
 	'datetime' : {
-		'format': "YYYY-mm-dd HH:MM:SS"
+		'format': "%Y-%m-%d %H:%M:%S"
 	},
 
 	'string': {
 		'minLength': 0,
-		'maxLength': maxsize,
-		'encoding': 'UTF-8'
+		'maxLength': 1024
 	},
 
 	'base64': {
 		'char62': r'+',
 		'char63': r'/',
 		'minContentLength': 0,
-		'maxContentLength': maxsize
+		'maxContentLength': 1024
 	},
 }
 
@@ -205,8 +205,8 @@ def p_root(p):
 
 def p_node(p):
 	'''
-			node : NODE IDENTIFIER EXTENDS IDENTIFIER '{' attributes '}'
-			     | NODE IDENTIFIER '{' attributes '}'
+		node : NODE IDENTIFIER EXTENDS IDENTIFIER '{' attributes '}'
+		     | NODE IDENTIFIER '{' attributes '}'
 	'''
 
 	if len(p) == 8:
@@ -279,8 +279,8 @@ def p_type(p):
 
 def p_attributes(p):
 	'''
-	    attributes : attributes ',' attribute
-			           | attribute
+		attributes : attributes ',' attribute
+		           | attribute
 	'''
 
 	if len(p) == 4: p[1].append(p[3])
@@ -290,8 +290,8 @@ def p_attributes(p):
 
 def p_attribute(p):
 	'''
-			attribute : OPTIONAL declaration 
-		            | declaration
+		attribute : OPTIONAL declaration
+		          | declaration
 	'''
 
 	if len(p) == 3:
@@ -304,8 +304,8 @@ def p_attribute(p):
 
 def p_declaration(p):
 	'''
-	    declaration : array_declaration
-	                | element_declaration
+		declaration : array_declaration
+		            | element_declaration
 	'''
 
 	p[0] = p[1]
@@ -313,8 +313,8 @@ def p_declaration(p):
 
 def p_array_declaration(p):
 	'''
-			array_declaration : element_declaration '[' specificities ']'
-			                  | element_declaration '[' ']'
+		array_declaration : element_declaration '[' specificities ']'
+		                  | element_declaration '[' ']'
 	'''
 
 	specs = {
@@ -338,8 +338,8 @@ def p_array_declaration(p):
 
 def p_element_declaration(p):
 	'''
-	    element_declaration : IDENTIFIER ':' IDENTIFIER '(' specificities ')'
-	                        | IDENTIFIER ':' IDENTIFIER
+		element_declaration : IDENTIFIER ':' IDENTIFIER '(' specificities ')'
+		                    | IDENTIFIER ':' IDENTIFIER
 	'''
 
 	kind = p[3]
@@ -350,8 +350,8 @@ def p_element_declaration(p):
 		kind in nodes)
 	
 	if not kind_exists:
-			msg = f"Unknown type '{kind}'"
-			raise ParseException(msg)
+		msg = f"Unknown type '{kind}'"
+		raise ParseException(msg)
 
 	ident = p[1]
 	specs = p[5] if len(p) == 7 else list()
@@ -360,8 +360,8 @@ def p_element_declaration(p):
 
 def p_specificities(p):
 	'''
-	    specificities : specificities ',' specificity
-	                  | specificity
+		specificities : specificities ',' specificity
+		              | specificity
 	'''
 
 	if len(p) == 4: p[1].append(p[3])
@@ -455,55 +455,53 @@ def d_fixed(strValue, specs):
 
 
 def d_bool(value, specs):
-	if not isinstance(value, bool):
-		if not specs['coerce']:
-			return False, f"Boolean values must be 'true' or 'false': got '{value}'"
+	if isinstance(value, bool):
+		return True, value
 
-		# coercion attempt
-		# check if is 'null' or empty string
-		if None == value or 0 == len(value):
+	if not specs['coerce']:
+		return False, f"Boolean values must be 'true' or 'false': got '{value}'"
+
+	# coercion attempt
+	# check if is 'null' or empty string
+	if None == value or 0 == len(value):
+		return True, False
+
+	try:
+		rawValue = float(value)
+		# check if is effectively zero or NaN
+		if 0 == rawValue or rawValue != rawValue:
 			return True, False
 
-		try:
-			rawValue = float(value)
-			# check if is effectively zero or NaN
-			if 0 == rawValue or rawValue != rawValue:
-				return True, False
+	except ValueError as e:
+		pass
 
-		except ValueError as e:
-			pass
-
-		# if none of the above, then most likely it's a truthy value
-		return True, True
-
-	return True, value
+	# if none of the above, then most likely it's a truthy value
+	return True, True
 
 
 def d_datetime(strValue, specs):
-	return True, strValue
+
+	try:
+		parsed_date = datetime.strptime(strValue, specs['format'])
+		return True, parsed_date
+
+	except ValueError as e:
+		return False, f"Unable to parse '{strValue}' with expected datetime format"
+
 
 
 def d_string(strValue, specs):
+	# TODO
 	return True, strValue
 
 
 def d_base64(strValue, specs):
+	# TODO
 	return True, strValue
 
 #---------------------------------------------------------------
 
 import json
-
-def load(filename):
-	with open(filename, "r") as fd:
-		contents = fd.read()
-		return loads(contents)
-
-
-def loads(contents):
-	result = blueprint(contents)
-	return result
-
 
 class blueprint:
 	def __init__(self, contents):
@@ -625,4 +623,16 @@ class blueprint:
 			return False, f'Invalid JSON, error at line {e.lineno}, column {e.colno}: {e.msg}'
 	
 		return self.validate(loaded)
+
+#-------------------------------------------------------------------------------
+
+def load(filename):
+	with open(filename, "r") as fd:
+		contents = fd.read()
+		return loads(contents)
+
+
+def loads(contents):
+	result = blueprint(contents)
+	return result
 
