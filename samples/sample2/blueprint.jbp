@@ -1,0 +1,5 @@
+
+root {
+	some_integer: integer (min=0),
+	some_boolean: bool
+}

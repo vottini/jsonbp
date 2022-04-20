@@ -8,7 +8,7 @@ if len(sys.argv) < 3:
 
 blueprintFile = sys.argv[1]
 prober = jsonbp.load(blueprintFile)
-print(prober)
+#print(prober)
 
 jsonFile = sys.argv[2]
 with open(jsonFile, "r") as fd:

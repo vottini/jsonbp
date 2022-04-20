@@ -1,6 +1,7 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
+from jbp.error import error
 
 reserved = (
 	'root',
@@ -114,13 +115,6 @@ primitive_types = {
 		'minLength': 0,
 		'maxLength': 1024
 	},
-
-	'base64': {
-		'char62': r'+',
-		'char63': r'/',
-		'minContentLength': 0,
-		'maxContentLength': 1024
-	},
 }
 
 #---------------------------------------------------------------
@@ -156,12 +150,14 @@ def t_error(t):
 	raise TokenException(msg)
 
 def p_error(p):
+	if p == None: raise ParseException("Empty blueprint")
 	msg = f"Syntax error in line {p.lineno}: token '{p.value}' misplaced"
 	raise ParseException(msg)
 
 #---------------------------------------------------------------
 
 derived_types = dict()
+adhoc_types = dict()
 enums = dict()
 nodes = dict()
 root = None
@@ -187,12 +183,18 @@ def p_construction(p):
 def p_root(p):
 	'''
 	    root : ROOT '{' attributes '}'
+			     | ROOT '{' '}'
+
 	'''
+
+	if len(p) < 5:
+		msg = "Empty root node"
+		raise ParseException(msg)
 
 	global root
 	if None != root:
 		msg = 'Only one root can be defined'
-		raise TokenException(msg)
+		raise ParseException(msg)
 
 	root = dict()
 
@@ -242,12 +244,7 @@ def p_node(p):
 		nodes[own_name] = node_decls
 
 
-def p_type(p):
-	'''
-			type : TYPE declaration
-	'''
-
-	decl = p[2]
+def create_type(decl):
 	origin = (
 		primitive_types[decl.kind]
 			if decl.kind in primitive_types
@@ -271,6 +268,16 @@ def p_type(p):
 		base_type = parent_type['__baseType__']
 
 	new_kind['__baseType__'] = base_type
+	return new_kind
+
+
+def p_type(p):
+	'''
+			type : TYPE element_declaration
+	'''
+
+	decl = p[2]
+	new_kind = create_type(decl)
 	derived_types[decl.name] = new_kind
 	p[0] = decl
 
@@ -290,8 +297,8 @@ def p_attributes(p):
 
 def p_attribute(p):
 	'''
-		attribute : OPTIONAL declaration
-		          | declaration
+		attribute : OPTIONAL attribution
+		          | attribution
 	'''
 
 	if len(p) == 3:
@@ -302,10 +309,10 @@ def p_attribute(p):
 		p[0] = p[1]
 
 
-def p_declaration(p):
+def p_attribution(p):
 	'''
-		declaration : array_declaration
-		            | element_declaration
+		attribution : array_declaration
+		            | local_declaration
 	'''
 
 	p[0] = p[1]
@@ -313,8 +320,8 @@ def p_declaration(p):
 
 def p_array_declaration(p):
 	'''
-		array_declaration : element_declaration '[' specificities ']'
-		                  | element_declaration '[' ']'
+		array_declaration : local_declaration '[' specificities ']'
+		                  | local_declaration '[' ']'
 	'''
 
 	specs = {
@@ -334,6 +341,21 @@ def p_array_declaration(p):
 
 	p[1].makeArray(specs)
 	p[0] = p[1]
+
+
+def p_local_declaration(p):
+	'''
+		local_declaration : element_declaration
+	'''
+	
+	decl = p[1]
+	if len(decl.specs) > 0:
+		new_kind = create_type(decl)
+		adhoc_type = '_anonymous_' + str(len(adhoc_types)) + '_'
+		adhoc_types[adhoc_type] = new_kind
+		decl.kind = adhoc_type
+
+	p[0] = decl
 
 
 def p_element_declaration(p):
@@ -413,53 +435,59 @@ def p_constants(p):
 
 #---------------------------------------------------------------
 
-def d_integer(strValue, specs):
+def d_integer(fieldName, strValue, specs):
 
 	try:
 		rawValue = int(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, 'Value {rawValue} is out of expected range'
+			return False, error(error.ERR_OUTSIDE_RANGE,
+				field=fieldName, value=rawValue)
 
 	except ValueError as e:
-		return False, e.msg
+		return False, error(error.ERR_INTEGER_PARSING,
+			text=strValue)
 
 	return True, rawValue
 
 
-def d_float(strValue, specs):
+def d_float(fieldName, strValue, specs):
 
 	try:
 		rawValue = float(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, 'Value {rawValue} is out of expected range'
+			return False, error(error.ERR_OUTSIDE_RANGE,
+				field=fieldName, value=rawValue)
 
 	except ValueError as e:
-		return False, e.msg
+		return False, error(error.ERR_FLOAT_PARSING,
+			text=strValue)
 
 	return True, rawValue
 
 
-def d_fixed(strValue, specs):
+def d_fixed(fieldName, strValue, specs):
 	sanedStrValue = strValue.replace(specs['separator'], '.')
 
 	try:
 		precision = f"1e-{specs['decimals']}"
 		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision))
 		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, f'Value {strValue} is out of expected range'
+			return False, error(error.ERR_OUTSIDE_RANGE,
+				field=fieldName, value=rawValue)
 
 	except InvalidOperation as e:
-		return False, f"Unable to convert value {strValue} to fixed"
+		return False, error(error.ERR_FIXED_PARSING,
+			text=strValue)
 
 	return True, rawValue
 
 
-def d_bool(value, specs):
+def d_bool(fieldName, value, specs):
 	if isinstance(value, bool):
 		return True, value
 
 	if not specs['coerce']:
-		return False, f"Boolean values must be 'true' or 'false': got '{value}'"
+		return False, f"Value must be 'true' or 'false': got '{value}'"
 
 	# coercion attempt
 	# check if is 'null' or empty string
@@ -479,24 +507,21 @@ def d_bool(value, specs):
 	return True, True
 
 
-def d_datetime(strValue, specs):
+def d_datetime(fieldName, strValue, specs):
 
 	try:
 		parsed_date = datetime.strptime(strValue, specs['format'])
 		return True, parsed_date
 
 	except ValueError as e:
-		return False, f"Unable to parse '{strValue}' with expected datetime format"
+		return False, f"'{strValue}' doesn't match expected datetime format"
 
 
+def d_string(fieldName, strValue, specs):
+	strLength = len(strValue)
+	if not specs['minLength'] <= strLength <= specs['maxLength']:
+		return False, f'Length {strLength} is out of expected range'
 
-def d_string(strValue, specs):
-	# TODO
-	return True, strValue
-
-
-def d_base64(strValue, specs):
-	# TODO
 	return True, strValue
 
 #---------------------------------------------------------------
@@ -511,13 +536,15 @@ class blueprint:
 
 		self.root = root
 		self.derived_types = derived_types
+		self.adhoc_types = adhoc_types
 		self.nodes = nodes
 		self.enums = enums
 
 	def __str__(self):
-		return (f'types = {self.derived_types}'
-			+ f'enums = {self.enums}'
-			+ f'nodes = {self.nodes}'
+		return (f'types = {self.derived_types} '
+			+ f'adhoc = {self.adhoc_types} '
+			+ f'enums = {self.enums} '
+			+ f'nodes = {self.nodes} '
 			+ f'root = {self.root}')
 
 
@@ -526,12 +553,16 @@ class blueprint:
 			specs = primitive_types[decl.kind]
 			baseType = decl.kind
 
-		else:
+		elif decl.kind in derived_types:
 			specs = self.derived_types[decl.kind]
 			baseType = specs['__baseType__']
 
+		else:
+			specs = self.adhoc_types[decl.kind]
+			baseType = specs['__baseType__']
+
 		deserialize_method = globals()['d_' + baseType]
-		return deserialize_method(retrieved, specs)
+		return deserialize_method(decl.name, retrieved, specs)
 
 
 	def validate_enum(self, value, enumType):
@@ -563,12 +594,20 @@ class blueprint:
 				success, result = self.validate_node(arrayNode, content)
 				if not success: return False, result
 
+			return True, decl
+
 		if decl.kind in self.enums:
 			for value in contents:
 				success, processed = self.validate_enum(value, decl.kind)
 				if not success: return False, processed
 
-		#TODO: checar cada elemento
+			return True, decl
+
+		for idx, value in enumerate(contents):
+			success, processed = self.deserialize_field(decl, value)
+			if not success: return False, f"Array '{decl.name}' at index {idx}: {processed}"
+			contents[idx] = processed
+
 		return True, contents
 
 
@@ -601,7 +640,7 @@ class blueprint:
 				continue
 
 			success, processed = self.deserialize_field(decl, retrieved)
-			if not success: return success, processed
+			if not success: return False, processed
 			contents[attr] = processed
 
 		return True, contents

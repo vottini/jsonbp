@@ -1,0 +1,4 @@
+
+Bad integer string | test1.js | ERR_INTEGER_PARSING
+Bad integer value | test2.js | ERR_OUTSIDE_RANGE
+Modified integer and simple boolean parsing  | test3.js,test4.js,test5.js | OK
