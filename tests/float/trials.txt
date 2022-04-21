@@ -1,0 +1,4 @@
+
+Parsing float from decimal value | json1.js | OK | json1.py
+Parsing float from scientific value | json2.js | OK | json2.py
+Parsing float from minus infinity | json3.js | OK | json3.py

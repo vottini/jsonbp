@@ -119,6 +119,12 @@ primitive_types = {
 
 #---------------------------------------------------------------
 
+class taggedNumber:
+	def __init__(self, strValue):
+		self.strValue = strValue
+
+#---------------------------------------------------------------
+
 class declaration:
 	def __init__(self, name, kind, specs):
 		self.name = name
@@ -156,11 +162,18 @@ def p_error(p):
 
 #---------------------------------------------------------------
 
-derived_types = dict()
-adhoc_types = dict()
-enums = dict()
-nodes = dict()
-root = None
+def initGlobals():
+	global derived_types
+	global adhoc_types
+	global enums
+	global nodes
+	global root
+
+	derived_types = dict()
+	adhoc_types = dict()
+	enums = dict()
+	nodes = dict()
+	root = None
 
 #---------------- general structure -----------------------------
 
@@ -258,6 +271,11 @@ def create_type(decl):
 		attrib, value = specificity
 		if not attrib in new_kind:
 			msg = f"Type '{decl.name}' ({decl.kind}) has no attribute {attrib}"
+			raise ParseException(msg)
+
+		oldValue = new_kind[attrib]
+		if type(value) != type(oldValue):
+			msg = f"New value for specificity '{attrib}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
 			raise ParseException(msg)
 
 		new_kind[attrib] = value
@@ -435,59 +453,66 @@ def p_constants(p):
 
 #---------------------------------------------------------------
 
-def d_integer(fieldName, strValue, specs):
+def d_integer(fieldName, value, specs):
+	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	try:
 		rawValue = int(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.ERR_OUTSIDE_RANGE,
+			return False, error(error.OUTSIDE_RANGE,
 				field=fieldName, value=rawValue)
 
 	except ValueError as e:
-		return False, error(error.ERR_INTEGER_PARSING,
+		return False, error(error.INTEGER_PARSING,
 			text=strValue)
 
 	return True, rawValue
 
 
-def d_float(fieldName, strValue, specs):
+def d_float(fieldName, value, specs):
+	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	try:
-		rawValue = float(strValue)
+		sanedValue = strValue.replace('Infinity', 'inf')
+		rawValue = float(sanedValue)
+
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.ERR_OUTSIDE_RANGE,
+			return False, error(error.OUTSIDE_RANGE,
 				field=fieldName, value=rawValue)
 
 	except ValueError as e:
-		return False, error(error.ERR_FLOAT_PARSING,
+		return False, error(error.FLOAT_PARSING,
 			text=strValue)
 
 	return True, rawValue
 
 
-def d_fixed(fieldName, strValue, specs):
+def d_fixed(fieldName, value, specs):
+	strValue = value.strValue if isinstance(value, taggedNumber) else value
 	sanedStrValue = strValue.replace(specs['separator'], '.')
 
 	try:
 		precision = f"1e-{specs['decimals']}"
 		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision))
 		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, error(error.ERR_OUTSIDE_RANGE,
+			return False, error(error.OUTSIDE_RANGE,
 				field=fieldName, value=rawValue)
 
 	except InvalidOperation as e:
-		return False, error(error.ERR_FIXED_PARSING,
+		return False, error(error.FIXED_PARSING,
 			text=strValue)
 
 	return True, rawValue
 
 
 def d_bool(fieldName, value, specs):
+	value = value.strValue if isinstance(value, taggedNumber) else value
+
 	if isinstance(value, bool):
 		return True, value
 
 	if not specs['coerce']:
-		return False, f"Value must be 'true' or 'false': got '{value}'"
+		return False, error(error.INVALID_BOOLEAN, value=value)
 
 	# coercion attempt
 	# check if is 'null' or empty string
@@ -500,14 +525,16 @@ def d_bool(fieldName, value, specs):
 		if 0 == rawValue or rawValue != rawValue:
 			return True, False
 
-	except ValueError as e:
+	except Exception as e:
+		# it was just an attempt, no problem
 		pass
 
 	# if none of the above, then most likely it's a truthy value
 	return True, True
 
 
-def d_datetime(fieldName, strValue, specs):
+def d_datetime(fieldName, value, specs):
+	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	try:
 		parsed_date = datetime.strptime(strValue, specs['format'])
@@ -518,9 +545,14 @@ def d_datetime(fieldName, strValue, specs):
 
 
 def d_string(fieldName, strValue, specs):
+	if not isinstance(strValue, str):
+		return False, error(error.INVALID_STRING,
+			field=fieldName, value=strValue)
+
 	strLength = len(strValue)
 	if not specs['minLength'] <= strLength <= specs['maxLength']:
-		return False, f'Length {strLength} is out of expected range'
+		return False, error(error.INVALID_LENGTH,
+			field=fieldName, length=strLength)
 
 	return True, strValue
 
@@ -651,12 +683,13 @@ class blueprint:
 
 
 	def deserialize(self, contents):
+		tag_number = lambda x : taggedNumber(x)
 		ident = lambda x : x
 
 		try:
 			loaded = json.loads(contents,
-				parse_float=ident, parse_constant=ident,
-				parse_int=ident)
+				parse_float=tag_number, parse_int=tag_number,
+				parse_constant=ident)
 
 		except json.JSONDecodeError as e:
 			return False, f'Invalid JSON, error at line {e.lineno}, column {e.colno}: {e.msg}'
@@ -665,6 +698,9 @@ class blueprint:
 
 #-------------------------------------------------------------------------------
 
+from threading import Lock
+mutex = Lock()
+
 def load(filename):
 	with open(filename, "r") as fd:
 		contents = fd.read()
@@ -672,6 +708,8 @@ def load(filename):
 
 
 def loads(contents):
-	result = blueprint(contents)
-	return result
+	with mutex:
+		initGlobals()
+		result = blueprint(contents)
+		return result
 

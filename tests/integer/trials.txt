@@ -1,0 +1,10 @@
+
+Parsing integer from positive value | json4.js | OK | json4.py
+Parsing integer from negative value | json7.js| OK | json7.py
+Parsing integer from string value | json5.js | OK | json5.py
+Parsing integer from boolean value | json6.js | OK | json6.py
+Catching bad string for integer | json1.js | KO | INTEGER_PARSING
+Catching integer value lesser than minimum | json2.js | KO | OUTSIDE_RANGE
+Catching integer value greater than maximum | json3.js | KO | OUTSIDE_RANGE
+Catching decimal float assigned to integer field | json8.js | KO | INTEGER_PARSING
+Catching scientific float assigned to integer field | json9.js | KO | INTEGER_PARSING

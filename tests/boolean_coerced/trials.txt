@@ -1,0 +1,8 @@
+
+Parsing coerced boolean from zero | json7.js | OK | json7.py
+Parsing coerced boolean from non zero integer | json3.js | OK | json3.py
+Parsing coerced boolean from random string | json4.js | OK | json4.py
+Parsing coerced boolean from string "false" | json5.js | OK | json5.py
+Parsing coerced boolean from empty string | json8.js | OK | json8.py
+Parsing coerced boolean from compound object | json9.js | OK | json9.py
+Parsing coerced boolean from null | json6.js | OK | json6.py

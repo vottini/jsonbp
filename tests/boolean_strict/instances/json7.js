@@ -1,0 +1,3 @@
+{
+	"some_boolean": true
+}

@@ -1,0 +1,5 @@
+
+Catching float lesser than minimun | json1.js | KO | OUTSIDE_RANGE
+Catching float greater than maximum | json2.js | KO | OUTSIDE_RANGE
+Parsing float between limits | json3.js | OK | json3.py
+

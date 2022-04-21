@@ -1,0 +1,4 @@
+
+root {
+	some_integer: integer (min=-10, max=10)
+}

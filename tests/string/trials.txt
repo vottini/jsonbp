@@ -1,0 +1,6 @@
+
+Parsing simple string | json1.js | OK | json1.py
+Catching string too small | json2.js | KO | INVALID_LENGTH
+Catching string too big | json3.js | KO | INVALID_LENGTH
+Catching integer as string | json4.js | KO | INVALID_STRING
+Catching null string | json5.js | KO | INVALID_STRING

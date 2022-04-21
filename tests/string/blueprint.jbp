@@ -1,0 +1,4 @@
+
+root {
+	some_string: string (minLength=5, maxLength=10)
+}
