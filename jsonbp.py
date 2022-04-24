@@ -82,8 +82,10 @@ t_ignore  = ' \t\r'
 #---------------------------------------------------------------
 
 from sys import maxsize
-from decimal import Decimal, InvalidOperation
 from datetime import datetime
+from decimal import Decimal
+import decimal
+import re
 
 primitive_types = {
 	'integer' : {
@@ -97,10 +99,11 @@ primitive_types = {
 	},
 
 	'fixed' : {
-		'decimals': 2,
+		'fractionalLength': 2,
 		'min': Decimal(-maxsize).quantize(Decimal('0.01')),
 		'max': Decimal(+maxsize).quantize(Decimal('0.01')),
-		'separator': '.'
+		'decimalSeparator': '.',
+		'groupSeparator': ''
 	},
 
 	'bool' : {
@@ -120,8 +123,9 @@ primitive_types = {
 #---------------------------------------------------------------
 
 class taggedNumber:
-	def __init__(self, strValue):
-		self.strValue = strValue
+	def __init__(self, strValue): self.strValue = strValue
+	def __str__(self): return self.strValue
+	__repr__ =  __str__
 
 #---------------------------------------------------------------
 
@@ -274,6 +278,10 @@ def create_type(decl):
 			raise ParseException(msg)
 
 		oldValue = new_kind[attrib]
+		if type(oldValue) == Decimal:
+			if type(value) == float:
+				value = Decimal(value)
+
 		if type(value) != type(oldValue):
 			msg = f"New value for specificity '{attrib}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
 			raise ParseException(msg)
@@ -455,15 +463,16 @@ def p_constants(p):
 
 def d_integer(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
+	if None == value: return False, error(error.NULL_VALUE, fieldName)
 
 	try:
 		rawValue = int(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.OUTSIDE_RANGE,
-				field=fieldName, value=rawValue)
+			return False, error(error.OUTSIDE_RANGE, fieldName,
+				value=rawValue)
 
-	except ValueError as e:
-		return False, error(error.INTEGER_PARSING,
+	except Exception as e:
+		return False, error(error.INTEGER_PARSING, fieldName,
 			text=strValue)
 
 	return True, rawValue
@@ -471,35 +480,55 @@ def d_integer(fieldName, value, specs):
 
 def d_float(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
+	if None == value: return False, error(error.NULL_VALUE, fieldName)
 
 	try:
 		sanedValue = strValue.replace('Infinity', 'inf')
 		rawValue = float(sanedValue)
 
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.OUTSIDE_RANGE,
-				field=fieldName, value=rawValue)
+			return False, error(error.OUTSIDE_RANGE, fieldName,
+				value=rawValue)
 
-	except ValueError as e:
-		return False, error(error.FLOAT_PARSING,
+	except Exception as e:
+		return False, error(error.FLOAT_PARSING, fieldName,
 			text=strValue)
 
 	return True, rawValue
 
+roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
+specialChars = r'.^$*+?|'
 
 def d_fixed(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
-	sanedStrValue = strValue.replace(specs['separator'], '.')
+	if None == strValue: return False, error(error.NULL_VALUE, fieldName)
+	if not isinstance(strValue, str): return False, error(error.FIXED_PARSING, fieldName,
+		text=strValue)
+
+	grpSep = specs['groupSeparator']
+	decSep = specs['decimalSeparator']
+
+	if grpSep in specialChars: grpSep = f'\\{grpSep}'
+	if decSep in specialChars: decSep = f'\\{decSep}'
+	fixedPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
+
+	if None == re.match(fixedPattern, strValue):
+		return False, error(error.FIXED_PARSING, fieldName,
+			text=strValue)
 
 	try:
-		precision = f"1e-{specs['decimals']}"
-		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision))
-		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, error(error.OUTSIDE_RANGE,
-				field=fieldName, value=rawValue)
+		precision = f"1e-{specs['fractionalLength']}"
+		sanedStrValue = strValue.replace(specs['groupSeparator'], '')
+		sanedStrValue = sanedStrValue.replace(specs['decimalSeparator'], '.')
+		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
+			context=roundingContext)
 
-	except InvalidOperation as e:
-		return False, error(error.FIXED_PARSING,
+		if specs['min'] > rawValue or rawValue > specs['max']:
+			return False, error(error.OUTSIDE_RANGE, fieldName,
+				value=rawValue)
+
+	except Exception as e:
+		return False, error(error.FIXED_PARSING, fieldName,
 			text=strValue)
 
 	return True, rawValue
@@ -512,7 +541,8 @@ def d_bool(fieldName, value, specs):
 		return True, value
 
 	if not specs['coerce']:
-		return False, error(error.INVALID_BOOLEAN, value=value)
+		return False, error(error.INVALID_BOOLEAN, fieldName,
+			value=value)
 
 	# coercion attempt
 	# check if is 'null' or empty string
@@ -540,19 +570,19 @@ def d_datetime(fieldName, value, specs):
 		parsed_date = datetime.strptime(strValue, specs['format'])
 		return True, parsed_date
 
-	except ValueError as e:
+	except Exception as e:
 		return False, f"'{strValue}' doesn't match expected datetime format"
 
 
 def d_string(fieldName, strValue, specs):
 	if not isinstance(strValue, str):
-		return False, error(error.INVALID_STRING,
-			field=fieldName, value=strValue)
+		return False, error(error.INVALID_STRING, fieldName,
+			value=strValue)
 
 	strLength = len(strValue)
 	if not specs['minLength'] <= strLength <= specs['maxLength']:
-		return False, error(error.INVALID_LENGTH,
-			field=fieldName, length=strLength)
+		return False, error(error.INVALID_LENGTH, fieldName,
+			length=strLength)
 
 	return True, strValue
 

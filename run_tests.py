@@ -1,9 +1,8 @@
 
 import os
 import os.path
+from decimal import Decimal
 
-verifications = dict()
-verificationsTotal = 0
 verificationDir = 'tests'
 verificationSubdirs = [f.name
 	for f in os.scandir(verificationDir)
@@ -15,6 +14,10 @@ trialColumns = (
 	'expectedOutcome',
 	'expectedResult'
 )
+
+verifications = dict()
+verificationSubdirs.sort()
+verificationsTotal = 0
 
 for subdir in verificationSubdirs:
 	subdirPath = os.path.join(verificationDir, subdir)
@@ -92,6 +95,7 @@ for key, value in verifications.items():
 			if not shouldSucceed:
 				expectedError = getattr(error, expectedResult)
 				returnedError = obtainedResult.getErrorType()
+				print(f'[{obtainedResult}] ', end='')
 
 				if expectedError != returnedError:
 					print('Failed!')
