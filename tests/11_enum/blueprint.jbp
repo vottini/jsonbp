@@ -1,0 +1,10 @@
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+root {
+	enum_field: color
+}

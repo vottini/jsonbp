@@ -1,0 +1,8 @@
+
+Parsing node with primitive types and enums I | json1.js | OK | json1.py
+Parsing node with primitive types and enums II | json2.js | OK | json2.py
+Catching field missing in child node | json3.js | KO | MISSING_FIELD
+Catching field missing in root node | json4.js | KO | MISSING_FIELD
+Catching invalid enum inside node | json5.js | KO | UNKNOWN_LITERAL
+Catching invalid float inside node | json6.js | KO | FLOAT_PARSING
+

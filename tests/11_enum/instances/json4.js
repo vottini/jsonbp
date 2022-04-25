@@ -1,0 +1,3 @@
+{
+	"enum_field": null
+}

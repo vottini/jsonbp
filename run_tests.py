@@ -1,7 +1,9 @@
 
 import os
 import os.path
+
 from decimal import Decimal
+from datetime import datetime
 
 verificationDir = 'tests'
 verificationSubdirs = [f.name
@@ -90,6 +92,7 @@ for key, value in verifications.items():
 				print('Failed!')
 				print(f'Expected outcome = {shouldSucceed}')
 				print(f'Obtained outcome = {outcome}')
+				print("###", obtainedResult)
 				break
 
 			if not shouldSucceed:

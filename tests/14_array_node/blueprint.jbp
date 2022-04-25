@@ -1,0 +1,17 @@
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+node point {
+	x: float,
+	y: float,
+	when: datetime (format="%d/%m/%Y")
+}
+
+root {
+	colors: color[maxLength=3],
+	points: point[minLength=2]
+}

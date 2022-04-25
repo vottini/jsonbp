@@ -84,6 +84,7 @@ t_ignore  = ' \t\r'
 from sys import maxsize
 from datetime import datetime
 from decimal import Decimal
+
 import decimal
 import re
 
@@ -278,9 +279,8 @@ def create_type(decl):
 			raise ParseException(msg)
 
 		oldValue = new_kind[attrib]
-		if type(oldValue) == Decimal:
-			if type(value) == float:
-				value = Decimal(value)
+		if type(oldValue) == Decimal and type(value) == float: value = Decimal(value)
+		if type(oldValue) == float and type(value) == int: value = float(value)
 
 		if type(value) != type(oldValue):
 			msg = f"New value for specificity '{attrib}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
@@ -351,8 +351,8 @@ def p_array_declaration(p):
 	'''
 
 	specs = {
-		'min': 1,
-		'max': maxsize,
+		'minLength': 1,
+		'maxLength': maxsize,
 	}
 	
 	if len(p) == 5:
@@ -571,7 +571,8 @@ def d_datetime(fieldName, value, specs):
 		return True, parsed_date
 
 	except Exception as e:
-		return False, f"'{strValue}' doesn't match expected datetime format"
+		return False, error(error.INVALID_DATETIME, fieldName,
+			text=strValue)
 
 
 def d_string(fieldName, strValue, specs):
@@ -591,11 +592,7 @@ def d_string(fieldName, strValue, specs):
 import json
 
 class blueprint:
-	def __init__(self, contents):
-		lexer = lex.lex()
-		parser = yacc.yacc()
-		parser.parse(contents)
-
+	def __init__(self):
 		self.root = root
 		self.derived_types = derived_types
 		self.adhoc_types = adhoc_types
@@ -627,27 +624,32 @@ class blueprint:
 		return deserialize_method(decl.name, retrieved, specs)
 
 
-	def validate_enum(self, value, enumType):
+	def validate_enum(self, fieldName, value, enumType):
+		if None == value: return False, error(error.NULL_VALUE, fieldName)
+
+		if not isinstance(value, str):
+			return False, error(error.INVALID_ENUM, fieldName,
+				value=value)
+
 		possibleValues = self.enums[enumType]
 		if not value in possibleValues:
-			return False, f'Unknown {enumType} value: "{value}"'
+			return False, error(error.UNKNOWN_LITERAL, fieldName,
+				value=value)
 		
 		return True, value
 
 
 	def validate_array(self, decl, contents):
 		if not isinstance(contents, list):
-			return False, f'Field "{decl.name}" needs to be an array'
+			return False, error(error.INVALID_ARRAY, decl.name)
 
-		arrayMin = decl.arraySpecs['min']
-		arrayMax = decl.arraySpecs['max']
+		arrayMin = decl.arraySpecs['minLength']
+		arrayMax = decl.arraySpecs['maxLength']
 		arrayLen = len(contents)
 		
-		if arrayLen < arrayMin:
-			return False, f"Array '{decl.name}' needs to have at least {arrayMin} elements, found {arrayLen}"
-		
-		if arrayLen > arrayMax:
-			return False, f"Array '{decl.name}' needs to have at most {arrayMax} elements, found {arrayLen}"
+		if not arrayMin <= arrayLen <= arrayMax:
+			return False, error(error.INVALID_LENGTH, decl.name,
+				length=arrayLen)
 
 		if decl.kind in self.nodes:
 			arrayNode = self.nodes[decl.kind]
@@ -660,14 +662,14 @@ class blueprint:
 
 		if decl.kind in self.enums:
 			for value in contents:
-				success, processed = self.validate_enum(value, decl.kind)
+				success, processed = self.validate_enum(decl.name, value, decl.kind)
 				if not success: return False, processed
 
 			return True, decl
 
 		for idx, value in enumerate(contents):
 			success, processed = self.deserialize_field(decl, value)
-			if not success: return False, f"Array '{decl.name}' at index {idx}: {processed}"
+			if not success: return False, processed
 			contents[idx] = processed
 
 		return True, contents
@@ -680,7 +682,7 @@ class blueprint:
 		for attr, decl in node.items():
 			if not attr in contents:
 				if decl.optional: continue
-				return False, f'Missing field "{attr}"'
+				return False, error(error.MISSING_FIELD, attr)
 
 			retrieved = contents[attr]
 			attr_type = decl.kind
@@ -697,7 +699,7 @@ class blueprint:
 				continue
 
 			if attr_type in self.enums:
-				success, processed = self.validate_enum(retrieved, attr_type)
+				success, processed = self.validate_enum(attr, retrieved, attr_type)
 				if not success: return success, processed
 				continue
 
@@ -736,10 +738,13 @@ def load(filename):
 		contents = fd.read()
 		return loads(contents)
 
+lexer = lex.lex()
+parser = yacc.yacc()
 
 def loads(contents):
 	with mutex:
 		initGlobals()
-		result = blueprint(contents)
+		parser.parse(contents)
+		result = blueprint()
 		return result
 

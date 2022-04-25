@@ -1,0 +1,4 @@
+
+root {
+	some_datetime: datetime (format="%B %d, %Y, %I:%M %p")
+}

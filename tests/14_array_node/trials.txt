@@ -1,0 +1,7 @@
+
+Parsing array with node and enum I | json1.js | OK | json1.py
+Parsing array with node and enum II | json2.js | OK | json2.py
+Catching array with less elements than expected | json3.js | KO | INVALID_LENGTH
+Catching array with more elements than expected | json4.js | KO | INVALID_LENGTH
+Catching single element assigned to array | json5.js | KO | INVALID_ARRAY
+Catching null assigned to array | json6.js | KO | INVALID_ARRAY

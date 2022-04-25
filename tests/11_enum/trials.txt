@@ -1,0 +1,7 @@
+
+Parsing enum usage I | json1.js | OK | json1.py
+Parsing enum usage II | json5.js | OK | json5.py
+Catching non existent enum literal | json2.js | KO | UNKNOWN_LITERAL
+Catching number in enum field | json3.js | KO | INVALID_ENUM
+Catching null in enum field | json4.js | KO | NULL_VALUE
+
