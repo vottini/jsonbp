@@ -1,0 +1,3 @@
+
+class BlueprintViolation(Exception):
+	pass

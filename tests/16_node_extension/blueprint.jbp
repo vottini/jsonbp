@@ -1,0 +1,27 @@
+
+# this is a comment
+# and another one
+
+type timestamp : integer (min=0)
+
+node point {
+	x: float,
+	y: float,
+	moment: timestamp
+}
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+node colored_point extends point {
+	color: color
+}
+
+root {
+	points: colored_point[],
+	optional path_color: color
+}
+

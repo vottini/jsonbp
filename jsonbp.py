@@ -1,7 +1,10 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
-from jbp.error import error
+
+import jbp.error as jbpError
+import jbp.array as jbpArray
+import jbp.declaration as jbpDeclaration
 
 reserved = (
 	'root',
@@ -130,29 +133,6 @@ class taggedNumber:
 
 #---------------------------------------------------------------
 
-class declaration:
-	def __init__(self, name, kind, specs):
-		self.name = name
-		self.kind = kind
-		self.specs = specs
-		self.arraySpecs = None
-		self.optional = False
-
-	@property
-	def isArray(self):
-		return (None != self.arraySpecs)
-
-	def makeArray(self, arraySpecs):
-		self.arraySpecs = arraySpecs
-
-	def setOptional(self):
-		self.optional = True
-
-	def __str__(self):
-		return f"{self.kind} -> {self.specs}"
-
-#---------------------------------------------------------------
-
 class TokenException(Exception): pass
 class ParseException(Exception): pass
 
@@ -169,13 +149,11 @@ def p_error(p):
 
 def initGlobals():
 	global derived_types
-	global adhoc_types
 	global enums
 	global nodes
 	global root
 
 	derived_types = dict()
-	adhoc_types = dict()
 	enums = dict()
 	nodes = dict()
 	root = None
@@ -200,66 +178,60 @@ def p_construction(p):
 
 def p_root(p):
 	'''
-	    root : ROOT '{' attributes '}'
-			     | ROOT '{' '}'
+	    root : ROOT node_declaration
 
 	'''
-
-	if len(p) < 5:
-		msg = "Empty root node"
-		raise ParseException(msg)
 
 	global root
 	if None != root:
 		msg = 'Only one root can be defined'
 		raise ParseException(msg)
 
-	root = dict()
-
-	attributes = p[3]
-	for attr in attributes:
-		root[attr.name] = attr
-
+	root = p[2]
 	p[0] = root
 
 
 def p_node(p):
 	'''
-		node : NODE IDENTIFIER EXTENDS IDENTIFIER '{' attributes '}'
-		     | NODE IDENTIFIER '{' attributes '}'
+		node : NODE IDENTIFIER EXTENDS IDENTIFIER node_declaration
+		     | NODE IDENTIFIER node_declaration
 	'''
 
-	if len(p) == 8:
+	if len(p) == 6:
 		base_node = p[4]
 		if not base_node in nodes:
 			msg = f"Node '{base_node}' is not defined"
 			raise ParseException(msg)
 
 		base_decls = nodes[base_node]
-		own_decls = p[6]
+		extended_decls = p[5]
 		own_name = p[2]
 
-		for own_decl in own_decls:
-			if own_decl.name in base_decls:
-				msg = f"Field '{own_decl.name}' in node '{own_name}' is already defined in base node '{base_node}'"
+		for fieldName, fieldDeclaration in extended_decls.items():
+			if fieldName in base_decls:
+				msg = f"Field '{fieldName}' in node '{own_name}' is already defined in base node '{base_node}'"
 				raise ParseException(msg)
 
-		node_decls = dict()
-		for decl in own_decls:
-			node_decls[decl.name] = decl
-
-		node_decls.update(base_decls)
-		nodes[own_name] = node_decls
+		extended_decls.update(base_decls)
+		nodes[own_name] = extended_decls
 
 	else:
 		own_name = p[2]
-		own_decls = p[4]
+		extended_decls = p[3]
+		nodes[own_name] = extended_decls
 
-		node_decls = dict()
-		for decl in own_decls:
-			node_decls[decl.name] = decl
 
-		nodes[own_name] = node_decls
+def p_node_specs(p):
+	'''
+		node_declaration : '{' attributes '}'
+	'''
+
+	decls = p[2]
+	new_node = dict()
+	for decl in decls:
+		new_node[decl[0]] = decl[1]
+
+	p[0] = new_node
 
 
 def create_type(decl):
@@ -299,13 +271,12 @@ def create_type(decl):
 
 def p_type(p):
 	'''
-			type : TYPE element_declaration
+			type : TYPE IDENTIFIER ':' element_declaration
 	'''
 
-	decl = p[2]
+	decl = p[4]
 	new_kind = create_type(decl)
-	derived_types[decl.name] = new_kind
-	p[0] = decl
+	derived_types[p[2]] = new_kind
 
 
 #---------------- attributes ----------------------------
@@ -328,7 +299,7 @@ def p_attribute(p):
 	'''
 
 	if len(p) == 3:
-		p[2].setOptional()
+		p[2][1].setOptional()
 		p[0] = p[2]
 
 	else:
@@ -337,11 +308,11 @@ def p_attribute(p):
 
 def p_attribution(p):
 	'''
-		attribution : array_declaration
-		            | local_declaration
+		attribution : IDENTIFIER ':' array_declaration
+		            | IDENTIFIER ':' local_declaration
 	'''
 
-	p[0] = p[1]
+	p[0] = (p[1], p[3])
 
 
 def p_array_declaration(p):
@@ -350,23 +321,14 @@ def p_array_declaration(p):
 		                  | local_declaration '[' ']'
 	'''
 
-	specs = {
-		'minLength': 1,
-		'maxLength': maxsize,
-	}
+	jArray = jbpArray.makeArray(p[1])
 	
 	if len(p) == 5:
 		for specificity in p[3]:
-			field, value = specificity
+			spec, value = specificity
+			jArray.applySpec(spec, value)
 
-			if not field in specs:
-				msg = f"Invalid specificity for array: '{field}'"
-				raise ParseException(msg)
-
-			specs[field] = value
-
-	p[1].makeArray(specs)
-	p[0] = p[1]
+	p[0] = jArray
 
 
 def p_local_declaration(p):
@@ -377,8 +339,8 @@ def p_local_declaration(p):
 	decl = p[1]
 	if len(decl.specs) > 0:
 		new_kind = create_type(decl)
-		adhoc_type = '_anonymous_' + str(len(adhoc_types)) + '_'
-		adhoc_types[adhoc_type] = new_kind
+		adhoc_type = '_anonymous_' + str(len(derived_types)) + '_'
+		derived_types[adhoc_type] = new_kind
 		decl.kind = adhoc_type
 
 	p[0] = decl
@@ -386,11 +348,11 @@ def p_local_declaration(p):
 
 def p_element_declaration(p):
 	'''
-		element_declaration : IDENTIFIER ':' IDENTIFIER '(' specificities ')'
-		                    | IDENTIFIER ':' IDENTIFIER
+		element_declaration : IDENTIFIER '(' specificities ')'
+		                    | IDENTIFIER
 	'''
 
-	kind = p[3]
+	kind = p[1]
 	kind_exists = (
 		kind in primitive_types or
 		kind in derived_types or
@@ -401,9 +363,8 @@ def p_element_declaration(p):
 		msg = f"Unknown type '{kind}'"
 		raise ParseException(msg)
 
-	ident = p[1]
-	specs = p[5] if len(p) == 7 else list()
-	p[0] = declaration(ident, kind, specs)
+	specs = p[3] if len(p) == 5 else list()
+	p[0] = jbpDeclaration.create(kind, specs)
 
 
 def p_specificities(p):
@@ -463,47 +424,59 @@ def p_constants(p):
 
 def d_integer(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
-	if None == value: return False, error(error.NULL_VALUE, fieldName)
+
+	if None == value:
+		return False, jbpError.createForField(fieldName,
+			jbpError.NULL_VALUE)
 
 	try:
 		rawValue = int(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.OUTSIDE_RANGE, fieldName,
-				value=rawValue)
+			return False, jbpError.createForField(fieldName,
+				jbpError.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, error(error.INTEGER_PARSING, fieldName,
-			text=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.INTEGER_PARSING, text=strValue)
 
 	return True, rawValue
 
 
 def d_float(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
-	if None == value: return False, error(error.NULL_VALUE, fieldName)
+
+	if None == value:
+		return False, jbpError.createForField(fieldName,
+			jbpError.NULL_VALUE)
 
 	try:
 		sanedValue = strValue.replace('Infinity', 'inf')
 		rawValue = float(sanedValue)
 
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, error(error.OUTSIDE_RANGE, fieldName,
-				value=rawValue)
+			return False, jbpError.createForField(fieldName,
+				jbpError.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, error(error.FLOAT_PARSING, fieldName,
-			text=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.FLOAT_PARSING, text=strValue)
 
 	return True, rawValue
+
 
 roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
 specialChars = r'.^$*+?|'
 
 def d_fixed(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
-	if None == strValue: return False, error(error.NULL_VALUE, fieldName)
-	if not isinstance(strValue, str): return False, error(error.FIXED_PARSING, fieldName,
-		text=strValue)
+
+	if None == strValue:
+		return False, jbpError.createForField(fieldName,
+			jbpError.NULL_VALUE)
+
+	if not isinstance(strValue, str):
+		return False, jbpError.createForField(fieldName,
+			jbpError.FIXED_PARSING, text=strValue)
 
 	grpSep = specs['groupSeparator']
 	decSep = specs['decimalSeparator']
@@ -513,8 +486,8 @@ def d_fixed(fieldName, value, specs):
 	fixedPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
 
 	if None == re.match(fixedPattern, strValue):
-		return False, error(error.FIXED_PARSING, fieldName,
-			text=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.FIXED_PARSING, text=strValue)
 
 	try:
 		precision = f"1e-{specs['fractionalLength']}"
@@ -524,12 +497,12 @@ def d_fixed(fieldName, value, specs):
 			context=roundingContext)
 
 		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, error(error.OUTSIDE_RANGE, fieldName,
-				value=rawValue)
+			return False, jbpError.createForField(fieldName,
+				jbpError.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, error(error.FIXED_PARSING, fieldName,
-			text=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.FIXED_PARSING, text=strValue)
 
 	return True, rawValue
 
@@ -541,8 +514,8 @@ def d_bool(fieldName, value, specs):
 		return True, value
 
 	if not specs['coerce']:
-		return False, error(error.INVALID_BOOLEAN, fieldName,
-			value=value)
+		return False, jbpError.createForField(fieldName,
+			jbpError.INVALID_BOOLEAN, value=value)
 
 	# coercion attempt
 	# check if is 'null' or empty string
@@ -571,19 +544,19 @@ def d_datetime(fieldName, value, specs):
 		return True, parsed_date
 
 	except Exception as e:
-		return False, error(error.INVALID_DATETIME, fieldName,
-			text=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.INVALID_DATETIME, text=strValue)
 
 
 def d_string(fieldName, strValue, specs):
 	if not isinstance(strValue, str):
-		return False, error(error.INVALID_STRING, fieldName,
-			value=strValue)
+		return False, jbpError.createForField(fieldName,
+			jbpError.INVALID_STRING, value=strValue)
 
 	strLength = len(strValue)
 	if not specs['minLength'] <= strLength <= specs['maxLength']:
-		return False, error(error.INVALID_LENGTH, fieldName,
-			length=strLength)
+		return False, jbpError.createForField(fieldName,
+			jbpError.INVALID_LENGTH, length=strLength)
 
 	return True, strValue
 
@@ -595,123 +568,129 @@ class blueprint:
 	def __init__(self):
 		self.root = root
 		self.derived_types = derived_types
-		self.adhoc_types = adhoc_types
 		self.nodes = nodes
 		self.enums = enums
 
 	def __str__(self):
 		return (f'types = {self.derived_types} '
-			+ f'adhoc = {self.adhoc_types} '
 			+ f'enums = {self.enums} '
 			+ f'nodes = {self.nodes} '
 			+ f'root = {self.root}')
 
 
-	def deserialize_field(self, decl, retrieved):
+	def deserialize_field(self, attrib, decl, retrieved):
 		if decl.kind in primitive_types:
 			specs = primitive_types[decl.kind]
 			baseType = decl.kind
 
-		elif decl.kind in derived_types:
+		else:
 			specs = self.derived_types[decl.kind]
 			baseType = specs['__baseType__']
 
-		else:
-			specs = self.adhoc_types[decl.kind]
-			baseType = specs['__baseType__']
-
 		deserialize_method = globals()['d_' + baseType]
-		return deserialize_method(decl.name, retrieved, specs)
+		return deserialize_method(attrib, retrieved, specs)
 
 
 	def validate_enum(self, fieldName, value, enumType):
-		if None == value: return False, error(error.NULL_VALUE, fieldName)
+		if None == value:
+			return False, jbpError.createForField(fieldName,
+				jbpError.NULL_VALUE)
 
 		if not isinstance(value, str):
-			return False, error(error.INVALID_ENUM, fieldName,
-				value=value)
+			return False, jbpError.createForField(fieldName,
+				jbpError.INVALID_ENUM, value=value)
 
 		possibleValues = self.enums[enumType]
 		if not value in possibleValues:
-			return False, error(error.UNKNOWN_LITERAL, fieldName,
-				value=value)
+			return False, jbpError.createForField(fieldName, 
+				jbpError.UNKNOWN_LITERAL, value=value)
 		
 		return True, value
 
 
-	def validate_array(self, decl, contents):
+	def validate_array(self, fieldName, jArray, contents):
 		if not isinstance(contents, list):
-			return False, error(error.INVALID_ARRAY, decl.name)
+			return False, jbpError.createForField(fieldName,
+				jbpError.INVALID_ARRAY)
 
-		arrayMin = decl.arraySpecs['minLength']
-		arrayMax = decl.arraySpecs['maxLength']
 		arrayLen = len(contents)
-		
-		if not arrayMin <= arrayLen <= arrayMax:
-			return False, error(error.INVALID_LENGTH, decl.name,
-				length=arrayLen)
+		if not jArray.minLength <= arrayLen <= jArray.maxLength:
+			return False, jbpError.createForField(fieldName,
+				jbpError.INVALID_LENGTH, length=arrayLen)
 
+		decl = jArray.content
 		if decl.kind in self.nodes:
 			arrayNode = self.nodes[decl.kind]
 
-			for content in contents:
-				success, result = self.validate_node(arrayNode, content)
-				if not success: return False, result
+			for idx, content in enumerate(contents):
+				success, result = self.validate_node(decl.kind, arrayNode, content)
+
+				if not success:
+					result.setAsArrayElement(idx)
+					return False, result
 
 			return True, decl
 
 		if decl.kind in self.enums:
-			for value in contents:
-				success, processed = self.validate_enum(decl.name, value, decl.kind)
-				if not success: return False, processed
+			for idx, value in enumerate(contents):
+				success, processed = self.validate_enum(fieldName, value, decl.kind)
+
+				if not success:
+					processed.setAsArrayElement(idx)
+					return False, processed
 
 			return True, decl
 
 		for idx, value in enumerate(contents):
-			success, processed = self.deserialize_field(decl, value)
-			if not success: return False, processed
+			success, processed = self.deserialize_field(fieldName, decl, value)
+
+			if not success:
+				processed.setAsArrayElement(idx)
+				return False, processed
+
 			contents[idx] = processed
 
 		return True, contents
 
 
-	def validate_node(self, node, contents):
+	def validate_node(self, nodeName, node, contents):
 		if not isinstance(contents, dict):
-			return False, f'Invalid data'
+			return False, jbpError.createForNode(nodeName,
+				jbpError.INVALID_NODE)
 
-		for attr, decl in node.items():
-			if not attr in contents:
+		for fieldName, decl in node.items():
+			if not fieldName in contents:
 				if decl.optional: continue
-				return False, error(error.MISSING_FIELD, attr)
+				return False, jbpError.createForNode(nodeName,
+					jbpError.MISSING_FIELD, field=fieldName)
 
-			retrieved = contents[attr]
-			attr_type = decl.kind
-
-			if decl.isArray:
-				success, processed = self.validate_array(decl, retrieved)
+			retrieved = contents[fieldName]
+			if jbpArray.isArray(decl):
+				success, processed = self.validate_array(fieldName, decl, retrieved)
 				if not success: return success, processed
 				continue
 
+			attr_type = decl.kind
 			if attr_type in self.nodes:
 				node_decl = self.nodes[attr_type]
-				success, processed = self.validate_node(node_decl, retrieved)
+				success, processed = self.validate_node(attr_type, node_decl, retrieved)
 				if not success: return success, processed
 				continue
 
 			if attr_type in self.enums:
-				success, processed = self.validate_enum(attr, retrieved, attr_type)
+				success, processed = self.validate_enum(fieldName, retrieved, attr_type)
 				if not success: return success, processed
 				continue
 
-			success, processed = self.deserialize_field(decl, retrieved)
+			success, processed = self.deserialize_field(fieldName, decl, retrieved)
 			if not success: return False, processed
-			contents[attr] = processed
+			contents[fieldName] = processed
 
 		return True, contents
 
 
 	def validate(self, root_contents):
-		return self.validate_node(self.root, root_contents)
+		return self.validate_node(None, self.root, root_contents)
 
 
 	def deserialize(self, contents):
@@ -724,7 +703,8 @@ class blueprint:
 				parse_constant=ident)
 
 		except json.JSONDecodeError as e:
-			return False, f'Invalid JSON, error at line {e.lineno}, column {e.colno}: {e.msg}'
+			return False, jbpError.createForRoot(jbpError.JSON_PARSING,
+				line=e.lineno, column=e.colno, message=e.msg)
 	
 		return self.validate(loaded)
 

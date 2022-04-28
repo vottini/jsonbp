@@ -1,45 +1,93 @@
 
-class error:
+JSON_PARSING	   = 14	 # line, column, message
+NULL_VALUE		   = 7	 # 
+INTEGER_PARSING  = 0	 # text
+FLOAT_PARSING    = 1	 # text
+FIXED_PARSING    = 2	 # text
+OUTSIDE_RANGE    = 3	 # value
+INVALID_BOOLEAN  = 4	 # value
+INVALID_STRING   = 5	 # value
+INVALID_LENGTH   = 6	 # length
+INVALID_DATETIME = 8	 # text
+UNKNOWN_LITERAL  = 9	 # text
+INVALID_ENUM     = 10	 # value
+MISSING_FIELD    = 11  # field
+INVALID_ARRAY    = 12  # 
+INVALID_NODE     = 13  # 
 
-	NULL_VALUE		   = 7	 # field
-	INTEGER_PARSING  = 0	 # field, text
-	FLOAT_PARSING    = 1	 # field, text
-	FIXED_PARSING    = 2	 # field, text
-	OUTSIDE_RANGE    = 3	 # field, value
-	INVALID_BOOLEAN  = 4	 # field, value
-	INVALID_STRING   = 5	 # field, value
-	INVALID_LENGTH   = 6	 # field, length
-	INVALID_DATETIME = 8	 # field, text
-	UNKNOWN_LITERAL  = 9	 # field, text
-	INVALID_ENUM     = 10	 # field, value
-	MISSING_FIELD    = 11  # field,
-	INVALID_ARRAY    = 22  # field
+texts = {
+	JSON_PARSING: 'Invalid JSON, error at line {line}, column {column}: {message}',
+	NULL_VALUE: 'Null value',
+	INTEGER_PARSING: 'Unable to parse "{text}" as integer',
+	FLOAT_PARSING: 'Unable to parse "{text}" as float',
+	FIXED_PARSING: 'Unable to parse "{text}" as fixed',
+	OUTSIDE_RANGE: 'Value {value} is outside expected range',
+	INVALID_BOOLEAN: 'Value must be "true" or "false", got "{value}"',
+	INVALID_STRING: 'Not a valid string',
+	INVALID_LENGTH: 'Length {length} is out of expected range',
+	INVALID_DATETIME: '"{text}" doesn\'t match expected datetime format',
+	UNKNOWN_LITERAL: 'Unknown value "{value}"',
+	INVALID_ENUM: 'Not a valid string',
+	MISSING_FIELD: 'Missing field "{field}"',
+	INVALID_ARRAY: 'Needs to be an array',
+	INVALID_NODE: 'Needs to be a dictionary'
+}
 
-	texts = {
-		NULL_VALUE: 'Field "{field}" has null value',
-		INTEGER_PARSING: 'Field "{field}": unable to parse "{text}" as integer',
-		FLOAT_PARSING: 'Field "{field}": unable to parse "{text}" as float',
-		FIXED_PARSING: 'Field "{field}": unable to parse "{text}" as fixed',
-		OUTSIDE_RANGE: 'Field "{field}": value {value} is outside expected range',
-		INVALID_BOOLEAN: 'Field "{field}": value must be "true" or "false", got "{value}"',
-		INVALID_STRING: 'Field "{field}": Not a valid string',
-		INVALID_LENGTH: 'Field "{field}": length {length} is out of expected range',
-		INVALID_DATETIME: 'Field "{field}": "{text}" doesn\'t match expected datetime format',
-		UNKNOWN_LITERAL: 'Field "{field}: Unknown value: "{value}"',
-		INVALID_ENUM: 'Field "{field}": Not a valid string',
-		MISSING_FIELD: 'Missing field "{field}"',
-		INVALID_ARRAY: 'Field "{field}" needs to be an array'
-	}
+prefixes = {
+	"FIELD": 'Field "{assignee}":',
+	"NODE": 'Node "{assignee}":',
+	"ARRAY": 'In array "{assignee}" at index {index}:',
+	"ROOT": 'At root node:'
+}
 
-	def __init__(self, error_id, field,  **context):
+class instance:
+	def __init__(self, error_id, **context):
 		self.error_id = error_id
 		self.context = context
-		self.field = field
-
-	def __str__(self):
-		msg = error.texts[self.error_id]
-		return msg.format(field=self.field, **self.context)
+		self.prefix = None
+		self.assignee = None
+		self.index = None
 
 	def getErrorType(self):
 		return self.error_id
+
+	def setAssignee(self, assigneeType, assigneeName=None):
+		self.prefix = assigneeType
+		self.assignee = assigneeName
+
+	def setAsArrayElement(self, arrayIndex):
+		self.prefix = "ARRAY"
+		self.index = arrayIndex
+
+	def __str__(self):
+		prefixText = ""
+		if None != self.prefix:
+			prefix = prefixes[self.prefix]
+			prefixText = prefix.format(
+				assignee=self.assignee,
+				index=self.index)
+
+		msg = texts[self.error_id]
+		errorMsg = msg.format(**self.context)
+		return " ".join([prefixText, errorMsg])
+
+#-------------------------------------------------------------------------------
+
+def createForField(fieldName, error_id, **context):
+	result = instance(error_id, **context)
+	result.setAssignee("FIELD", fieldName)
+	return result
+
+
+def createForNode(nodeName, error_id, **context):
+	result = instance(error_id, **context)
+	args = ("NODE", nodeName) if nodeName != None else ("ROOT",)
+	result.setAssignee(*args)
+	return result
+
+
+def createForRoot(error_id, **context):
+	result = instance(error_id, **context)
+	result.setAssignee("ROOT")
+	return result
 

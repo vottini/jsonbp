@@ -72,7 +72,7 @@ for subdir in verificationSubdirs:
 
 import sys
 import jsonbp
-from jbp.error import error
+import jbp.error as jbpError
 
 verified = 1
 for key, value in verifications.items():
@@ -96,7 +96,7 @@ for key, value in verifications.items():
 				break
 
 			if not shouldSucceed:
-				expectedError = getattr(error, expectedResult)
+				expectedError = getattr(jbpError, expectedResult)
 				returnedError = obtainedResult.getErrorType()
 				print(f'[{obtainedResult}] ', end='')
 

@@ -5,4 +5,9 @@ Catching field missing in child node | json3.js | KO | MISSING_FIELD
 Catching field missing in root node | json4.js | KO | MISSING_FIELD
 Catching invalid enum inside node | json5.js | KO | UNKNOWN_LITERAL
 Catching invalid float inside node | json6.js | KO | FLOAT_PARSING
+Catching integer in place of a node | json7.js | KO | INVALID_NODE
+Catching string in place of a node | json8.js | KO | INVALID_NODE
+Catching null in place of a node | json9.js | KO | INVALID_NODE
+Catching array in place of a node | jsonA.js | KO | INVALID_NODE
+Catching invalid json | jsonB.js | KO | JSON_PARSING
 
