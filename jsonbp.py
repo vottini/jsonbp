@@ -5,6 +5,7 @@ import ply.yacc as yacc
 import jbp.error as jbpError
 import jbp.array as jbpArray
 import jbp.declaration as jbpDeclaration
+import jbp.field as jbpField
 
 reserved = (
 	'root',
@@ -178,7 +179,8 @@ def p_construction(p):
 
 def p_root(p):
 	'''
-	    root : ROOT node_declaration
+	    root : ROOT array_declaration
+					 | ROOT single_declaration
 
 	'''
 
@@ -197,6 +199,17 @@ def p_node(p):
 		     | NODE IDENTIFIER node_declaration
 	'''
 
+	node_name = p[2]
+	name_is_taken = (
+		node_name in nodes or
+		node_name in enums or
+		node_name in primitive_types or
+		node_name in derived_types)
+
+	if name_is_taken:
+			msg = f"Duplicated type '{node_name}'"
+			raise ParseException(msg)
+
 	if len(p) == 6:
 		base_node = p[4]
 		if not base_node in nodes:
@@ -204,21 +217,19 @@ def p_node(p):
 			raise ParseException(msg)
 
 		base_decls = nodes[base_node]
-		extended_decls = p[5]
-		own_name = p[2]
+		node_decls = p[5]
 
-		for fieldName, fieldDeclaration in extended_decls.items():
+		for fieldName, fieldDeclaration in node_decls.items():
 			if fieldName in base_decls:
-				msg = f"Field '{fieldName}' in node '{own_name}' is already defined in base node '{base_node}'"
+				msg = f"Field '{fieldName}' in node '{node_name}' is already defined in base node '{base_node}'"
 				raise ParseException(msg)
 
-		extended_decls.update(base_decls)
-		nodes[own_name] = extended_decls
+		node_decls.update(base_decls)
+		nodes[node_name] = node_decls
 
 	else:
-		own_name = p[2]
-		extended_decls = p[3]
-		nodes[own_name] = extended_decls
+		node_decls = p[3]
+		nodes[node_name] = node_decls
 
 
 def p_node_specs(p):
@@ -234,20 +245,20 @@ def p_node_specs(p):
 	p[0] = new_node
 
 
-def create_type(decl):
+def create_type(newTypeName, declaration):
 	origin = (
-		primitive_types[decl.kind]
-			if decl.kind in primitive_types
-			else derived_types[decl.kind])
+		primitive_types[declaration.typeName]
+			if declaration.typeName in primitive_types
+			else derived_types[declaration.typeName])
 
 	new_kind = dict()
 	for attrib, value in origin.items():
 		new_kind[attrib] = value
 
-	for specificity in decl.specs:
+	for specificity in declaration.specs:
 		attrib, value = specificity
-		if not attrib in new_kind:
-			msg = f"Type '{decl.name}' ({decl.kind}) has no attribute {attrib}"
+		if not attrib in origin:
+			msg = f"Type '{newTypename}' ({declaration.typeName}) has no attribute {attrib}"
 			raise ParseException(msg)
 
 		oldValue = new_kind[attrib]
@@ -260,12 +271,13 @@ def create_type(decl):
 
 		new_kind[attrib] = value
 
-	base_type = decl.kind
+	base_type = declaration.typeName
 	while not base_type in primitive_types:
 		parent_type = derived_types[base_type]
 		base_type = parent_type['__baseType__']
 
 	new_kind['__baseType__'] = base_type
+	derived_types[newTypeName] = new_kind
 	return new_kind
 
 
@@ -274,9 +286,9 @@ def p_type(p):
 			type : TYPE IDENTIFIER ':' element_declaration
 	'''
 
-	decl = p[4]
-	new_kind = create_type(decl)
-	derived_types[p[2]] = new_kind
+	typeName = p[2]
+	declaration = p[4]
+	create_type(typeName, declaration)
 
 
 #---------------- attributes ----------------------------
@@ -299,7 +311,8 @@ def p_attribute(p):
 	'''
 
 	if len(p) == 3:
-		p[2][1].setOptional()
+		fieldName, fieldData = p[2]
+		fieldData.setOptional()
 		p[0] = p[2]
 
 	else:
@@ -309,7 +322,7 @@ def p_attribute(p):
 def p_attribution(p):
 	'''
 		attribution : IDENTIFIER ':' array_declaration
-		            | IDENTIFIER ':' local_declaration
+		            | IDENTIFIER ':' single_declaration
 	'''
 
 	p[0] = (p[1], p[3])
@@ -317,8 +330,8 @@ def p_attribution(p):
 
 def p_array_declaration(p):
 	'''
-		array_declaration : local_declaration '[' specificities ']'
-		                  | local_declaration '[' ']'
+		array_declaration : single_declaration '[' specificities ']'
+		                  | single_declaration '[' ']'
 	'''
 
 	jArray = jbpArray.makeArray(p[1])
@@ -331,19 +344,48 @@ def p_array_declaration(p):
 	p[0] = jArray
 
 
-def p_local_declaration(p):
+def p_single_declaration(p):
 	'''
-		local_declaration : element_declaration
+		single_declaration : node_declaration
+		                   | enum_declaration
+		                   | element_declaration
 	'''
 	
-	decl = p[1]
-	if len(decl.specs) > 0:
-		new_kind = create_type(decl)
-		adhoc_type = '_anonymous_' + str(len(derived_types)) + '_'
-		derived_types[adhoc_type] = new_kind
-		decl.kind = adhoc_type
+	declaration = p[1]
+	if isinstance(declaration, dict):
+		adhoc_node = '_node_type_' + str(len(nodes)) + '_'
+		nodes[adhoc_node] = declaration
+		fieldKind = jbpField.NODE
+		fieldType = adhoc_node
 
-	p[0] = decl
+	elif isinstance(declaration, list):
+		adhoc_enum = '_enum_type_' + str(len(enums)) + '_'
+		enums[adhoc_enum] = declaration
+		fieldKind = jbpField.ENUM
+		fieldType = adhoc_enum
+
+	else:
+		declType = declaration.typeName
+		if declType in primitive_types or declType in derived_types:
+			fieldKind = jbpField.SIMPLE
+
+			if not declaration.isCustomized():
+				fieldType = declaration.typeName
+
+			else:
+				adhoc_type = '_simple_type_' + str(len(derived_types)) + '_'
+				create_type(adhoc_type, declaration)
+				fieldType = adhoc_type
+
+		elif declType in enums:
+			fieldKind = jbpField.ENUM
+			fieldType = declType
+
+		elif declType in nodes:
+			fieldKind = jbpField.NODE
+			fieldType = declType
+
+	p[0] = jbpField.create(fieldKind, fieldType)
 
 
 def p_element_declaration(p):
@@ -352,19 +394,41 @@ def p_element_declaration(p):
 		                    | IDENTIFIER
 	'''
 
-	kind = p[1]
-	kind_exists = (
-		kind in primitive_types or
-		kind in derived_types or
-		kind in enums or
-		kind in nodes)
-	
-	if not kind_exists:
-		msg = f"Unknown type '{kind}'"
-		raise ParseException(msg)
+	typeName = p[1]
 
-	specs = p[3] if len(p) == 5 else list()
-	p[0] = jbpDeclaration.create(kind, specs)
+	if len(p) == 5:
+		isComplex = (
+			typeName in enums or
+			typeName in nodes)
+
+		if isComplex:
+			msg = f"Unable to apply specificities to '{typeName}', only simple types can be specialized"
+			raise ParseException(msg)
+
+		typeExists = (
+			typeName in primitive_types or
+			typeName in derived_types)
+	
+		if not typeExists:
+			msg = f"Unknown simple type '{typeName}'"
+			raise ParseException(msg)
+
+		specs = p[3]
+
+	else:
+		typeExists = (
+			typeName in primitive_types or
+			typeName in derived_types or
+			typeName in enums or
+			typeName in nodes)
+
+		if not typeExists:
+			msg = f"Unknown simple type '{typeName}'"
+			raise ParseException(msg)
+
+		specs = list()
+	
+	p[0] = jbpDeclaration.create(typeName, specs)
 
 
 def p_specificities(p):
@@ -400,11 +464,29 @@ def p_specified_value(p):
 
 def p_enum(p):
 	'''
-			enum : ENUM IDENTIFIER '{' constants '}'
+			enum : ENUM IDENTIFIER enum_declaration
 	'''
 
-	enums[p[2]] = p[4]
-	p[0] = 0
+	enum_name = p[2]
+	name_is_taken = (
+		enum_name in nodes or
+		enum_name in enums or
+		enum_name in primitive_types or
+		enum_name in derived_types)
+
+	if name_is_taken:
+			msg = f"Duplicated type '{enum_name}'"
+			raise ParseException(msg)
+
+	enums[enum_name] = p[3]
+
+
+def p_enum_declaration(p):
+	'''
+			enum_declaration : '{' constants '}'
+	'''
+
+	p[0] = p[2]
 
 
 def p_constants(p):
@@ -578,17 +660,17 @@ class blueprint:
 			+ f'root = {self.root}')
 
 
-	def deserialize_field(self, attrib, decl, retrieved):
-		if decl.kind in primitive_types:
-			specs = primitive_types[decl.kind]
-			baseType = decl.kind
+	def deserialize_field(self, fieldName, fieldType, value):
+		if fieldType in primitive_types:
+			specs = primitive_types[fieldType]
+			baseType = fieldType
 
 		else:
-			specs = self.derived_types[decl.kind]
+			specs = self.derived_types[fieldType]
 			baseType = specs['__baseType__']
 
 		deserialize_method = globals()['d_' + baseType]
-		return deserialize_method(attrib, retrieved, specs)
+		return deserialize_method(fieldName, value, specs)
 
 
 	def validate_enum(self, fieldName, value, enumType):
@@ -618,31 +700,32 @@ class blueprint:
 			return False, jbpError.createForField(fieldName,
 				jbpError.INVALID_LENGTH, length=arrayLen)
 
-		decl = jArray.content
-		if decl.kind in self.nodes:
-			arrayNode = self.nodes[decl.kind]
+		arrayKind = jArray.fieldKind
+		arrayType = jArray.fieldType
 
+		if arrayKind == jbpField.NODE:
+			arrayNode = self.nodes[arrayType]
 			for idx, content in enumerate(contents):
-				success, result = self.validate_node(decl.kind, arrayNode, content)
+				success, result = self.validate_node(fieldName, arrayNode, content)
 
 				if not success:
 					result.setAsArrayElement(idx)
 					return False, result
 
-			return True, decl
+			return True, result
 
-		if decl.kind in self.enums:
+		if arrayKind == jbpField.ENUM:
 			for idx, value in enumerate(contents):
-				success, processed = self.validate_enum(fieldName, value, decl.kind)
+				success, processed = self.validate_enum(fieldName, value, arrayType)
 
 				if not success:
 					processed.setAsArrayElement(idx)
 					return False, processed
 
-			return True, decl
+			return True, processed
 
 		for idx, value in enumerate(contents):
-			success, processed = self.deserialize_field(fieldName, decl, value)
+			success, processed = self.deserialize_field(fieldName, arrayType, value)
 
 			if not success:
 				processed.setAsArrayElement(idx)
@@ -658,31 +741,33 @@ class blueprint:
 			return False, jbpError.createForNode(nodeName,
 				jbpError.INVALID_NODE)
 
-		for fieldName, decl in node.items():
+		for fieldName, fieldData in node.items():
 			if not fieldName in contents:
-				if decl.optional: continue
+				if fieldData.optional: continue
 				return False, jbpError.createForNode(nodeName,
 					jbpError.MISSING_FIELD, field=fieldName)
 
 			retrieved = contents[fieldName]
-			if jbpArray.isArray(decl):
-				success, processed = self.validate_array(fieldName, decl, retrieved)
+			if jbpArray.isArray(fieldData):
+				success, processed = self.validate_array(fieldName, fieldData, retrieved)
 				if not success: return success, processed
 				continue
 
-			attr_type = decl.kind
-			if attr_type in self.nodes:
-				node_decl = self.nodes[attr_type]
-				success, processed = self.validate_node(attr_type, node_decl, retrieved)
+			fieldKind = fieldData.fieldKind
+			fieldType = fieldData.fieldType
+
+			if fieldKind == jbpField.NODE:
+				node_decl = self.nodes[fieldType]
+				success, processed = self.validate_node(fieldName, node_decl, retrieved)
 				if not success: return success, processed
 				continue
 
-			if attr_type in self.enums:
-				success, processed = self.validate_enum(fieldName, retrieved, attr_type)
+			if fieldKind == jbpField.ENUM:
+				success, processed = self.validate_enum(fieldName, retrieved, fieldType)
 				if not success: return success, processed
 				continue
 
-			success, processed = self.deserialize_field(fieldName, decl, retrieved)
+			success, processed = self.deserialize_field(fieldName, fieldType, retrieved)
 			if not success: return False, processed
 			contents[fieldName] = processed
 
@@ -690,8 +775,24 @@ class blueprint:
 
 
 	def validate(self, root_contents):
-		return self.validate_node(None, self.root, root_contents)
+		if jbpArray.isArray(self.root):
+			return self.validate_array(root_contents)
 
+		rootKind = self.root.fieldKind
+		rootType = self.root.fieldType
+
+		if rootKind == jbpField.NODE:
+			rootNode = self.nodes[rootType]
+			return self.validate_node(None, rootNode, root_contents)
+
+		if rootKind == jbpField.ENUM:
+			rootEnum = self.enums[rootType]
+			return self.validate_enum(None, rootNode, root_contents)
+
+		if rootKind == jbpField.SIMPLE:
+			#rootType = self.nodes[rootType]
+			#return self.validate_node(None, rootNode, root_contents)
+			pass
 
 	def deserialize(self, contents):
 		tag_number = lambda x : taggedNumber(x)
