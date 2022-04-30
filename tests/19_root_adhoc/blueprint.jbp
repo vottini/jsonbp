@@ -1,0 +1,14 @@
+
+root {
+	points: {
+		x: float,
+		y: float,
+		timestamp: integer (min=0),
+
+		color: {
+			RED,
+			GOLD,
+			GREEN
+		}
+	} []
+}

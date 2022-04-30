@@ -1,0 +1,3 @@
+
+Parsing list of enums root I | json1.js | OK | json1.py
+Parsing list of enums root II | json2.js | OK | json2.py

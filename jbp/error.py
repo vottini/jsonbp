@@ -37,7 +37,7 @@ prefixes = {
 	"FIELD": 'Field "{assignee}":',
 	"NODE": 'Node "{assignee}":',
 	"ARRAY": 'In array "{assignee}" at index {index}:',
-	"ROOT": 'At root node:'
+	"ROOT": 'At root level:'
 }
 
 class instance:
@@ -75,7 +75,8 @@ class instance:
 
 def createForField(fieldName, error_id, **context):
 	result = instance(error_id, **context)
-	result.setAssignee("FIELD", fieldName)
+	args = ("FIELD", fieldName) if fieldName != None else ("ROOT",)
+	result.setAssignee(*args)
 	return result
 
 

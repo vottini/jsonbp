@@ -1,0 +1,6 @@
+
+result = [
+	"SEG",
+	"QUA",
+	"SEX"
+]

@@ -1,0 +1,6 @@
+
+Parsing simple integer root I | json1.js | OK | json1.py
+Parsing simple integer root II | json2.js | OK | json2.py
+Catching float in simple integer root | json3.js | KO | INTEGER_PARSING
+Catching empty json | json4.js | KO | JSON_PARSING
+Catching null simple integer root | json5.js | KO | NULL_VALUE

@@ -199,37 +199,37 @@ def p_node(p):
 		     | NODE IDENTIFIER node_declaration
 	'''
 
-	node_name = p[2]
+	nodeName = p[2]
 	name_is_taken = (
-		node_name in nodes or
-		node_name in enums or
-		node_name in primitive_types or
-		node_name in derived_types)
+		nodeName in nodes or
+		nodeName in enums or
+		nodeName in primitive_types or
+		nodeName in derived_types)
 
 	if name_is_taken:
-			msg = f"Duplicated type '{node_name}'"
+			msg = f"Duplicated type '{nodeName}'"
 			raise ParseException(msg)
 
 	if len(p) == 6:
-		base_node = p[4]
-		if not base_node in nodes:
-			msg = f"Node '{base_node}' is not defined"
+		baseNode = p[4]
+		if not baseNode in nodes:
+			msg = f"Node '{baseNode}' is not defined"
 			raise ParseException(msg)
 
-		base_decls = nodes[base_node]
-		node_decls = p[5]
+		baseFields = nodes[baseNode]
+		nodeFields = p[5]
 
-		for fieldName, fieldDeclaration in node_decls.items():
-			if fieldName in base_decls:
-				msg = f"Field '{fieldName}' in node '{node_name}' is already defined in base node '{base_node}'"
+		for fieldName, fieldDeclaration in nodeFields.items():
+			if fieldName in baseFields:
+				msg = f"Field '{fieldName}' in node '{nodeName}' is already defined in base node '{baseNode}'"
 				raise ParseException(msg)
 
-		node_decls.update(base_decls)
-		nodes[node_name] = node_decls
+		nodeFields.update(baseFields)
+		nodes[nodeName] = nodeFields
 
 	else:
-		node_decls = p[3]
-		nodes[node_name] = node_decls
+		nodeFields = p[3]
+		nodes[nodeName] = nodeFields
 
 
 def p_node_specs(p):
@@ -238,47 +238,47 @@ def p_node_specs(p):
 	'''
 
 	decls = p[2]
-	new_node = dict()
+	newNode = dict()
 	for decl in decls:
-		new_node[decl[0]] = decl[1]
+		newNode[decl[0]] = decl[1]
 
-	p[0] = new_node
+	p[0] = newNode
 
 
-def create_type(newTypeName, declaration):
+def createType(newTypeName, declaration):
 	origin = (
 		primitive_types[declaration.typeName]
 			if declaration.typeName in primitive_types
 			else derived_types[declaration.typeName])
 
-	new_kind = dict()
-	for attrib, value in origin.items():
-		new_kind[attrib] = value
+	newType = dict()
+	for specName, value in origin.items():
+		newType[specName] = value
 
-	for specificity in declaration.specs:
-		attrib, value = specificity
-		if not attrib in origin:
-			msg = f"Type '{newTypename}' ({declaration.typeName}) has no attribute {attrib}"
+	for spec in declaration.specs:
+		specName, value = spec
+		if not specName in origin:
+			msg = f"Type '{newTypename}' ({declaration.typeName}) has no attribute {specName}"
 			raise ParseException(msg)
 
-		oldValue = new_kind[attrib]
+		oldValue = newType[specName]
 		if type(oldValue) == Decimal and type(value) == float: value = Decimal(value)
 		if type(oldValue) == float and type(value) == int: value = float(value)
 
 		if type(value) != type(oldValue):
-			msg = f"New value for specificity '{attrib}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
+			msg = f"New value for specificity '{specName}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
 			raise ParseException(msg)
 
-		new_kind[attrib] = value
+		newType[specName] = value
 
 	base_type = declaration.typeName
 	while not base_type in primitive_types:
 		parent_type = derived_types[base_type]
 		base_type = parent_type['__baseType__']
 
-	new_kind['__baseType__'] = base_type
-	derived_types[newTypeName] = new_kind
-	return new_kind
+	newType['__baseType__'] = base_type
+	derived_types[newTypeName] = newType
+	return newType
 
 
 def p_type(p):
@@ -288,7 +288,7 @@ def p_type(p):
 
 	typeName = p[2]
 	declaration = p[4]
-	create_type(typeName, declaration)
+	createType(typeName, declaration)
 
 
 #---------------- attributes ----------------------------
@@ -374,7 +374,7 @@ def p_single_declaration(p):
 
 			else:
 				adhoc_type = '_simple_type_' + str(len(derived_types)) + '_'
-				create_type(adhoc_type, declaration)
+				createType(adhoc_type, declaration)
 				fieldType = adhoc_type
 
 		elif declType in enums:
@@ -706,13 +706,15 @@ class blueprint:
 		if arrayKind == jbpField.NODE:
 			arrayNode = self.nodes[arrayType]
 			for idx, content in enumerate(contents):
-				success, result = self.validate_node(fieldName, arrayNode, content)
+				success, processed = self.validate_node(fieldName, arrayNode, content)
 
 				if not success:
-					result.setAsArrayElement(idx)
-					return False, result
+					processed.setAsArrayElement(idx)
+					return False, processed
 
-			return True, result
+				contents[idx] = processed
+
+			return True, contents
 
 		if arrayKind == jbpField.ENUM:
 			for idx, value in enumerate(contents):
@@ -722,7 +724,9 @@ class blueprint:
 					processed.setAsArrayElement(idx)
 					return False, processed
 
-			return True, processed
+				contents[idx] = processed
+
+			return True, contents
 
 		for idx, value in enumerate(contents):
 			success, processed = self.deserialize_field(fieldName, arrayType, value)
@@ -757,14 +761,16 @@ class blueprint:
 			fieldType = fieldData.fieldType
 
 			if fieldKind == jbpField.NODE:
-				node_decl = self.nodes[fieldType]
-				success, processed = self.validate_node(fieldName, node_decl, retrieved)
+				nodeSpecs = self.nodes[fieldType]
+				success, processed = self.validate_node(fieldName, nodeSpecs, retrieved)
 				if not success: return success, processed
+				contents[fieldName] = processed
 				continue
 
 			if fieldKind == jbpField.ENUM:
 				success, processed = self.validate_enum(fieldName, retrieved, fieldType)
 				if not success: return success, processed
+				contents[fieldName] = processed
 				continue
 
 			success, processed = self.deserialize_field(fieldName, fieldType, retrieved)
@@ -774,25 +780,25 @@ class blueprint:
 		return True, contents
 
 
-	def validate(self, root_contents):
+	def validate(self, rootContents):
 		if jbpArray.isArray(self.root):
-			return self.validate_array(root_contents)
+			return self.validate_array(None, self.root, rootContents)
 
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
 		if rootKind == jbpField.NODE:
 			rootNode = self.nodes[rootType]
-			return self.validate_node(None, rootNode, root_contents)
+			return self.validate_node(None, rootNode, rootContents)
 
 		if rootKind == jbpField.ENUM:
 			rootEnum = self.enums[rootType]
-			return self.validate_enum(None, rootNode, root_contents)
+			return self.validate_enum(None, rootNode, rootContents)
 
 		if rootKind == jbpField.SIMPLE:
-			#rootType = self.nodes[rootType]
-			#return self.validate_node(None, rootNode, root_contents)
+			return self.deserialize_field(None, rootType, rootContents)
 			pass
+
 
 	def deserialize(self, contents):
 		tag_number = lambda x : taggedNumber(x)
