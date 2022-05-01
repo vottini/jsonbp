@@ -1,4 +1,25 @@
 
+import re
+import decimal
+import json
+
+import jbp.error as jbpError
+import jbp.field as jbpField
+import jbp.array as jbpArray
+
+from decimal import Decimal
+from datetime import datetime
+from jbp.types import primitive_types
+
+#-------------------------------------------------------------------------------
+
+class taggedNumber:
+	def __init__(self, strValue): self.strValue = strValue
+	def __str__(self): return self.strValue
+	__repr__ =  __str__
+
+#-------------------------------------------------------------------------------
+
 def d_integer(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -137,9 +158,10 @@ def d_string(fieldName, strValue, specs):
 
 	return True, strValue
 
+#-------------------------------------------------------------------------------
 
-class blueprint:
-	def __init__(self):
+class JsonBlueprint:
+	def __init__(self, root, derived_types, nodes, enums):
 		self.root = root
 		self.derived_types = derived_types
 		self.nodes = nodes
@@ -306,3 +328,4 @@ class blueprint:
 				line=e.lineno, column=e.colno, message=e.msg)
 	
 		return self.validate(loaded)
+
