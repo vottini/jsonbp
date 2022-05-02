@@ -1,6 +1,6 @@
 
-import ply.lex as lex
-import ply.yacc as yacc
+import jbp.ply.lex as lex
+import jbp.ply.yacc as yacc
 
 import jbp.declaration as jbpDeclaration
 import jbp.field as jbpField
@@ -16,7 +16,8 @@ reserved = (
 	'type',
 	'enum',
 	'optional',
-	'extends'
+	'extends',
+	'include'
 )
 
 literals = (
@@ -100,6 +101,16 @@ def p_error(p):
 	msg = f"Syntax error in line {p.lineno}: token '{p.value}' misplaced"
 	raise ParseException(msg)
 
+#---------------------------------------------------------------
+
+def typeExists(typeName):
+	found = (
+		blueprint.find_element_declaration(typeName) or
+		blueprint.find_node_declaration(typeName) or
+		blueprint.find_enum_declaration(typeName))
+
+	return found != None
+
 #---------------- general structure -----------------------------
 
 def p_schema(p):
@@ -114,9 +125,30 @@ def p_construction(p):
 					         | enum
 									 | node
 									 | root
+									 | include
 	'''
 
 #---------------- constructs -----------------------------
+
+
+def p_include(p):
+	'''
+		include : INCLUDE STRING
+	'''
+
+	inclusionFile = p[2]
+	inclusionPath = os.path.join(currentPath, inclusionFile)
+	
+	pushEnv()
+	loaded = load(inclusionPath)
+	popEnv()
+
+	if None == loaded:
+		msg = f'Unable to open file {inclusionFile}'
+		raise ParseException(msg)
+		
+	blueprint.includes.append(loaded)
+
 
 def p_root(p):
 	'''
@@ -125,13 +157,11 @@ def p_root(p):
 
 	'''
 
-	global root
-	if None != root:
+	if None != blueprint.root:
 		msg = 'Only one root can be defined'
 		raise ParseException(msg)
 
-	root = p[2]
-	p[0] = root
+	blueprint.root = p[2]
 
 
 def p_node(p):
@@ -141,36 +171,30 @@ def p_node(p):
 	'''
 
 	nodeName = p[2]
-	name_is_taken = (
-		nodeName in nodes or
-		nodeName in enums or
-		nodeName in primitive_types or
-		nodeName in derived_types)
-
-	if name_is_taken:
-			msg = f"Duplicated type '{nodeName}'"
-			raise ParseException(msg)
+	if typeExists(nodeName):
+		msg = f"Duplicated type '{nodeName}'"
+		raise ParseException(msg)
 
 	if len(p) == 6:
 		baseNode = p[4]
-		if not baseNode in nodes:
+		baseFields = blueprint.find_node_declaration(baseNode)
+
+		if None == baseFields:
 			msg = f"Node '{baseNode}' is not defined"
 			raise ParseException(msg)
 
-		baseFields = nodes[baseNode]
 		nodeFields = p[5]
-
 		for fieldName, fieldDeclaration in nodeFields.items():
 			if fieldName in baseFields:
 				msg = f"Field '{fieldName}' in node '{nodeName}' is already defined in base node '{baseNode}'"
 				raise ParseException(msg)
 
 		nodeFields.update(baseFields)
-		nodes[nodeName] = nodeFields
+		blueprint.nodes[nodeName] = nodeFields
 
 	else:
 		nodeFields = p[3]
-		nodes[nodeName] = nodeFields
+		blueprint.nodes[nodeName] = nodeFields
 
 
 def p_node_specs(p):
@@ -187,10 +211,9 @@ def p_node_specs(p):
 
 
 def createType(newTypeName, declaration):
-	origin = (
-		primitive_types[declaration.typeName]
-			if declaration.typeName in primitive_types
-			else derived_types[declaration.typeName])
+	base_type = declaration.typeName
+	origin = blueprint.find_element_declaration(
+		base_type)
 
 	newType = dict()
 	for specName, value in origin.items():
@@ -212,13 +235,12 @@ def createType(newTypeName, declaration):
 
 		newType[specName] = value
 
-	base_type = declaration.typeName
 	while not base_type in primitive_types:
-		parent_type = derived_types[base_type]
+		parent_type = blueprint.derived_types[base_type]
 		base_type = parent_type['__baseType__']
 
 	newType['__baseType__'] = base_type
-	derived_types[newTypeName] = newType
+	blueprint.derived_types[newTypeName] = newType
 	return newType
 
 
@@ -294,35 +316,35 @@ def p_single_declaration(p):
 	
 	declaration = p[1]
 	if isinstance(declaration, dict):
-		adhoc_node = '_node_type_' + str(len(nodes)) + '_'
-		nodes[adhoc_node] = declaration
+		adhoc_node = '_node_type_' + str(len(blueprint.nodes)) + '_'
+		blueprint.nodes[adhoc_node] = declaration
 		fieldKind = jbpField.NODE
 		fieldType = adhoc_node
 
 	elif isinstance(declaration, list):
-		adhoc_enum = '_enum_type_' + str(len(enums)) + '_'
-		enums[adhoc_enum] = declaration
+		adhoc_enum = '_enum_type_' + str(len(blueprint.enums)) + '_'
+		blueprint.enums[adhoc_enum] = declaration
 		fieldKind = jbpField.ENUM
 		fieldType = adhoc_enum
 
 	else:
 		declType = declaration.typeName
-		if declType in primitive_types or declType in derived_types:
+		if blueprint.find_element_declaration(declType):
 			fieldKind = jbpField.SIMPLE
 
 			if not declaration.isCustomized():
 				fieldType = declaration.typeName
 
 			else:
-				adhoc_type = '_simple_type_' + str(len(derived_types)) + '_'
+				adhoc_type = '_simple_type_' + str(len(blueprint.derived_types)) + '_'
 				createType(adhoc_type, declaration)
 				fieldType = adhoc_type
 
-		elif declType in enums:
+		elif blueprint.find_enum_declaration(declType):
 			fieldKind = jbpField.ENUM
 			fieldType = declType
 
-		elif declType in nodes:
+		elif blueprint.find_node_declaration(declType):
 			fieldKind = jbpField.NODE
 			fieldType = declType
 
@@ -338,33 +360,23 @@ def p_element_declaration(p):
 	typeName = p[1]
 
 	if len(p) == 5:
-		isComplex = (
-			typeName in enums or
-			typeName in nodes)
+		not_simple = (
+			blueprint.find_node_declaration(typeName) or
+			blueprint.find_enum_declaration(typeName))
 
-		if isComplex:
+		if not_simple:
 			msg = f"Unable to apply specificities to '{typeName}', only simple types can be specialized"
 			raise ParseException(msg)
 
-		typeExists = (
-			typeName in primitive_types or
-			typeName in derived_types)
-	
-		if not typeExists:
+		if not blueprint.find_element_declaration(typeName):
 			msg = f"Unknown simple type '{typeName}'"
 			raise ParseException(msg)
 
 		specs = p[3]
 
 	else:
-		typeExists = (
-			typeName in primitive_types or
-			typeName in derived_types or
-			typeName in enums or
-			typeName in nodes)
-
-		if not typeExists:
-			msg = f"Unknown simple type '{typeName}'"
+		if not typeExists(typeName):
+			msg = f"Type not declared: '{typeName}'"
 			raise ParseException(msg)
 
 		specs = list()
@@ -409,17 +421,11 @@ def p_enum(p):
 	'''
 
 	enum_name = p[2]
-	name_is_taken = (
-		enum_name in nodes or
-		enum_name in enums or
-		enum_name in primitive_types or
-		enum_name in derived_types)
+	if typeExists(enum_name):
+		msg = f"Duplicated type '{enum_name}'"
+		raise ParseException(msg)
 
-	if name_is_taken:
-			msg = f"Duplicated type '{enum_name}'"
-			raise ParseException(msg)
-
-	enums[enum_name] = p[3]
+	blueprint.enums[enum_name] = p[3]
 
 
 def p_enum_declaration(p):
@@ -446,31 +452,72 @@ def p_constants(p):
 #---------------------------------------------------------------
 
 from threading import Lock
+
 mutex = Lock()
+loadedFiles = dict()
+pushedEnvs = list()
 
-def initGlobals():
-	global derived_types
-	global enums
-	global nodes
-	global root
+def setupEnv(contentPath, output):
+	global blueprint
+	global currentPath
 
-	derived_types = dict()
-	enums = dict()
-	nodes = dict()
-	root = None
+	currentPath = contentPath
+	blueprint = output
 
-def load(filename):
-	with open(filename, "r") as fd:
-		contents = fd.read()
-		return loads(contents)
 
-lexer = lex.lex()
-parser = yacc.yacc()
+def pushEnv():
+	env = (currentPath, blueprint)
+	pushedEnvs.append(env)
+	mutex.release()
 
-def loads(contents):
+
+def popEnv():
+	global currentPath
+	global blueprint
+
+	mutex.acquire()
+	env = pushedEnvs.pop()
+	(currentPath, blueprint) = env
+
+#---------------------------------------------------------------
+
+import os
+import os.path
+
+def load(filepath):
+	abspath = os.path.abspath(filepath)
+	if abspath in loadedFiles:
+		return loadedFiles[abspath]
+
+	try:
+		with open(filepath, "r") as fd:
+			contents = fd.read()
+
+	except FileNotFoundError:
+		return None
+
+	return loads(contents,
+		os.path.dirname(filepath),
+		os.path.dirname(filepath))
+
+	
+def loads(contents, contentPath='.', contentName=None):
+	lexer = lex.lex()
+	parser = yacc.yacc()
+
 	with mutex:
-		initGlobals()
+		result = jbpBlueprint.JsonBlueprint()
+		setupEnv(contentPath, result)
 		parser.parse(contents)
-		result = jbpBlueprint.JsonBlueprint(root, derived_types, nodes, enums)
+
+		if None == blueprint.root and len(pushedEnvs) == 0:
+			msg = 'No root defined at topmost level'
+			raise ParseException(msg)
+
+		if None != contentName:
+			contentFullpath = os.path.join(contentPath, contentName)
+			abspath = os.path.abspath(contentFullpath)
+			loadedFiles[abspath] = result
+
 		return result
 

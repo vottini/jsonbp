@@ -159,19 +159,22 @@ def d_string(fieldName, strValue, specs):
 	return True, strValue
 
 #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 class JsonBlueprint:
-	def __init__(self, root, derived_types, nodes, enums):
-		self.root = root
-		self.derived_types = derived_types
-		self.nodes = nodes
-		self.enums = enums
+	def __init__(self):
+		self.includes = list()
+		self.derived_types = dict()
+		self.enums = dict()
+		self.nodes = dict()
+		self.root = None
 
 	def __str__(self):
-		return (f'types = {self.derived_types} '
-			+ f'enums = {self.enums} '
-			+ f'nodes = {self.nodes} '
-			+ f'root = {self.root}')
+		return (
+			f'types = {self.derived_types} ' +
+			f'enums = {self.enums} ' +
+			f'nodes = {self.nodes} ' +
+			f'root = {self.root}')
 
 
 	def deserialize_field(self, fieldName, fieldType, value):
@@ -180,7 +183,7 @@ class JsonBlueprint:
 			baseType = fieldType
 
 		else:
-			specs = self.derived_types[fieldType]
+			specs = self.find_element_declaration(fieldType)
 			baseType = specs['__baseType__']
 
 		deserialize_method = globals()['d_' + baseType]
@@ -196,7 +199,8 @@ class JsonBlueprint:
 			return False, jbpError.createForField(fieldName,
 				jbpError.INVALID_ENUM, value=value)
 
-		possibleValues = self.enums[enumType]
+		possibleValues = self.find_enum_declaration(enumType)
+
 		if not value in possibleValues:
 			return False, jbpError.createForField(fieldName, 
 				jbpError.UNKNOWN_LITERAL, value=value)
@@ -218,7 +222,7 @@ class JsonBlueprint:
 		arrayType = jArray.fieldType
 
 		if arrayKind == jbpField.NODE:
-			arrayNode = self.nodes[arrayType]
+			arrayNode = self.find_node_declaration(arrayType)
 			for idx, content in enumerate(contents):
 				success, processed = self.validate_node(fieldName, arrayNode, content)
 
@@ -275,7 +279,7 @@ class JsonBlueprint:
 			fieldType = fieldData.fieldType
 
 			if fieldKind == jbpField.NODE:
-				nodeSpecs = self.nodes[fieldType]
+				nodeSpecs = self.find_node_declaration(fieldType)
 				success, processed = self.validate_node(fieldName, nodeSpecs, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
@@ -302,11 +306,11 @@ class JsonBlueprint:
 		rootType = self.root.fieldType
 
 		if rootKind == jbpField.NODE:
-			rootNode = self.nodes[rootType]
+			rootNode = self.find_node_declaration(rootType)
 			return self.validate_node(None, rootNode, rootContents)
 
 		if rootKind == jbpField.ENUM:
-			rootEnum = self.enums[rootType]
+			rootEnum = self.find_enum_declaration(rootType)
 			return self.validate_enum(None, rootNode, rootContents)
 
 		if rootKind == jbpField.SIMPLE:
@@ -328,4 +332,38 @@ class JsonBlueprint:
 				line=e.lineno, column=e.colno, message=e.msg)
 	
 		return self.validate(loaded)
+
+	#----------------------------------------------------------------------------
+
+	def find_element_declaration(self, typeName):
+		if typeName in primitive_types: return primitive_types[typeName]
+		if typeName in self.derived_types: return self.derived_types[typeName]
+		
+		for blueprint in self.includes:
+			found = blueprint.find_element_declaration(typeName)
+			if None != found: return found
+		
+		return None
+	
+	
+	def find_node_declaration(self, nodeName):
+		if nodeName in self.nodes:
+			return self.nodes[nodeName]
+	
+		for blueprint in self.includes:
+			found = blueprint.find_node_declaration(nodeName)
+			if None != found: return found
+	
+		return None
+	
+	
+	def find_enum_declaration(self, enumName):
+		if enumName in self.enums:
+			return self.enums[enumName]
+	
+		for blueprint in self.includes:
+			found = blueprint.find_enum_declaration(enumName)
+			if None != found: return found
+
+		return None
 

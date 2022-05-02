@@ -1,0 +1,5 @@
+
+Parsing nested includes I | json1.js | OK | json1.py
+Parsing nested includes II | json2.js | OK | json2.py
+Catching invalid optional enum in nested includes | json3.js | KO | UNKNOWN_LITERAL
+

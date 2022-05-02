@@ -1,0 +1,8 @@
+
+include "math.jbp"
+include "physical.jbp"
+
+root {
+	ano: positive,
+	temperatura: celsius
+}

@@ -1,0 +1,3 @@
+
+type positive : integer (min=+1)
+type negative : integer (max=-1)

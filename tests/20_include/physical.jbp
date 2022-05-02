@@ -1,0 +1,4 @@
+
+type celsius : float (min=-273.15)
+type farenheit : float (min=-459.67)
+type kelvin : float (min=0.00)
