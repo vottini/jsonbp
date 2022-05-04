@@ -168,14 +168,19 @@ class JsonBlueprint:
 		self.enums = dict()
 		self.nodes = dict()
 		self.root = None
+		self.uuid = None
 
-	def __str__(self):
-		return (
-			f'types = {self.derived_types} ' +
-			f'enums = {self.enums} ' +
-			f'nodes = {self.nodes} ' +
-			f'root = {self.root}')
+	#def __str__(self):
+	#	return (
+	#		f'types = {self.derived_types} ' +
+	#		f'enums = {self.enums} ' +
+	#		f'nodes = {self.nodes} ' +
+	#		f'root = {self.root}')
 
+	def setUUID(self, value):
+		self.uuid = value
+
+	#-----------------------------------------------------------------------------
 
 	def deserialize_field(self, fieldName, fieldType, value):
 		if fieldType in primitive_types:
@@ -335,35 +340,69 @@ class JsonBlueprint:
 
 	#----------------------------------------------------------------------------
 
-	def find_element_declaration(self, typeName):
+	def collectSources(self, collected=None):
+		collected = collected if None != collected else set()
+		collected.add(self)
+
+		for blueprint in self.includes:
+			blueprint.collectSources(collected)
+
+		return collected
+
+
+	def collectTypes(self):
+		collected = list()
+		sources = self.collectSources()
+
+		for source in sources:
+			collected.extend(source.derived_types.keys())
+			collected.extend(source.enums.keys())
+			collected.extend(source.nodes.keys())
+
+		return collected
+
+
+	def __hash__(self):
+		return hash(self.uuid)
+
+	#----------------------------------------------------------------------------
+
+	def find_element_declaration(self, typeName, checked=None):
 		if typeName in primitive_types: return primitive_types[typeName]
 		if typeName in self.derived_types: return self.derived_types[typeName]
-		
+		checked = checked or set()
+		checked.add(self)
+
 		for blueprint in self.includes:
-			found = blueprint.find_element_declaration(typeName)
-			if None != found: return found
+			if not blueprint in checked:
+				found = blueprint.find_element_declaration(typeName, checked)
+				if None != found: return found
 		
 		return None
 	
 	
-	def find_node_declaration(self, nodeName):
-		if nodeName in self.nodes:
-			return self.nodes[nodeName]
+	def find_node_declaration(self, nodeName, checked=None):
+		if nodeName in self.nodes: return self.nodes[nodeName]
+		checked = checked or set()
+		checked.add(self)
 	
 		for blueprint in self.includes:
-			found = blueprint.find_node_declaration(nodeName)
-			if None != found: return found
+			if not blueprint in checked:
+				found = blueprint.find_node_declaration(nodeName, checked)
+				if None != found: return found
 	
 		return None
 	
 	
-	def find_enum_declaration(self, enumName):
-		if enumName in self.enums:
-			return self.enums[enumName]
+	def find_enum_declaration(self, enumName, checked=None):
+		if enumName in self.enums: return self.enums[enumName]
+		checked = checked or set()
+		checked.add(self)
 	
 		for blueprint in self.includes:
-			found = blueprint.find_enum_declaration(enumName)
-			if None != found: return found
+			if not blueprint in checked:
+				found = blueprint.find_enum_declaration(enumName, checked)
+				if None != found: return found
 
 		return None
 

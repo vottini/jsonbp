@@ -9,8 +9,8 @@ if len(sys.argv) < 3:
 blueprintFile = sys.argv[1]
 blueprint = jsonbp.load(blueprintFile)
 print(blueprint, "\n")
-for include in blueprint.includes:
-	print(" -> ", include)
+#for include in blueprint.includes:
+#	print(" -> ", include)
 
 jsonFile = sys.argv[2]
 with open(jsonFile, "r") as fd:

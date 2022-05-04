@@ -103,13 +103,22 @@ def p_error(p):
 
 #---------------------------------------------------------------
 
-def typeExists(typeName):
+def typeExists(typeName, excluded=None):
+	excluded = excluded or set()
+
 	found = (
-		blueprint.find_element_declaration(typeName) or
-		blueprint.find_node_declaration(typeName) or
-		blueprint.find_enum_declaration(typeName))
+		blueprint.find_element_declaration(typeName, excluded.copy()) or
+		blueprint.find_node_declaration(typeName, excluded.copy()) or
+		blueprint.find_enum_declaration(typeName, excluded.copy()))
 
 	return found != None
+
+
+adhoc_counter = 0
+def getNextAdhoc():
+	global adhoc_counter
+	adhoc_counter += 1
+	return adhoc_counter
 
 #---------------- general structure -----------------------------
 
@@ -138,16 +147,18 @@ def p_include(p):
 
 	inclusionFile = p[2]
 	inclusionPath = os.path.join(currentPath, inclusionFile)
-	
-	pushEnv()
-	loaded = load(inclusionPath)
-	popEnv()
+	pushEnv(); loadedBlueprint = load(inclusionPath); popEnv()
 
-	if None == loaded:
+	if None == loadedBlueprint:
 		msg = f'Unable to open file {inclusionFile}'
 		raise ParseException(msg)
-		
-	blueprint.includes.append(loaded)
+
+	for typeName in loadedBlueprint.collectTypes():
+		if typeExists(typeName, excluded=loadedBlueprint.collectSources()):
+			msg = f"Error including '{inclusionFile}': type '{typeName}' already defined"
+			raise ParseException(msg)
+
+	blueprint.includes.append(loadedBlueprint)
 
 
 def p_root(p):
@@ -316,13 +327,13 @@ def p_single_declaration(p):
 	
 	declaration = p[1]
 	if isinstance(declaration, dict):
-		adhoc_node = '_node_type_' + str(len(blueprint.nodes)) + '_'
+		adhoc_node = '_node_type_' + str(getNextAdhoc()) + '_'
 		blueprint.nodes[adhoc_node] = declaration
 		fieldKind = jbpField.NODE
 		fieldType = adhoc_node
 
 	elif isinstance(declaration, list):
-		adhoc_enum = '_enum_type_' + str(len(blueprint.enums)) + '_'
+		adhoc_enum = '_enum_type_' + str(getNextAdhoc()) + '_'
 		blueprint.enums[adhoc_enum] = declaration
 		fieldKind = jbpField.ENUM
 		fieldType = adhoc_enum
@@ -336,7 +347,7 @@ def p_single_declaration(p):
 				fieldType = declaration.typeName
 
 			else:
-				adhoc_type = '_simple_type_' + str(len(blueprint.derived_types)) + '_'
+				adhoc_type = '_simple_type_' + str(getNextAdhoc()) + '_'
 				createType(adhoc_type, declaration)
 				fieldType = adhoc_type
 
@@ -483,6 +494,7 @@ def popEnv():
 
 import os
 import os.path
+import uuid
 
 def load(filepath):
 	abspath = os.path.abspath(filepath)
@@ -498,14 +510,15 @@ def load(filepath):
 
 	return loads(contents,
 		os.path.dirname(filepath),
-		os.path.dirname(filepath))
+		os.path.basename(filepath))
 
 	
 def loads(contents, contentPath='.', contentName=None):
 	lexer = lex.lex()
 	parser = yacc.yacc()
 
-	with mutex:
+	try:
+		mutex.acquire()
 		result = jbpBlueprint.JsonBlueprint()
 		setupEnv(contentPath, result)
 		parser.parse(contents)
@@ -519,5 +532,10 @@ def loads(contents, contentPath='.', contentName=None):
 			abspath = os.path.abspath(contentFullpath)
 			loadedFiles[abspath] = result
 
+		result.setUUID(uuid.uuid4())
+		mutex.release()
 		return result
+
+	except Exception as e:
+		raise e
 
