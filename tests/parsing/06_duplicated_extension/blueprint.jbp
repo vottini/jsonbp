@@ -1,0 +1,17 @@
+
+type unsignedByte : integer(min=0, max=255)
+
+node color {
+	red: unsignedByte,
+	green: unsignedByte,
+	blue: unsignedByte,
+	alpha: unsignedByte
+}
+
+node translucentColor extends color {
+	alpha: unsignedByte
+}
+
+root {
+	some_color: color,
+}

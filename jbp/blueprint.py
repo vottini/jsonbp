@@ -2,6 +2,7 @@
 import re
 import decimal
 import json
+import uuid
 
 import jbp.error as jbpError
 import jbp.field as jbpField
@@ -163,22 +164,20 @@ def d_string(fieldName, strValue, specs):
 
 class JsonBlueprint:
 	def __init__(self):
+		self.uuid = uuid.uuid4()
 		self.includes = list()
 		self.derived_types = dict()
 		self.enums = dict()
 		self.nodes = dict()
 		self.root = None
-		self.uuid = None
 
-	#def __str__(self):
-	#	return (
-	#		f'types = {self.derived_types} ' +
-	#		f'enums = {self.enums} ' +
-	#		f'nodes = {self.nodes} ' +
-	#		f'root = {self.root}')
-
-	def setUUID(self, value):
-		self.uuid = value
+	def __str__(self):
+		return (
+			f"blueprint: {self.uuid}\n" +
+			f"|-> types = {self.derived_types}\n" +
+			f"|-> enums = {self.enums}\n" +
+			f"|-> nodes = {self.nodes}\n" +
+			f"'-> root = {self.root}")
 
 	#-----------------------------------------------------------------------------
 

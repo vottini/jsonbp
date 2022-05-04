@@ -1,0 +1,6 @@
+
+enum color {
+	YELLOW,
+	BLUE,
+	VIOLET
+}

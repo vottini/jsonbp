@@ -1,0 +1,13 @@
+
+type color : string
+
+enum color {
+	BLUE,
+	YELLOW,
+	VIOLET
+}
+
+root {
+	some_color: color,
+}
+

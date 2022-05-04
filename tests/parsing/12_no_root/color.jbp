@@ -1,0 +1,8 @@
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+root color

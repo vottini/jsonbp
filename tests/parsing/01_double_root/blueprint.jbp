@@ -1,0 +1,6 @@
+
+root {
+	age: integer (min=0)
+}
+
+root float

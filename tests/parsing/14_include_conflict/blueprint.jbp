@@ -1,0 +1,9 @@
+
+include "color2.jbp"
+include "colored_point.jbp"
+
+root {
+	points: colored_point[],
+	optional path_color: color
+}
+

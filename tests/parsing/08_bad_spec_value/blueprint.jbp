@@ -1,0 +1,6 @@
+
+type positive : integer(min=0.5)
+
+root {
+	some_positive: positive
+}

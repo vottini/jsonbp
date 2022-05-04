@@ -1,0 +1,19 @@
+
+enum color {
+	BLUE,
+	YELLOW,
+	VIOLET
+}
+
+type unsignedByte : integer(min=0, max=255)
+
+node color {
+	red: unsignedByte,
+	green: unsignedByte,
+	blue: unsignedByte
+}
+
+root {
+	some_color: color,
+}
+

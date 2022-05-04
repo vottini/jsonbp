@@ -1,0 +1,7 @@
+
+include "color1.jbp"
+include "point.jbp"
+
+node colored_point extends point {
+	color: color
+}

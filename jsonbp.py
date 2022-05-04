@@ -2,10 +2,10 @@
 import jbp.ply.lex as lex
 import jbp.ply.yacc as yacc
 
+import jbp.blueprint as jbpBlueprint
 import jbp.declaration as jbpDeclaration
 import jbp.field as jbpField
 import jbp.array as jbpArray
-import jbp.blueprint as jbpBlueprint
 
 from jbp.types import primitive_types
 from decimal import Decimal
@@ -150,7 +150,7 @@ def p_include(p):
 	pushEnv(); loadedBlueprint = load(inclusionPath); popEnv()
 
 	if None == loadedBlueprint:
-		msg = f'Unable to open file {inclusionFile}'
+		msg = f'Unable to open file "{inclusionFile}"'
 		raise ParseException(msg)
 
 	for typeName in loadedBlueprint.collectTypes():
@@ -233,7 +233,7 @@ def createType(newTypeName, declaration):
 	for spec in declaration.specs:
 		specName, value = spec
 		if not specName in origin:
-			msg = f"Type '{newTypename}' ({declaration.typeName}) has no attribute {specName}"
+			msg = f"Type '{newTypeName}' ({declaration.typeName}) has no attribute '{specName}'"
 			raise ParseException(msg)
 
 		oldValue = newType[specName]
@@ -261,6 +261,10 @@ def p_type(p):
 	'''
 
 	typeName = p[2]
+	if typeExists(typeName):
+		msg = f"Duplicated type '{typeName}'"
+		raise ParseException(msg)
+
 	declaration = p[4]
 	createType(typeName, declaration)
 
@@ -494,7 +498,6 @@ def popEnv():
 
 import os
 import os.path
-import uuid
 
 def load(filepath):
 	abspath = os.path.abspath(filepath)
@@ -532,10 +535,8 @@ def loads(contents, contentPath='.', contentName=None):
 			abspath = os.path.abspath(contentFullpath)
 			loadedFiles[abspath] = result
 
-		result.setUUID(uuid.uuid4())
-		mutex.release()
 		return result
-
-	except Exception as e:
-		raise e
+	
+	finally:
+		mutex.release()
 

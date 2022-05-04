@@ -1,0 +1,7 @@
+
+include "nonexistent.jbp"
+
+root {
+	some_float: float,
+	some_int: integer
+}
