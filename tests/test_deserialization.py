@@ -1,4 +1,6 @@
 
+print("Running deserialization tests...")
+
 import os
 import os.path
 

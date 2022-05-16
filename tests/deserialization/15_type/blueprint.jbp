@@ -5,7 +5,7 @@
 type small : integer (max=10)
 type positive : small (min=1)
 type instant : datetime (format="%Y-%m-%d %H:%M")
-type thousandth : fixed (fractionalLength=3)
+type thousandth : decimal (fractionalLength=3)
 
 root {
 	dummy1: positive,

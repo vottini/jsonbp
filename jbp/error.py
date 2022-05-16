@@ -3,7 +3,7 @@ JSON_PARSING	   = 0	 # line, column, message
 NULL_VALUE		   = 1	 # 
 INTEGER_PARSING  = 2	 # text
 FLOAT_PARSING    = 3	 # text
-FIXED_PARSING    = 4	 # text
+DECIMAL_PARSING  = 4	 # text
 OUTSIDE_RANGE    = 5	 # value
 INVALID_BOOLEAN  = 6	 # value
 INVALID_STRING   = 7	 # value
@@ -20,7 +20,7 @@ texts = {
 	NULL_VALUE: 'Null value',
 	INTEGER_PARSING: 'Unable to parse "{text}" as integer',
 	FLOAT_PARSING: 'Unable to parse "{text}" as float',
-	FIXED_PARSING: 'Unable to parse "{text}" as fixed',
+	DECIMAL_PARSING: 'Unable to parse "{text}" as decimal',
 	OUTSIDE_RANGE: 'Value {value} is outside expected range',
 	INVALID_BOOLEAN: 'Value must be "true" or "false", got "{value}"',
 	INVALID_STRING: 'Not a valid string',

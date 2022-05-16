@@ -1,5 +1,5 @@
 
 Parsing array with simple types | json1.js | OK | json1.py
 Catching array with wrong type I | json2.js | KO | INTEGER_PARSING
-Catching array with wrong type II | json3.js | KO | FIXED_PARSING
+Catching array with wrong type II | json3.js | KO | DECIMAL_PARSING
 Catching array with null item | json4.js | KO | INVALID_DATETIME

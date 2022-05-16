@@ -1,5 +1,0 @@
-
-Parsing localized fixed I  | json1.js | OK | json1.py
-Parsing localized fixed II | json2.js | OK | json2.py
-Catching miss localized string for fixed | json3.js | KO | FIXED_PARSING
-Catching digits lacking for localized fixed | json4.js | KO | FIXED_PARSING

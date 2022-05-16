@@ -1,4 +1,6 @@
 
+print("Running parsing tests...")
+
 import os
 import os.path
 

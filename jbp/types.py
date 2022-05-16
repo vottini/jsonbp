@@ -13,7 +13,7 @@ primitive_types = {
 		'max': float('+inf')
 	},
 
-	'fixed' : {
+	'decimal' : {
 		'fractionalLength': 2,
 		'min': Decimal(-maxsize).quantize(Decimal('0.01')),
 		'max': Decimal(+maxsize).quantize(Decimal('0.01')),

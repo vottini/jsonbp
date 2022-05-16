@@ -1,0 +1,5 @@
+
+Parsing localized decimal I  | json1.js | OK | json1.py
+Parsing localized decimal II | json2.js | OK | json2.py
+Catching miss localized string for decimal | json3.js | KO | DECIMAL_PARSING
+Catching digits lacking for localized decimal | json4.js | KO | DECIMAL_PARSING

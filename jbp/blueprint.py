@@ -66,7 +66,7 @@ def d_float(fieldName, value, specs):
 roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
 specialChars = r'.^$*+?|'
 
-def d_fixed(fieldName, value, specs):
+def d_decimal(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	if None == strValue:
@@ -75,18 +75,18 @@ def d_fixed(fieldName, value, specs):
 
 	if not isinstance(strValue, str):
 		return False, jbpError.createForField(fieldName,
-			jbpError.FIXED_PARSING, text=strValue)
+			jbpError.DECIMAL_PARSING, text=strValue)
 
 	grpSep = specs['groupSeparator']
 	decSep = specs['decimalSeparator']
 
 	if grpSep in specialChars: grpSep = f'\\{grpSep}'
 	if decSep in specialChars: decSep = f'\\{decSep}'
-	fixedPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
+	decimalPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
 
-	if None == re.match(fixedPattern, strValue):
+	if None == re.match(decimalPattern, strValue):
 		return False, jbpError.createForField(fieldName,
-			jbpError.FIXED_PARSING, text=strValue)
+			jbpError.DECIMAL_PARSING, text=strValue)
 
 	try:
 		precision = f"1e-{specs['fractionalLength']}"
@@ -101,7 +101,7 @@ def d_fixed(fieldName, value, specs):
 
 	except Exception as e:
 		return False, jbpError.createForField(fieldName,
-			jbpError.FIXED_PARSING, text=strValue)
+			jbpError.DECIMAL_PARSING, text=strValue)
 
 	return True, rawValue
 
