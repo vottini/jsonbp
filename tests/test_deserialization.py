@@ -3,6 +3,7 @@ print("Running deserialization tests...")
 
 import os
 import os.path
+import sys
 
 from decimal import Decimal
 from datetime import datetime
@@ -76,6 +77,10 @@ import sys
 import jsonbp
 import jbp.error as jbpError
 
+def abort(filename):
+	print(f"Aborting on file: {filename}")
+	sys.exit(0)
+
 verified = 1
 for key, value in verifications.items():
 	blueprintFile, trials = value
@@ -95,7 +100,7 @@ for key, value in verifications.items():
 				print(f'Expected outcome = {shouldSucceed}')
 				print(f'Obtained outcome = {outcome}')
 				print("###", obtainedResult)
-				break
+				abort(blueprintFile)
 
 			if not shouldSucceed:
 				expectedError = getattr(jbpError, expectedResult)
@@ -107,7 +112,7 @@ for key, value in verifications.items():
 					print('Expected error differs from obtained error:')
 					print(f'Expected error id = {expectedError}')
 					print(f'Obtained error id = {returnedError}')
-					break
+					abort(blueprintFile)
 
 			else:
 				subdirPath = os.path.join(verificationDir, key)
@@ -117,7 +122,7 @@ for key, value in verifications.items():
 					print('Failed!')
 					print(f'Unable to open file "{resultFile}"')
 					print('It was not possible to check deserialization')
-					break
+					abort(blueprintFile)
 
 				else:
 					with open(resultFile) as rfd:
@@ -128,20 +133,16 @@ for key, value in verifications.items():
 							print('Failed!')
 							print(f'In file "{resultFile}": "result" is not defined')
 							print('It was not possible to check deserialization')
-							break
+							abort(blueprintFile)
 
 						if not obtainedResult == result:
 							print('Failed!')
 							print(f'Obtained result = {obtainedResult}')
 							print(f'Expected result = {result}')
-							break
+							abort(blueprintFile)
 
 						del result
 
 			print('OK')
 
 		verified += 1
-
-#print(verifications)
-#print(verificationsTotal)
-

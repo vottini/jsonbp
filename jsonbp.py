@@ -2,6 +2,7 @@
 import jbp.ply.lex as lex
 import jbp.ply.yacc as yacc
 
+import jbp.error as jbpError
 import jbp.blueprint as jbpBlueprint
 import jbp.declaration as jbpDeclaration
 import jbp.field as jbpField
@@ -539,4 +540,16 @@ def loads(contents, contentPath='.', contentName=None):
 	
 	finally:
 		mutex.release()
+
+
+def useLanguage(languageCode):
+	scriptPath = os.path.dirname(__file__)
+	localizationPath = f'{scriptPath}/jbp/localization/messages.{languageCode}.ini'
+	jbpError.useTranslation(localizationPath)
+
+def useTranslation(translationFile):
+	jbpError.useTranslation(translationFile)
+
+defaultLanguage = "en_US"
+useLanguage(defaultLanguage)
 

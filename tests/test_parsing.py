@@ -43,3 +43,4 @@ for subdir, blueprintFile in verifications.items():
 		print(f"OK <{e}>")
 		verified += 1
 
+print("")

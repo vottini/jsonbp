@@ -142,9 +142,13 @@ def d_datetime(fieldName, value, specs):
 		parsed_date = datetime.strptime(strValue, specs['format'])
 		return True, parsed_date
 
-	except Exception as e:
+	except ValueError as e:
 		return False, jbpError.createForField(fieldName,
 			jbpError.INVALID_DATETIME, text=strValue)
+
+	except TypeError as e:
+		return False, jbpError.createForField(fieldName,
+			jbpError.INVALID_STRING, text=strValue)
 
 
 def d_string(fieldName, strValue, specs):

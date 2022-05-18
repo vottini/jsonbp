@@ -1,44 +1,63 @@
 
-JSON_PARSING	   = 0	 # line, column, message
-NULL_VALUE		   = 1	 # 
-INTEGER_PARSING  = 2	 # text
-FLOAT_PARSING    = 3	 # text
-DECIMAL_PARSING  = 4	 # text
-OUTSIDE_RANGE    = 5	 # value
-INVALID_BOOLEAN  = 6	 # value
-INVALID_STRING   = 7	 # value
-INVALID_LENGTH   = 8	 # length
-INVALID_DATETIME = 9	 # text
-UNKNOWN_LITERAL  = 10	 # text
-INVALID_ENUM     = 11	 # value
-MISSING_FIELD    = 12  # field
-INVALID_ARRAY    = 13  # 
-INVALID_NODE     = 14  # 
+import configparser
 
-texts = {
-	JSON_PARSING: 'Invalid JSON, error at line {line}, column {column}: {message}',
-	NULL_VALUE: 'Null value',
-	INTEGER_PARSING: 'Unable to parse "{text}" as integer',
-	FLOAT_PARSING: 'Unable to parse "{text}" as float',
-	DECIMAL_PARSING: 'Unable to parse "{text}" as decimal',
-	OUTSIDE_RANGE: 'Value {value} is outside expected range',
-	INVALID_BOOLEAN: 'Value must be "true" or "false", got "{value}"',
-	INVALID_STRING: 'Not a valid string',
-	INVALID_LENGTH: 'Length {length} is out of expected range',
-	INVALID_DATETIME: '"{text}" doesn\'t match expected datetime format',
-	UNKNOWN_LITERAL: 'Unknown value "{value}"',
-	INVALID_ENUM: 'Not a valid string',
-	MISSING_FIELD: 'Missing field "{field}"',
-	INVALID_ARRAY: 'Needs to be an array',
-	INVALID_NODE: 'Needs to be a dictionary'
-}
+JSON_PARSING     = 0    # line, column, message
+NULL_VALUE       = 1    # 
+INTEGER_PARSING  = 2    # text
+FLOAT_PARSING    = 3    # text
+DECIMAL_PARSING  = 4    # text
+OUTSIDE_RANGE    = 5    # value
+INVALID_BOOLEAN  = 6    # value
+INVALID_STRING   = 7    # value
+INVALID_LENGTH   = 8    # length
+INVALID_DATETIME = 9    # text
+UNKNOWN_LITERAL  = 10   # text
+INVALID_ENUM     = 11   # value
+MISSING_FIELD    = 12   # field
+INVALID_ARRAY    = 13   # 
+INVALID_NODE     = 14   # 
 
-prefixes = {
-	"FIELD": 'Field "{assignee}":',
-	"NODE": 'Node "{assignee}":',
-	"ARRAY": 'In array "{assignee}" at index {index}:',
-	"ROOT": 'At root level:'
-}
+texts = dict()
+possiblePrefixes = {'FIELD', 'NODE', 'ARRAY', 'ROOT'}
+prefixes = dict()
+
+#-------------------------------------------------------------------------------
+
+def useTranslation(filename):
+	print("###", filename)
+
+	try:
+		with open(filename) as fd:
+			contents = fd.read()
+
+	except IOError as e:
+		print(f"Unable to read localization file: {e.strerror}")
+		return
+
+	entries = globals()
+	config = configparser.ConfigParser()
+	config.read_string(contents)
+	sections = config.sections()
+
+	if 'Messages' in sections:
+		section = config['Messages']
+		for entry in config.options('Messages'):
+			sanedEntry = entry.upper()
+
+			if sanedEntry in entries:
+				index = entries[sanedEntry]
+				texts[index] = section[sanedEntry]
+
+	if 'Prefixes' in sections:
+		section = config['Prefixes']
+		for entry in config.options('Prefixes'):
+			sanedEntry = entry.upper()
+
+			if sanedEntry in possiblePrefixes:
+				prefixValue = section[sanedEntry]
+				prefixes[sanedEntry] = prefixValue
+
+#-------------------------------------------------------------------------------
 
 class instance:
 	def __init__(self, error_id, **context):
