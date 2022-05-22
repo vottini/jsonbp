@@ -29,7 +29,7 @@ root {
 } [minLength=2]
 ```
 
-It defines an array of minimum length 2 whose elements contain the fields 'x' and 'y' (where both 'x' and 'y' are not allowed to be a negative value plus 'y' not being allowed to be greater than 1) and an optional field 'color' that can be either "RED", "GOLD" or "GREEN". A JSON instance that obeys this schema is:
+This defines a schema of an array of minimum length 2 whose elements contain the fields 'x' and 'y' (where both 'x' and 'y' are not allowed to be a negative value plus 'y' not being allowed to be greater than 1) and an optional field 'color' that can be either "RED", "GOLD" or "GREEN". A JSON instance that obeys this schema is:
 
 ```js
 [
@@ -57,7 +57,7 @@ Besides **"root"**, the following entries can be used to organize the schema:
 - **"node"** can be thought as a "struct" in C
 - **"enum"** has the usual meaning
 
-To give you some idea, one can split the condensed definition above isolating the parts that can be reused. The previous schema, for example, could have been:
+One can then make use of these features and take advantage of a type system. We could split the parts that can be reused in the condensed example schema definition above, obtaining, for example:
 
 ```
 type non_negative : float (min=0.0)
@@ -76,7 +76,7 @@ node colored_coordinates extends coordinates {
 root colored_coordinates[minLength=2]
 ```
 
-where the contents of "color.jbp" would then be:
+where the contents of file "color.jbp" would then be:
 
 ```
 enum color {
