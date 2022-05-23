@@ -52,12 +52,12 @@ This defines a schema of an array of minimum length 2 whose elements contain the
 ]
 ```
 
-Besides **"root"**, the following entries can be used to organize the schema:
+Besides **"root"**, the following directives can be used to organize a schema:
 - **"type"** can be thought as a "typedef" in C
 - **"node"** can be thought as a "struct" in C
 - **"enum"** has the usual meaning
 
-One can then make use of these features and take advantage of a type system. We could split the parts that can be reused in the condensed example schema definition above, obtaining, for example:
+One can then make use of these features and take advantage of a type system. In the monolithic example schema definition above, we could split the parts that can be reused, obtaining, for example:
 
 ```
 type non_negative : float (min=0.0)
@@ -118,11 +118,10 @@ Under the hood, jsonbp uses [PLY][ply] for its schema parsing, however PLY comes
 
 ## Documentation
 
-That was just an introduction, if you are interested in using jsonbp here are some more information:
-- Schema definition
-- Error handling
-- Localization
-- Examples
+That was just an introduction, if you are interested in using jsonbp here are some more detailed information:
+- [`Schema definition`](docs/schema.md) 
+- [`Error Handling and Localization`](docs/error.md) 
+- [`Examples`](docs/examples.md)
 
 [//]: References
    [json_schema]: <https://json-schema.org/>

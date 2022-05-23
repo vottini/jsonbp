@@ -3,10 +3,10 @@
 
 A jsonbp schema can be composed of the following declarations:
 
-- root
 - node
 - type
 - enum
+- root 
 
 ## Nodes
 
@@ -102,7 +102,39 @@ node point3d extends point2d {
 
 ## Primitive types
 
+These are the primitive types that jsonbp accepts and the corresponding Python types that they map to:
+
+| jsonbp   | Python |
+| ------   | ------ |
+| integer  | int |
+| float    | float |
+| decimal  | decimal.Decimal |
+| bool     | bool |
+| datetime | datetime.datetime |
+| string   |  str |
+
+When used in a field declaration, primitive types can be customized through specificities, which is a list of pair-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
+
+For example:
+```
+node weekInstant {
+    weekday: string (minLength=3, maxLength=3),
+    hours: integer (min=0, max=12),
+    minutes : integer (min=0,max=59),
+    seconds : integer (min=0,max=59),
+    ampm: string (minLength=2, maxLength=2)
+}
+```
+
+And the following is a list of all possible specificities by primitive type:
+
+| type | specificity | Default |
+| ------   | ------ | ------   |
+| integer  | max<br>min | 4,294,967,296<br>-4,294,967,296 |
+| float  | max<br>min | +infinity<br>-infinity |
+
 ## Specialized types
+
 
 ## Enums
 
