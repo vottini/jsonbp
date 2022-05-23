@@ -10,7 +10,7 @@ A jsonbp schema can be composed of the following declarations:
 
 ## Nodes
 
-Nodes denote Objects in javascript. They are composed of **'fields'**, named entries which are assigned to hold exclusively certain types. To register a kind of node, jsonbp accepts the pattern:
+Nodes denote Objects in javascript. They are composed of **fields**, named entries which are assigned to hold exclusively certain types. To register a kind of node, jsonbp accepts the pattern:
 
 ```
 node <node name> {
@@ -130,11 +130,33 @@ And the following is a list of all possible specificities by primitive type:
 
 | type | specificity | Default |
 | ------   | ------ | ------   |
-| integer  | max<br>min | 4,294,967,296<br>-4,294,967,296 |
-| float  | max<br>min | +infinity<br>-infinity |
+| integer  | min<br>max | -2,147,483,648<br>2,147,483,647 |
+| float  | min<br>max | -infinity<br>+infinity |
+| decimal | fractionalLength<br>min<br>max<br>decimalSeparator<br>groupSeparator | 2<br>-2,147,483,648.00<br>+2,147,483,648.00<br>'.' (dot)<br>'' (empty string) |
+| bool | coerce | false |
+| datetime | format | "%Y-%m-%d %H:%M:%S" |
+| string | minLength<br>maxLength | 0<br>1024 |
 
-## Specialized types
+## Derived types
 
+If some sort of specialized field can be employed in multiple places, it's possible to define a derived type that can then be reused. This is done by the **type** directive, which has the following syntax:
+
+```
+type <derived type> : <parent type> (<specialization>, <specialization>, ...)
+```
+
+Derived types need not be based solely on primitive types, they can be a further specialization of another derived type. Once defined, a derived type can be used do specify a field content just like a primitive type. For example:
+
+```
+type percent : decimal (min=0.00, max=100.00)
+type unitRange : double (min=-1, max=+1)
+type normalized : unitRange (min=0)
+
+node values {
+    increase: percent,
+    cosine: normalized
+}
+```
 
 ## Enums
 

@@ -1,11 +1,19 @@
 
-from sys import maxsize
 from decimal import Decimal
+
+bytesLength = 4
+maxBits = (bytesLength * 8)
+signalizedMaxBits = maxBits - 1
+greatest = (1 << signalizedMaxBits) - 1
+lowest = -(1 << signalizedMaxBits)
+
+print("GREATEST", greatest)
+print("LOWEST", lowest)
 
 primitive_types = {
 	'integer' : {
-		'min': -maxsize,
-		'max': +maxsize
+		'min': lowest,
+		'max': greatest
 	},
 
 	'float' : {
@@ -15,8 +23,8 @@ primitive_types = {
 
 	'decimal' : {
 		'fractionalLength': 2,
-		'min': Decimal(-maxsize).quantize(Decimal('0.01')),
-		'max': Decimal(+maxsize).quantize(Decimal('0.01')),
+		'min': Decimal(-lowest).quantize(Decimal('0.01')),
+		'max': Decimal(+greatest).quantize(Decimal('0.01')),
 		'decimalSeparator': '.',
 		'groupSeparator': ''
 	},
