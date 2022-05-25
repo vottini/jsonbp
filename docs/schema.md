@@ -6,7 +6,14 @@ A jsonbp schema can be composed of the following declarations:
 - node
 - type
 - enum
-- root 
+- root
+
+To add comments to a schema, use the sharp (#) character
+
+```
+# This is a comment
+# and this as well
+```
 
 ## Nodes
 
@@ -113,7 +120,7 @@ These are the primitive types that jsonbp accepts and the corresponding Python t
 | datetime | datetime.datetime |
 | string   |  str |
 
-When used in a field declaration, primitive types can be customized through specificities, which is a list of pair-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
+When used in a field declaration, primitive types can be customized through **specificities**, which is a list of key-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
 
 For example:
 ```
@@ -126,7 +133,7 @@ node weekInstant {
 }
 ```
 
-And the following is a list of all possible specificities by primitive type:
+The following is a list of all possible specificities by primitive type:
 
 | type | specificity | Default |
 | ------   | ------ | ------   |
@@ -137,15 +144,28 @@ And the following is a list of all possible specificities by primitive type:
 | datetime | format | "%Y-%m-%d %H:%M:%S" |
 | string | minLength<br>maxLength | 0<br>1024 |
 
+Some of the specificities need an explanation:
+
+**decimal**
+*fractionalLength*:
+*decimalSeparator*:
+*groupSeparator*:
+
+**bool**
+*coerce*:
+
+**datetime**
+*format*:
+
 ## Derived types
 
-If some sort of specialized field can be employed in multiple places, it's possible to define a derived type that can then be reused. This is done by the **type** directive, which has the following syntax:
+It's possible to register and reuse the specialization of a type. This is done by the **type** directive, which creates a **derived type** that applies inherently all the specificities defined for it. This directive has the following syntax:
 
 ```
-type <derived type> : <parent type> (<specialization>, <specialization>, ...)
+type <derived type> : <parent type> (<specificity>, <specificity>, ...)
 ```
 
-Derived types need not be based solely on primitive types, they can be a further specialization of another derived type. Once defined, a derived type can be used do specify a field content just like a primitive type. For example:
+Derived types need not be based solely on primitive types, they can be a further specialization of an already derived type. Once defined, a derived type can be used do specify a field content just like a primitive type. For example:
 
 ```
 type percent : decimal (min=0.00, max=100.00)
@@ -160,8 +180,110 @@ node values {
 
 ## Enums
 
+Enums can be employed to define types that hold discrete and limited values. They need to be javascript **strings** and will be deserialized into Python's **str**. As one might expect, if the value in an instance being deserialized is not present in the enum list, an error will be flagged. Note that values in enums are **case sensitive**. Enums can be registered through the **"enum"** directive:
+
+```
+enum months {
+	January,
+	February,
+	March,
+	April,
+	May,
+	June,
+	July,
+	August,
+	September,
+	October,
+	November,
+	December
+}
+```
+
+And like nodes, they can be defined just in place:
+
+```
+node sale {
+	amount: decimal (min=0.00),
+	status: {
+		AWAITING,
+		PAID,
+		REJECTED,
+		CANCELLED
+	}
+}
+```
+
 ## Root
 
-## How to array
+**"root"** is the only mandatory directive that needs to be present in a blueprint (unless a schema file is only meant to be imported, as it's explained later on). It defines the contents that need to be present in an JSON instance for it to be validated and further deserialized. The "root" directive can receive a simple type, an enum or a node, either through a registered identifier or defined just in place:
+
+```
+root integer
+
+# or
+
+root string (maxLength=128)
+
+# or
+
+root { IDLE, BUSY }
+
+# or
+
+root {
+	username: string(minLength=3),
+	password: string(minLength=8)
+}
+
+# or
+
+node credentials {
+	username: string(minLength=3),
+	password: string(minLength=8)
+}
+
+root credentials
+
+```
+
+Only one root can be declared. Declaring two or more roots will characterize a schema as ambiguos and jsonbp will complain during the schema parsing.
+
+
+## Array
+
+To make any field an array, just add brackets "[]" at the end of its definition. The field can be either a simple type (primitive or derived), an enum or a node. During deserialization, jsonbp will check if the value is in fact an **Array**, even a empty one, and will reject the JSON instance otherwise. If it is correctly validated by jsonbp, the result will be a Python **list**.  For example:
+
+```
+node point2d {
+	x: float,
+	y: float
+}
+
+root {
+	points: point2d[],
+	deltaTs: double (min=0.0) [minLength=2],
+	conditions: {
+		"GOOD",
+		"REGULAR",
+		"BAD",
+		"REJECTED
+	} [minLength=1, maxLength=3]
+}
+```
+
+"root" itself can also be an array:
+
+```
+root {
+	APPLE,
+	ORANGE,
+	STRAWBERRY,
+	PINEAPLE
+} [minLength=2, maxLength=2]
+
+# or even
+
+root point2d[]
+```
 
 ## Include
