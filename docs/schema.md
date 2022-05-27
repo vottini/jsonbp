@@ -120,7 +120,7 @@ These are the primitive types that jsonbp accepts and the corresponding Python t
 | datetime | datetime.datetime |
 | string   |  str |
 
-When used in a field declaration, primitive types can be customized through **specificities**, which is a list of key-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
+When used in a field declaration, simple types can be customized through **specificities**, which is a list of key-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
 
 For example:
 ```
@@ -144,22 +144,22 @@ The following is a list of all possible specificities by primitive type:
 | datetime | format | "%Y-%m-%d %H:%M:%S" |
 | string | minLength<br>maxLength | 0<br>1024 |
 
-Some of the specificities need an explanation:
+Some of the specificities may warrant an explanation:
 
 **decimal**
-*fractionalLength*:
-*decimalSeparator*:
-*groupSeparator*:
+*fractionalLength*: Number of digits after the radix
+*decimalSeparator*: Character that represents the radix
+*groupSeparator*: Character used to simplify reading big numbers
 
 **bool**
-*coerce*:
+*coerce*: If false, only **true** and **false** are acceptable booleans, otherwise (if "coerce" is true) during deserialization, truthy values will be accepted as **true** and falsy values will be accepted as **false**.
 
 **datetime**
-*format*:
+*format*: Format used for datetime parsing. It'll be directy fed to strptime() [https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
 
 ## Derived types
 
-It's possible to register and reuse the specialization of a type. This is done by the **type** directive, which creates a **derived type** that applies inherently all the specificities defined for it. This directive has the following syntax:
+It's possible to register and reuse the specialization of a type. This is done by the **type** directive, which creates a **derived type** that withholds all the specificities defined for it. This directive has the following syntax:
 
 ```
 type <derived type> : <parent type> (<specificity>, <specificity>, ...)
@@ -177,6 +177,18 @@ node values {
     cosine: normalized
 }
 ```
+
+When deriving a type, **it is** allowed to modify previously defined specificities. That is, you can alter some or all the specificities already defined for a type. This can also happen directly in the field declaration, like the following scenario:
+
+```
+type broadScale : float (min=0, max=999)
+type narrowScale : broadScale (max=99)
+
+node scaled {
+	restrictedScale : narrowScale (max=9)
+}
+```
+
 
 ## Enums
 
@@ -251,7 +263,7 @@ Only one root can be declared. Declaring two or more roots will characterize a s
 
 ## Array
 
-To make any field an array, just add brackets "[]" at the end of its definition. The field can be either a simple type (primitive or derived), an enum or a node. During deserialization, jsonbp will check if the value is in fact an **Array**, even a empty one, and will reject the JSON instance otherwise. If it is correctly validated by jsonbp, the result will be a Python **list**.  For example:
+To make any field an array, just add brackets "[]" at the end of its definition. The field can be either a simple type, an enum or a node. During deserialization, jsonbp will check if the value is in fact an **Array**, even a empty one, and will reject the JSON instance otherwise. If it is correctly validated by jsonbp, the result will be a Python **list**.  For example:
 
 ```
 node point2d {
@@ -286,4 +298,48 @@ root {
 root point2d[]
 ```
 
-## Include
+## Import
+
+Schema files can be imported by other schema files in order to reuse the definions present in them. The syntax is:
+
+```
+include <path to schema file inside quotes including extension>
+```
+
+The path is relative to the schema file that has the "import" directive.
+So, for example, if we have this file structure:
+
+```
+.
+|-> schema00.jbp
+|-> schema01.jbp
+|
+|-> dir1
+|    |-> schema10.jbp
+|    '-> schema11.jbp
+|
+'-> dir2
+     |-> schema20.jbp
+	 '-> schema21.jbp
+```
+
+The following imports are all valid:
+
+Inside "schema00.jpb"
+```
+import "schema01.jbp"
+import "dir1/schema10.jbp"
+import "dir2/schema21.jbp"
+```
+
+Inside "dir1/schema11.jbp"
+```
+import "../schema00.jbp"
+import "schema10.jbp"
+import "../dir2/schema20.jbp"
+```
+
+When loading a schema from a string, the execution path is used as base path instead.
+"root" directives (if present) are ignored when their schema file is imported.
+
+If the same type name is defined in more than one schema (be it a simple type, an enum or a node), jsonbp will complain and throw you an error during schema parsing. However, a single schema can be imported from multiple schemas with no problem (internally jsonbp stores the full paths that have been imported, and won't even load the same file twice)
