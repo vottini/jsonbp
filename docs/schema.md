@@ -1,14 +1,15 @@
 
 ## General Structure
 
-A jsonbp schema can be composed of the following declarations:
+A jsonbp schema can be composed of the following directives:
 
 - node
 - type
 - enum
 - root
+- import
 
-To add comments to a schema, use the sharp (#) character
+Comments are done using the sharp (#) character
 
 ```
 # This is a comment
@@ -55,7 +56,7 @@ car_sale {
 }
 ```
 
-They can also be defined just in place, it's not necessary to register them using the "node" directive beforehand. The car example above could very well be defined like:
+They can also have a just in place definition, not being necessary to register them using the "node" directive beforehand. The car example above could very well be defined like:
 
 ```
 car_sale {
@@ -84,7 +85,7 @@ node address {
 
 Optional fields, when present, must obey the type defined for them.
 
-Nodes can also be extended. That is, you can create a new node based on a previously defined one. It'll inherit all the fields defined in its parent or that the parent itself inherited. It's not possible, however, to "redefine" fields using the same field name in child nodes that are already present in any of their parents, an error will be thrown if you attempt to do that. The syntax is as follows:
+Nodes can also be extended. That is, you can create a new node based on a previously defined one. It'll inherit all the fields defined in its parent or that the parent itself inherited. It's not possible, however, to "redefine" fields using the same field name in child nodes that are already present in any of their parents, an error will happen during schema parsing if you inadvertently do that. The syntax is as follows:
 
 ```
 node <child node name> extends <parent node name> {
@@ -146,15 +147,15 @@ The following is a list of all possible specificities by primitive type:
 
 Some of the specificities may warrant an explanation:
 
-**decimal**
-*fractionalLength*: Number of digits after the radix
-*decimalSeparator*: Character that represents the radix
-*groupSeparator*: Character used to simplify reading big numbers
+**decimal**   
+*fractionalLength*: Number of digits after the radix  
+*decimalSeparator*: Character that represents the radix  
+*groupSeparator*: Character used to organize and simplify reading big numbers  
 
-**bool**
+**bool**   
 *coerce*: If false, only **true** and **false** are acceptable booleans, otherwise (if "coerce" is true) during deserialization, truthy values will be accepted as **true** and falsy values will be accepted as **false**.
 
-**datetime**
+**datetime**   
 *format*: Format used for datetime parsing. It'll be directy fed to strptime() [https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
 
 ## Derived types
@@ -178,7 +179,7 @@ node values {
 }
 ```
 
-When deriving a type, **it is** allowed to modify previously defined specificities. That is, you can alter some or all the specificities already defined for a type. This can also happen directly in the field declaration, like the following scenario:
+When registering a new simple type, it's allowed to modify previously defined specificities. That is, you can alter some or all the specificities already defined in a base type. This can also be done directly in the field declaration, like the following scenario:
 
 ```
 type broadScale : float (min=0, max=999)
@@ -192,7 +193,7 @@ node scaled {
 
 ## Enums
 
-Enums can be employed to define types that hold discrete and limited values. They need to be javascript **strings** and will be deserialized into Python's **str**. As one might expect, if the value in an instance being deserialized is not present in the enum list, an error will be flagged. Note that values in enums are **case sensitive**. Enums can be registered through the **"enum"** directive:
+Enums can be employed to define types whose values are part of a limited set. They need to be javascript **strings** and will be deserialized into Python's **str**. As one might expect, if the value in an JSON instance being deserialized is not present in the enum list, an error will be flagged. Note that values in enums are **case sensitive**. Enums can be registered through the **"enum"** directive:
 
 ```
 enum months {
@@ -227,28 +228,33 @@ node sale {
 
 ## Root
 
-**"root"** is the only mandatory directive that needs to be present in a blueprint (unless a schema file is only meant to be imported, as it's explained later on). It defines the contents that need to be present in an JSON instance for it to be validated and further deserialized. The "root" directive can receive a simple type, an enum or a node, either through a registered identifier or defined just in place:
+**root** is the only mandatory directive that needs to be present in a blueprint (unless a schema file is only meant to be imported, as it's explained later on). It defines the contents that need to be present in an JSON instance for it to be validated and further deserialized. The "root" directive can receive a simple type, an enum or a node, either through a named type or a just in place definition:
 
+Example 1
 ```
 root integer
+```
 
-# or
-
+Example 2
+```
 root string (maxLength=128)
+```
 
-# or
-
+Example 3
+```
 root { IDLE, BUSY }
+```
 
-# or
-
+Example 4
+```
 root {
 	username: string(minLength=3),
 	password: string(minLength=8)
 }
+```
 
-# or
-
+Example 5
+```
 node credentials {
 	username: string(minLength=3),
 	password: string(minLength=8)
@@ -258,7 +264,7 @@ root credentials
 
 ```
 
-Only one root can be declared. Declaring two or more roots will characterize a schema as ambiguos and jsonbp will complain during the schema parsing.
+Only one root can be declared by schema file. Declaring two or more roots will characterize a schema as ambiguos and jsonbp will complain during the schema parsing.
 
 
 ## Array
@@ -298,6 +304,8 @@ root {
 root point2d[]
 ```
 
+As is ilustrated by the above examples, arrays can have two "specificities", **minLength** and **maxLength**, which limits respectively the minimum and maximum number of elements they array may contain.
+
 ## Import
 
 Schema files can be imported by other schema files in order to reuse the definions present in them. The syntax is:
@@ -306,7 +314,7 @@ Schema files can be imported by other schema files in order to reuse the definio
 include <path to schema file inside quotes including extension>
 ```
 
-The path is relative to the schema file that has the "import" directive.
+The path is relative to the schema file that has the "import" directive.  
 So, for example, if we have this file structure:
 
 ```
@@ -320,7 +328,7 @@ So, for example, if we have this file structure:
 |
 '-> dir2
      |-> schema20.jbp
-	 '-> schema21.jbp
+     '-> schema21.jbp
 ```
 
 The following imports are all valid:
@@ -339,7 +347,7 @@ import "schema10.jbp"
 import "../dir2/schema20.jbp"
 ```
 
-When loading a schema from a string, the execution path is used as base path instead.
+When loading a schema from a string, the execution path is used as base path instead.  
 "root" directives (if present) are ignored when their schema file is imported.
 
 If the same type name is defined in more than one schema (be it a simple type, an enum or a node), jsonbp will complain and throw you an error during schema parsing. However, a single schema can be imported from multiple schemas with no problem (internally jsonbp stores the full paths that have been imported, and won't even load the same file twice)
