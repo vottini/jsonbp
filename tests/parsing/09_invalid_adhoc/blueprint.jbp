@@ -8,6 +8,6 @@ node color {
 }
 
 root {
-	some_color: color (min=0),
+	some_color: color (min=0)
 }
 

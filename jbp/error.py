@@ -24,7 +24,6 @@ prefixes = dict()
 #-------------------------------------------------------------------------------
 
 def useTranslation(filename):
-	print("###", filename)
 
 	try:
 		with open(filename) as fd:

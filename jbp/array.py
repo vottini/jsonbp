@@ -1,11 +1,11 @@
 
 from sys import maxsize
-from jbp.violation import BlueprintViolation
-from jbp.field import JsonField
+import jbp.violation as jbpViolation
+import jbp.field as jbpField
 
-class JsonArray(JsonField):
+class JsonArray(jbpField.JsonField):
 	def __init__(self, baseField):
-		JsonField.__init__(self,
+		jbpField.JsonField.__init__(self,
 			baseField.fieldKind,
 			baseField.fieldType)
 
@@ -16,18 +16,18 @@ class JsonArray(JsonField):
 	def applySpec(self, spec, value):
 		if not spec in ("minLength", "maxLength"):
 			msg = f"Invalid array spec '{spec}'"
-			raise BlueprintViolation(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		if value < 0:
 			msg = f"Invalid array length: {value}"
-			raise BlueprintViolation(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		if "minLength" == spec: self.minLength = value
 		if "maxLength" == spec: self.maxLength = value
 
 		if not (0 <= self.minLength <= self.maxLength and 0 < self.maxLength):
 			msg = f"Invalid array length for '{spec}'"
-			raise BlueprintViolation(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 #------------------------------------------------------------------------------
 

@@ -1,3 +1,4 @@
 
-class BlueprintViolation(Exception):
+class JsonViolation(Exception):
 	pass
+

@@ -1,4 +1,4 @@
 
 result = {
-	"some_fixed": Decimal("-3000000000.00")
+	"some_fixed": Decimal("-3000000.00")
 }

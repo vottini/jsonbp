@@ -4,5 +4,3 @@ enum color {
 	GOLD,
 	GREEN
 }
-
-root color

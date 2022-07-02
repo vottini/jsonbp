@@ -3,6 +3,7 @@ import jbp.ply.lex as lex
 import jbp.ply.yacc as yacc
 
 import jbp.error as jbpError
+import jbp.violation as jbpViolation
 import jbp.blueprint as jbpBlueprint
 import jbp.declaration as jbpDeclaration
 import jbp.field as jbpField
@@ -90,17 +91,17 @@ t_ignore  = ' \t\r'
 
 #---------------------------------------------------------------
 
-class TokenException(Exception): pass
-class ParseException(Exception): pass
+SchemaViolation = jbpViolation.JsonViolation
 
 def t_error(t):
-	msg = f"Illegal character '{t.value[0]}' on line {t.lineno}"
-	raise TokenException(msg)
+	sentence = t.value.split()[0]
+	msg = f"Syntax error: Unexpected sentence '{sentence}' on line {t.lineno}"
+	raise SchemaViolation(msg)
 
 def p_error(p):
-	if p == None: raise ParseException("Empty blueprint")
-	msg = f"Syntax error in line {p.lineno}: token '{p.value}' misplaced"
-	raise ParseException(msg)
+	if p == None: raise jbpViolation.JsonViolation("Empty blueprint")
+	msg = f"Error parsing line {p.lineno}: token '{p.value}' misplaced"
+	raise SchemaViolation(msg)
 
 #---------------------------------------------------------------
 
@@ -152,12 +153,12 @@ def p_include(p):
 
 	if None == loadedBlueprint:
 		msg = f'Unable to open file "{inclusionFile}"'
-		raise ParseException(msg)
+		raise jbpViolation.JsonViolation(msg)
 
 	for typeName in loadedBlueprint.collectTypes():
 		if typeExists(typeName, excluded=loadedBlueprint.collectSources()):
 			msg = f"Error including '{inclusionFile}': type '{typeName}' already defined"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 	blueprint.includes.append(loadedBlueprint)
 
@@ -171,7 +172,7 @@ def p_root(p):
 
 	if None != blueprint.root:
 		msg = 'Only one root can be defined'
-		raise ParseException(msg)
+		raise jbpViolation.JsonViolation(msg)
 
 	blueprint.root = p[2]
 
@@ -185,7 +186,7 @@ def p_node(p):
 	nodeName = p[2]
 	if typeExists(nodeName):
 		msg = f"Duplicated type '{nodeName}'"
-		raise ParseException(msg)
+		raise jbpViolation.JsonViolation(msg)
 
 	if len(p) == 6:
 		baseNode = p[4]
@@ -193,13 +194,13 @@ def p_node(p):
 
 		if None == baseFields:
 			msg = f"Node '{baseNode}' is not defined"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		nodeFields = p[5]
 		for fieldName, fieldDeclaration in nodeFields.items():
 			if fieldName in baseFields:
 				msg = f"Field '{fieldName}' in node '{nodeName}' is already defined in base node '{baseNode}'"
-				raise ParseException(msg)
+				raise jbpViolation.JsonViolation(msg)
 
 		nodeFields.update(baseFields)
 		blueprint.nodes[nodeName] = nodeFields
@@ -235,7 +236,7 @@ def createType(newTypeName, declaration):
 		specName, value = spec
 		if not specName in origin:
 			msg = f"Type '{newTypeName}' ({declaration.typeName}) has no attribute '{specName}'"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		oldValue = newType[specName]
 		if type(oldValue) == Decimal and type(value) == float: value = Decimal(value)
@@ -243,7 +244,7 @@ def createType(newTypeName, declaration):
 
 		if type(value) != type(oldValue):
 			msg = f"New value for specificity '{specName}' is {type(value).__name__}, but it expects {type(oldValue).__name__}"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		newType[specName] = value
 
@@ -264,7 +265,7 @@ def p_type(p):
 	typeName = p[2]
 	if typeExists(typeName):
 		msg = f"Duplicated type '{typeName}'"
-		raise ParseException(msg)
+		raise jbpViolation.JsonViolation(msg)
 
 	declaration = p[4]
 	createType(typeName, declaration)
@@ -382,18 +383,18 @@ def p_element_declaration(p):
 
 		if not_simple:
 			msg = f"Unable to apply specificities to '{typeName}', only simple types can be specialized"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		if not blueprint.find_element_declaration(typeName):
 			msg = f"Unknown simple type '{typeName}'"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		specs = p[3]
 
 	else:
 		if not typeExists(typeName):
 			msg = f"Type not declared: '{typeName}'"
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		specs = list()
 	
@@ -439,7 +440,7 @@ def p_enum(p):
 	enum_name = p[2]
 	if typeExists(enum_name):
 		msg = f"Duplicated type '{enum_name}'"
-		raise ParseException(msg)
+		raise jbpViolation.JsonViolation(msg)
 
 	blueprint.enums[enum_name] = p[3]
 
@@ -529,7 +530,7 @@ def loads(contents, contentPath='.', contentName=None):
 
 		if None == blueprint.root and len(pushedEnvs) == 0:
 			msg = 'No root defined at topmost level'
-			raise ParseException(msg)
+			raise jbpViolation.JsonViolation(msg)
 
 		if None != contentName:
 			contentFullpath = os.path.join(contentPath, contentName)
@@ -543,12 +544,15 @@ def loads(contents, contentPath='.', contentName=None):
 
 
 def useLanguage(languageCode):
-	scriptPath = os.path.dirname(__file__)
-	localizationPath = f'{scriptPath}/jbp/localization/messages.{languageCode}.ini'
+	localizationPath = f'messages.{languageCode}.ini'
+
+	if not os.path.isfile(localizationPath):
+		scriptPath = os.path.dirname(__file__)
+		localizationPath = f'{scriptPath}/jbp/localization/messages.{languageCode}.ini'
+
+	print(f"Using file {localizationPath}")
 	jbpError.useTranslation(localizationPath)
 
-def useTranslation(translationFile):
-	jbpError.useTranslation(translationFile)
 
 defaultLanguage = "en_US"
 useLanguage(defaultLanguage)
