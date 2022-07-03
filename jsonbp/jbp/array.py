@@ -1,7 +1,7 @@
 
 from sys import maxsize
-import jbp.violation as jbpViolation
-import jbp.field as jbpField
+from . import violation as jbpViolation
+from . import field as jbpField
 
 class JsonArray(jbpField.JsonField):
 	def __init__(self, baseField):

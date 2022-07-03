@@ -1,21 +1,21 @@
 
-
 # jsonbp
 
 **jsonbp** (JSON BluePrint) is a library to validate and deserialize JSON into Python based on a schema. There is [json-schema][json_schema] and its implementations already if you want a more mature and more widely used technique, but I needed some features that were not easily available by just patching json-schema, so this library is the result.
 
 jsonbp's design main goals were:
-- trivial to integrate and use
 - schema reuse through import / type system
 - support for enums
 - built in numeric fixed precision type (which deserializes directly into Python's Decimal)
 - built in datetime type (which deserializes directly into Python's datetime)
 - error reporting with support for localization
+- easy to integrate and use
 
 ## Contents
  - [Schema definition](#schema-definition)
  - [Usage](#usage)
  - [Requirements and Dependencies](#requirements-and-dependencies)
+ - [Installation](#installation)
  - [Documentation](#documentation)
 
 ## Schema definition
@@ -95,7 +95,7 @@ enum color {
 }
 ```
 
-For detailed information structuring your schema and using these directives, see [`Schema definition`](docs/schema.md).
+(For detailed information using these directives, see the [Documentation section](#documentation))
 
 ## Usage
 
@@ -112,7 +112,7 @@ For schema loading one can use these two functions, which do the same thing, the
 
 - \<blueprint object>.deserialize(\<JSON string>) => (success, outcome)
 
-This is the only method that should be invoked from the blueprint object returned by load()/loads(). It expects a string holding the JSON contents to be deserialized. It returns a tuple in the form *(success, outcome)*. **success** is a boolean flagging if the deserialization was successful. If successful, **outcome** will store the Python data obtained from the JSON string. Otherwise (**success** is false) **outcome** will have a message explaining what was not compliant with the expected schema. More details can be found on [`Error handling and error localization`](docs/error.md)
+This is the only method that should be invoked from the blueprint object returned by load()/loads(). It expects a string holding the JSON contents to be deserialized. It returns a tuple in the form *(success, outcome)*. **success** is a boolean flagging if the deserialization was successful. If successful, **outcome** will store the Python data obtained from the JSON string. Otherwise (**success** is false) **outcome** will have a message explaining what was not compliant with the expected schema.
 
 ### Example
 
@@ -140,6 +140,15 @@ print(f'Outcome: {outcome}')
 
 jsonbp requires Python 3.6+, that's it.  
 Under the hood, jsonbp uses [PLY][ply] for its schema parsing. PLY comes included with jsonbp already, there's no need to download it separately.
+
+## Installation
+
+jsonbp is available at PyPI:  [https://pypi.org/project/jsonbp/](https://pypi.org/project/jsonbp/)
+
+To install through pip:
+```bash
+pip3 install jsonbp
+```
 
 ## Documentation
 

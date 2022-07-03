@@ -4,13 +4,13 @@ import decimal
 import json
 import uuid
 
-import jbp.error as jbpError
-import jbp.field as jbpField
-import jbp.array as jbpArray
+from . import error as jbpError
+from . import field as jbpField
+from . import array as jbpArray
 
 from decimal import Decimal
 from datetime import datetime
-from jbp.types import primitive_types
+from .types import primitive_types
 
 #-------------------------------------------------------------------------------
 

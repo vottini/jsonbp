@@ -352,4 +352,4 @@ root {
 root point2d[]
 ```
 
-As is ilustrated by the above examples, arrays can have two "specificities", **minLength** and **maxLength**, which limits respectively the minimum and maximum number of elements they array may contain.
+As is ilustrated by the above examples, arrays can have two "specificities", **minLength** and **maxLength**, which limits respectively the minimum and maximum number of elements the array may contain.

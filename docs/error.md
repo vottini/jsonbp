@@ -36,7 +36,7 @@ Something bad occured: Error parsing line 3: token 'dda' misplaced
 
 ## Errors during JSON deserialization
 
-These errors happen when someone feeds to your program a JSON that is either incomplete or one that has an unexpected/undesired values. The blueprint method **deserialize()** returns a pair of values, the first one indicates whether the deserialization was successful or not. If deserialization fails, the seconds value holds a message explaining why the given string was not accepted.
+These errors happen when someone feeds to your program a JSON that is either incomplete or one that has an unexpected/undesired value. The blueprint method **deserialize()** returns a pair of values, the first one indicates whether the deserialization was successful or not. If deserialization fails, the seconds value holds a message explaining why the given string was not accepted.
 
 Here's a full example ilustrating error reporting: we define a blueprint to accept fields **'a'** and **'b'** that must be stricly decimal. We then do some processing on them (add them together) and return the result with status 200 (success). If, however, a bad JSON is fed to our program, we return status 400 (bad request) and the reason of the failure:
 
@@ -47,8 +47,8 @@ import jsonbp
 
 blueprint = '''
 root {
-	a: integer,
-	b: integer
+	a: decimal,
+	b: decimal
 }
 '''
 
@@ -137,7 +137,7 @@ FLOAT_PARSING=Unable to parse "{text}" as float
 DECIMAL_PARSING=Unable to parse "{text}" as decimal
 OUTSIDE_RANGE=Value {value} is outside expected range
 INVALID_BOOLEAN=Value must be "true" or "false", got "{value}"
-INVALID_STRING=Not a valid string'
+INVALID_STRING=Not a valid string
 INVALID_LENGTH=Length {length} is out of expected range
 INVALID_DATETIME="{text}" doesn't match expected datetime format or is not a valid date
 UNKNOWN_LITERAL=Unknown value "{value}"

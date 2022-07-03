@@ -27,7 +27,6 @@ for subdir in verificationSubdirs:
 
 import sys
 import jsonbp
-import jbp.violation as jbpViolation
 
 verified = 1
 for subdir, blueprintFile in verifications.items():
@@ -39,7 +38,7 @@ for subdir, blueprintFile in verifications.items():
 		print("Aborting...")
 		break
 
-	except jbpViolation.JsonViolation as e:
+	except jsonbp.SchemaViolation as e:
 		print(f"OK <{e}>")
 		verified += 1
 

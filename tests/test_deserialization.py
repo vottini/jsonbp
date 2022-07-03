@@ -75,7 +75,6 @@ for subdir in verificationSubdirs:
 
 import sys
 import jsonbp
-import jbp.error as jbpError
 
 def abort(filename):
 	print(f"Aborting on file: {filename}")
@@ -103,7 +102,7 @@ for key, value in verifications.items():
 				abort(blueprintFile)
 
 			if not shouldSucceed:
-				expectedError = getattr(jbpError, expectedResult)
+				expectedError = getattr(jsonbp.jbpError, expectedResult)
 				returnedError = obtainedResult.getErrorType()
 				print(f'[{obtainedResult}] ', end='')
 

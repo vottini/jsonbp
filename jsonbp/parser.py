@@ -1,15 +1,15 @@
 
-import jbp.ply.lex as lex
-import jbp.ply.yacc as yacc
+from .ply import lex as plyLex
+from .ply import yacc as plyYacc
 
-import jbp.error as jbpError
-import jbp.violation as jbpViolation
-import jbp.blueprint as jbpBlueprint
-import jbp.declaration as jbpDeclaration
-import jbp.field as jbpField
-import jbp.array as jbpArray
+from .jbp import error as jbpError
+from .jbp import violation as jbpViolation
+from .jbp import blueprint as jbpBlueprint
+from .jbp import declaration as jbpDeclaration
+from .jbp import field as jbpField
+from .jbp import array as jbpArray
 
-from jbp.types import primitive_types
+from .jbp.types import primitive_types
 from decimal import Decimal
 
 reserved = (
@@ -91,17 +91,15 @@ t_ignore  = ' \t\r'
 
 #---------------------------------------------------------------
 
-SchemaViolation = jbpViolation.JsonViolation
-
 def t_error(t):
 	sentence = t.value.split()[0]
 	msg = f"Syntax error: Unexpected sentence '{sentence}' on line {t.lineno}"
-	raise SchemaViolation(msg)
+	raise jbpViolation.JsonViolation(msg)
 
 def p_error(p):
 	if p == None: raise jbpViolation.JsonViolation("Empty blueprint")
 	msg = f"Error parsing line {p.lineno}: token '{p.value}' misplaced"
-	raise SchemaViolation(msg)
+	raise jbpViolation.JsonViolation(msg)
 
 #---------------------------------------------------------------
 
@@ -519,8 +517,8 @@ def load(filepath):
 
 	
 def loads(contents, contentPath='.', contentName=None):
-	lexer = lex.lex()
-	parser = yacc.yacc()
+	lexer = plyLex.lex()
+	parser = plyYacc.yacc()
 
 	try:
 		mutex.acquire()
@@ -541,19 +539,3 @@ def loads(contents, contentPath='.', contentName=None):
 	
 	finally:
 		mutex.release()
-
-
-def useLanguage(languageCode):
-	localizationPath = f'messages.{languageCode}.ini'
-
-	if not os.path.isfile(localizationPath):
-		scriptPath = os.path.dirname(__file__)
-		localizationPath = f'{scriptPath}/jbp/localization/messages.{languageCode}.ini'
-
-	print(f"Using file {localizationPath}")
-	jbpError.useTranslation(localizationPath)
-
-
-defaultLanguage = "en_US"
-useLanguage(defaultLanguage)
-
