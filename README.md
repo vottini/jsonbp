@@ -22,7 +22,7 @@ jsonbp's design main goals were:
 
 jsonbp uses its own (very simple) domain language to define a schema.
 The only mandatory declaration is the **"root"** entry, which determines the expected JSON contents.
-Here's a simple hypotetical example:
+Here's a simple hypothetical example:
 
 ```
 root {
@@ -66,7 +66,7 @@ Besides **"root"**, in jsonbp the following optional directives can be used to o
 - **"enum"** -> to define a list of allowed values for given fields
 - **"import"** -> to reuse directives from existing blueprints
 
-One can then make use of these features to simplify and make the schema more modular. In the above example schema, we could split the definitions and get something more reusable, obtaining for example:
+One can then make use of these features to simplify and make the schema more modular. In the above example schema, we could split the definitions and get something more reusable, like the following:
 
 ```
 type non_negative : float (min=0.0)
@@ -103,8 +103,8 @@ All of jsonbp can be summarized in only 2 entrypoints which are suplied by 3 fun
 
 ### Schema parsing
 
-- jsonbp.load(<schema file path>) => \<blueprint object>
-- jsonbp.loads(<schema string>) => \<blueprint object>
+- jsonbp.load(\<schema file path>) => \<blueprint object>
+- jsonbp.loads(\<schema string>) => \<blueprint object>
 
 For schema loading one can use these two functions, which do the same thing, the only difference is that one expects a path to a file storing the schema content while the other expects a string with the schema content itself. When there's a problem with the supplied schema, an exception is thrown. More on this can be read on [`Error handling and error localization`](docs/error.md). Both functions, when succeed loading the schema, return a blueprint instance that can be used to deserialize JSON strings.
 
@@ -155,6 +155,7 @@ pip3 install jsonbp
 That was just an introduction, if you are interested in using jsonbp here are some more detailed information:
 - [`Schema definition`](docs/schema.md)
 - [`Error handling and error localization`](docs/error.md)
+- [`Sample of using jsonbp in Flask `](https://github.com/vottini/sample-jsonbp-flask)
 
 [//]: References
    [json_schema]: <https://json-schema.org/>

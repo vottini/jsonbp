@@ -119,7 +119,7 @@ and then the previous example would have as output:
 {"a": 42 "b": "30"} => status: 400 | payload: {'error': "Na raíz: JSON inválido, erro na linha 1, coluna 10: Expecting ',' delimiter"}
 ```
 
-jsonbp first searchs the working directory for the file **messages.<language code>.ini**.  
+jsonbp first searchs the working directory for the file **messages.\<language code>.ini**.  
 If no such file exists in the working directory, it then searchs for the same file name inside directory **jbp/localization** where jsonbp is installed.
 
 The messages are rather few and can be easily translated should you want to make your own version.  
@@ -139,7 +139,7 @@ OUTSIDE_RANGE=Value {value} is outside expected range
 INVALID_BOOLEAN=Value must be "true" or "false", got "{value}"
 INVALID_STRING=Not a valid string
 INVALID_LENGTH=Length {length} is out of expected range
-INVALID_DATETIME="{text}" doesn't match expected datetime format or is not a valid date
+INVALID_DATETIME="{text}" does not match expected datetime format or is not a valid date
 UNKNOWN_LITERAL=Unknown value "{value}"
 INVALID_ENUM=Not a valid string
 MISSING_FIELD=Missing field "{field}"
