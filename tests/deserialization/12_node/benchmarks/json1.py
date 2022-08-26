@@ -1,5 +1,5 @@
 
-result = {
+benchmark['result'] = {
 	"position": {
 		"latitude": -22,
 		"longitude": 44,

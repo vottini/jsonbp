@@ -1,14 +1,13 @@
 
-print("Running deserialization tests...")
-
 import os
 import os.path
 import sys
 
 from decimal import Decimal
 from datetime import datetime
+import pytest
 
-verificationDir = 'tests/deserialization'
+verificationDir = 'deserialization'
 verificationSubdirs = [f.name
 	for f in os.scandir(verificationDir)
 	if f.is_dir()]
@@ -74,74 +73,83 @@ for subdir in verificationSubdirs:
 		verificationsTotal += len(trials)
 
 import sys
+sys.path.append('..')
 import jsonbp
 
-def abort(filename):
-	print(f"Aborting on file: {filename}")
-	sys.exit(0)
+def testDeserializations():
+	verified = 1
 
-verified = 1
-for key, value in verifications.items():
-	blueprintFile, trials = value
-	blueprint = jsonbp.load(blueprintFile)
+	for key, value in verifications.items():
+		blueprintFile, trials = value
+		blueprint = jsonbp.load(blueprintFile)
+		benchmark = {}
 
-	for trial in trials:
-		description, jsonFile, expectedOutcome, expectedResult = trial
-		print(f'({verified}/{verificationsTotal}) {description} ... ', end='')
-		shouldSucceed = "OK" == expectedOutcome
+		for trial in trials:
+			description, jsonFile, expectedOutcome, expectedResult = trial
+			print(f'({str(verified).zfill(3)}/{verificationsTotal}) {description} ... ', end='')
+			shouldSucceed = "OK" == expectedOutcome
 
-		with open(jsonFile, "r") as fd:
-			outcome, obtainedResult = blueprint.deserialize(fd.read())
-			correct = (outcome == shouldSucceed)
+			with open(jsonFile, "r") as fd:
+				outcome, obtainedResult = blueprint.deserialize(fd.read())
+				correct = (outcome == shouldSucceed)
 
-			if not correct:
-				print('Failed!')
-				print(f'Expected outcome = {shouldSucceed}')
-				print(f'Obtained outcome = {outcome}')
-				print("###", obtainedResult)
-				abort(blueprintFile)
+				if not correct:
+						print('Failed!')
+						print(f'Expected outcome = {shouldSucceed}')
+						print(f'Obtained outcome = {outcome}')
+						print("###", obtainedResult)
 
-			if not shouldSucceed:
-				expectedError = getattr(jsonbp.jbpError, expectedResult)
-				returnedError = obtainedResult.getErrorType()
-				print(f'[{obtainedResult}] ', end='')
+				assert correct
+				if not shouldSucceed:
+					expectedError = getattr(jsonbp.jbpError, expectedResult)
+					returnedError = obtainedResult.getErrorType()
+					returnedIsExpected = (expectedError == returnedError)
 
-				if expectedError != returnedError:
-					print('Failed!')
-					print('Expected error differs from obtained error:')
-					print(f'Expected error id = {expectedError}')
-					print(f'Obtained error id = {returnedError}')
-					abort(blueprintFile)
+					if not returnedIsExpected:
+						print('Failed!')
+						print('Expected error differs from obtained error:')
+						print(f'Expected error id = {expectedError}')
+						print(f'Obtained error id = {returnedError}')
 
-			else:
-				subdirPath = os.path.join(verificationDir, key)
-				resultFile = os.path.join(subdirPath, 'benchmarks', expectedResult)
-
-				if not os.path.isfile(resultFile):
-					print('Failed!')
-					print(f'Unable to open file "{resultFile}"')
-					print('It was not possible to check deserialization')
-					abort(blueprintFile)
+					assert returnedIsExpected
 
 				else:
+					subdirPath = os.path.join(verificationDir, key)
+					resultFile = os.path.join(subdirPath, 'benchmarks', expectedResult)
+					resultFileExists = os.path.isfile(resultFile)
+
+					if not resultFileExists:
+						print('Failed!')
+						print(f'Unable to open file "{resultFile}"')
+						print('It was not possible to check deserialization')
+
+					assert resultFileExists
+
 					with open(resultFile) as rfd:
 						contents = rfd.read()
 						exec(contents)
 
-						if not 'result' in locals():
-							print('Failed!')
-							print(f'In file "{resultFile}": "result" is not defined')
-							print('It was not possible to check deserialization')
-							abort(blueprintFile)
+						resultInBenchmark = 'result' in benchmark
 
-						if not obtainedResult == result:
-							print('Failed!')
-							print(f'Obtained result = {obtainedResult}')
-							print(f'Expected result = {result}')
-							abort(blueprintFile)
+						if not resultInBenchmark:
+								print('Failed!')
+								print(f'In file "{resultFile}": "result" was not defined for dict benchmark')
+								print('It was not possible to check deserialization')
 
-						del result
+						assert resultInBenchmark
+						correctResult = obtainedResult == benchmark['result']
 
-			print('OK')
+						if not correctResult:
+								print('Failed!')
+								print(f'Obtained result = {obtainedResult}')
+								print(f'Expected result = {benchmark["result"]}')
 
-		verified += 1
+
+						assert correctResult
+						del benchmark['result']
+
+			print("OK")
+			verified += 1
+
+if __name__ == "__main__":
+	testDeserializations()

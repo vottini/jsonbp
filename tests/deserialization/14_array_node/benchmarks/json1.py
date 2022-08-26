@@ -1,5 +1,5 @@
 
-result = {
+benchmark['result'] = {
 	"points": [
 		{
 			"x": 0.11,

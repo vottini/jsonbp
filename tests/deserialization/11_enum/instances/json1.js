@@ -1,3 +1,1 @@
-{
-	"enum_field": "GOLD"
-}
+"GOLD"

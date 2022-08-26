@@ -155,7 +155,7 @@ pip3 install jsonbp
 That was just an introduction, if you are interested in using jsonbp here are some more detailed information:
 - [`Schema definition`](docs/schema.md)
 - [`Error handling and error localization`](docs/error.md)
-- [`Sample of using jsonbp in Flask `](https://github.com/vottini/sample-jsonbp-flask)
+- [`Sample of using jsonbp in Flask`](https://github.com/vottini/sample-jsonbp-flask)
 
 [//]: References
    [json_schema]: <https://json-schema.org/>

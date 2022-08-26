@@ -1,5 +1,5 @@
 
-result = {
+benchmark['result'] = {
 	"lottery": [
 		12,
 		22,

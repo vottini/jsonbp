@@ -1,0 +1,4 @@
+
+root {
+	dummy: integer
+} [mxaLengh=4]

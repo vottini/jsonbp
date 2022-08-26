@@ -1,4 +1,2 @@
 
-result = {
-	"enum_field": "GOLD"
-}
+benchmark['result'] = "GOLD"

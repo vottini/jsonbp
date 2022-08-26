@@ -1,0 +1,4 @@
+
+root {
+	dummy: integer
+} [minLength=-2]

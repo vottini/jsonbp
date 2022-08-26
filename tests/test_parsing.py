@@ -1,10 +1,9 @@
 
-print("Running parsing tests...")
-
 import os
 import os.path
+import pytest
 
-verificationDir = 'tests/parsing'
+verificationDir = 'parsing'
 verificationSubdirs = [f.name
 	for f in os.scandir(verificationDir)
 	if f.is_dir()]
@@ -26,20 +25,27 @@ for subdir in verificationSubdirs:
 		verificationsTotal += 1
 
 import sys
+sys.path.append('..')
 import jsonbp
 
-verified = 1
-for subdir, blueprintFile in verifications.items():
-	print(f'({verified}/{verificationsTotal}) {subdir} ... ', end='')
+def testViolations():
+	verified = 1
+	for subdir, blueprintFile in verifications.items():
+		print(f'({str(verified).zfill(2)}/{verificationsTotal}) {subdir} ... ', end='')
 
-	try:
-		blueprint = jsonbp.load(blueprintFile)
-		print("KO => Error not found")
-		print("Aborting...")
-		break
+		with pytest.raises(jsonbp.SchemaViolation):
 
-	except jsonbp.SchemaViolation as e:
-		print(f"OK <{e}>")
-		verified += 1
+			try:
+				blueprint = jsonbp.load(blueprintFile)
+				print("KO => Error not found")
+				print("Aborting...")
+				break
+			
+			except jsonbp.SchemaViolation as e:
+				print(f"OK <{e}>")
+				verified += 1
+				raise e
 
-print("")
+
+if __name__ == "__main__":
+	testViolations()

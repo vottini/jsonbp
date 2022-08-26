@@ -5,6 +5,4 @@ enum color {
 	GREEN
 }
 
-root {
-	enum_field: color
-}
+root color

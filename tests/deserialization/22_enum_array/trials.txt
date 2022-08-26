@@ -1,0 +1,4 @@
+
+Parsing array enum | json1.js | OK | json1.py
+Insufficient array length | json2.js | KO | INVALID_LENGTH
+Bad value in enum array | json3.js | KO | UNKNOWN_LITERAL

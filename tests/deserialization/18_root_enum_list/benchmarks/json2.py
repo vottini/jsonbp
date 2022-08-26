@@ -1,4 +1,4 @@
 
-result = [
+benchmark['result'] = [
 	"DOM"
 ]

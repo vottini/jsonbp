@@ -1,2 +1,2 @@
 
-result = 33
+benchmark['result'] = 33

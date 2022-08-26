@@ -1,0 +1,10 @@
+
+root {
+	SUNDAY,
+	MONDAY,
+	TUESDAY,
+	WEDNESDAY,
+	THURSDAY,
+	FRIDAY,
+	SATURDAY
+} [minLength=2]

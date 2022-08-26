@@ -1,5 +1,5 @@
 
-result = [
+benchmark['result'] = [
 	"SEG",
 	"QUA",
 	"SEX"

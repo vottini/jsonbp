@@ -198,7 +198,7 @@ class JsonBlueprint:
 		return deserialize_method(fieldName, value, specs)
 
 
-	def validate_enum(self, fieldName, value, enumType):
+	def validate_enum(self, fieldName, enumType, value):
 		if None == value:
 			return False, jbpError.createForField(fieldName,
 				jbpError.NULL_VALUE)
@@ -244,7 +244,7 @@ class JsonBlueprint:
 
 		if arrayKind == jbpField.ENUM:
 			for idx, value in enumerate(contents):
-				success, processed = self.validate_enum(fieldName, value, arrayType)
+				success, processed = self.validate_enum(fieldName, arrayType, value)
 
 				if not success:
 					processed.setAsArrayElement(idx)
@@ -280,8 +280,8 @@ class JsonBlueprint:
 			retrieved = contents[fieldName]
 			if jbpArray.isArray(fieldData):
 				success, processed = self.validate_array(fieldName, fieldData, retrieved)
-				if not success: return success, processed
-				continue
+				if success: continue
+				return success, processed
 
 			fieldKind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
@@ -294,7 +294,7 @@ class JsonBlueprint:
 				continue
 
 			if fieldKind == jbpField.ENUM:
-				success, processed = self.validate_enum(fieldName, retrieved, fieldType)
+				success, processed = self.validate_enum(fieldName, fieldType, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
 				continue
@@ -319,11 +319,10 @@ class JsonBlueprint:
 
 		if rootKind == jbpField.ENUM:
 			rootEnum = self.find_enum_declaration(rootType)
-			return self.validate_enum(None, rootNode, rootContents)
+			return self.validate_enum(None, rootType, rootContents)
 
 		if rootKind == jbpField.SIMPLE:
 			return self.deserialize_field(None, rootType, rootContents)
-			pass
 
 
 	def deserialize(self, contents):

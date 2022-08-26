@@ -1,2 +1,2 @@
 
-result = -422
+benchmark['result'] = -422
