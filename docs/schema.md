@@ -6,7 +6,8 @@
 
 # Primitive Types
 
-These are the primitive types that jsonbp accepts and the corresponding Python types that they map to:
+These are the primitive types that jsonbp accepts and the corresponding Python
+types that they map to:
 
 | jsonbp   | Python |
 | ------   | ------ |
@@ -17,16 +18,19 @@ These are the primitive types that jsonbp accepts and the corresponding Python t
 | datetime | datetime.datetime |
 | string   |  str |
 
-When used in a field declaration, simple types can be customized through **specificities**, which is a list of key-values enclosed in parenthesis and separated by commas. Each type has a fixed and well defined list of possible specificities.
+When used in a field declaration, simple types can be customized through
+**specificities**, which is a list of key-values enclosed in parenthesis and
+separated by commas. Each type has a fixed and well defined list of possible
+specificities.
 
 For example:
 ```
 node weekInstant {
-    weekday: string (minLength=3, maxLength=3),
     hours: integer (min=0, max=12),
-    minutes : integer (min=0,max=59),
-    seconds : integer (min=0,max=59),
-    ampm: string (minLength=2, maxLength=2)
+    minutes : integer (min=0, max=59),
+    seconds : integer (min=0, max=59),
+    timezone: string (minLength=3, maxLength=3),
+		DST: bool (coerce=false)
 }
 ```
 
@@ -49,10 +53,13 @@ Some of the specificities may warrant an explanation:
 *groupSeparator*: Character used to organize and simplify reading big numbers  
 
 **bool**   
-*coerce*: If false, only **true** and **false** are acceptable booleans, otherwise (if "coerce" is true) during deserialization, truthy values will be accepted as **true** and falsy values will be accepted as **false**.
+*coerce*: If false, only **true** and **false** are acceptable booleans,
+otherwise (if "coerce" is true) during deserialization, truthy values will
+be accepted as **true** and falsy values will be accepted as **false**.
 
 **datetime**   
-*format*: Format used for datetime parsing. It'll be directy fed to strptime() [https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
+*format*: Format used for datetime parsing. It'll be directy fed to strptime():  
+[https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
 
 # Schema Directives
 
@@ -73,7 +80,9 @@ Comments are done using the sharp (#) character
 
 ## Nodes
 
-Nodes denote Objects in javascript. They are composed of **fields**, named entries which are assigned to hold exclusively a certain type and specialization. To register a kind of node, jsonbp accepts the pattern:
+Nodes denote Objects in JavaScript. They are composed of **fields**, named
+entries which are assigned to hold exclusively a certain type and
+specialization. To register a kind of node, jsonbp accepts the pattern:
 
 ```
 node <node name> {
@@ -84,7 +93,8 @@ node <node name> {
 }
 ```
 
-Where a field declaration is composed of a field name and its type separated by a colon. Fields of a node are separated by a comma:
+Where a field declaration is composed of a field name and its type
+separated by a colon. Fields of a node are separated by a comma:
 
 ```
 <field name> : <field type>
@@ -100,7 +110,8 @@ node car {
 }
 ```
 
-Nodes can be nested. The "car" node above could be reutilized in a "car_sale" node, like this:
+Nodes can be nested. The "car" node above could be reutilized in a
+"car_sale" node, like this:
 
 ```
 node car_sale {
@@ -111,7 +122,9 @@ node car_sale {
 }
 ```
 
-They can also have a just in place definition, it's not strictly necessary to register them using the "node" directive beforehand. The car example above could very well be defined like:
+They can also have an "inline" definition, that is, it's not strictly
+necessary to register a node directive before using it. The
+car example above could very well be defined like:
 
 ```
 node car_sale {
@@ -127,7 +140,10 @@ node car_sale {
 }
 ```
 
-By default every field in a node is mandatory. Thus, if any field is not present in the JSON instance being deserialized, an error will be flagged. If a field is to be optional, just prefix the field definition with the **"optional"** directive, like this:
+By default every field in a node is mandatory. Thus, if any field is not
+present in the JSON instance being deserialized, an error will be flagged.
+If a field is to be optional, just prefix the field definition with
+the **"optional"** directive, like this:
 
 ```
 node address {
@@ -140,13 +156,17 @@ node address {
 
 Optional fields, when present, must obey the type and specialization defined for them.
 
-Nodes can also be extended. That is, you can create a new node based on a previously defined one. It'll inherit all the fields defined in its parent or that the parent itself inherited. It's not possible, however, to "redefine" fields using the same field name in child nodes that are already present in any of their parents, an error will happen during schema parsing if you inadvertently do that. The syntax is as follows:
+Nodes can also be extended. You can create a new node based on a previously defined one.
+It'll inherit all the fields defined in its parent or that the parent itself inherited. 
+t's not possible, however, to "redefine" fields using the same field name in child nodes
+that are already present in any of their parents, an error will happen during
+schema parsing if you inadvertently do that. The syntax is as follows:
 
 ```
 node <child node name> extends <parent node name> {
-	<new field declaration>,
-	<new field declaration>,
-	...
+  <new field declaration>,
+  <new field declaration>,
+  ...
 }
 ```
 
@@ -154,24 +174,28 @@ For example:
 
 ```
 node point2d {
-	x: float,
-	y: float
+  x: float,
+  y: float
 }
 
 node point3d extends point2d {
-	z: float
+  z: float
 }
 ```
 
 ## Derived types
 
-It's possible to register and reuse the specialization of a type. This is done by the **type** directive, which creates a **derived type** that withholds all the specificities defined for it. This directive has the following syntax:
+It's possible to register and reuse the specialization of a type. This is done by
+the **type** directive, which creates a **derived type** that withholds all the specificities
+defined for it. This directive has the following syntax:
 
 ```
 type <derived type> : <parent type> (<specificity>, <specificity>, ...)
 ```
 
-Derived types need not be based solely on primitive types, they can be a further specialization of an already derived type. Once defined, a derived type can be used do specify a field content just like a primitive type. For example:
+Derived types can be a further specialization of an already derived type.
+Once defined, a derived type can be used do specify a field content just like
+a primitive type. For example:
 
 ```
 type percent : decimal (min=0.00, max=100.00)
@@ -179,12 +203,15 @@ type unitRange : double (min=-1, max=+1)
 type normalized : unitRange (min=0)
 
 node values {
-    increase: percent,
-    cosine: normalized
+  increase: percent,
+  cosine: normalized
 }
 ```
 
-When registering a new derived type, one can alter previously defined specificities. That is, you can alter some or all the specificities already defined in a base type. This can also be done directly in the field declaration, like in the following scenario:
+When registering a new derived type, one can alter previously defined specificities.
+This means you can alter some or all the specificities already defined in a base type,
+be it during the declaration of a new type as well directly in the field declaration,
+like in the following scenario:
 
 ```
 type broadScale : float (min=0, max=999)
@@ -198,7 +225,11 @@ node scaled {
 
 ## Enums
 
-Enums can be employed to define types whose values are part of a limited set. They need to be javascript **strings** and will be deserialized into Python's **str**. As one might expect, if the value in an JSON instance being deserialized is not present in the enum list, an error will be flagged. Note that values in enums are **case sensitive**. Enums can be registered through the **"enum"** directive:
+Enums can be employed to define types whose values are part of a limited set. They
+need to be JavaScript **strings** and will be deserialized into Python's **str**. As
+one might expect, if the value in an JSON instance being deserialized is not present
+in the set of values of an enum, an error will be flagged. Note that values in enums
+are **case sensitive**. Enums can be registered through the **"enum"** directive:
 
 ```
 enum months {
@@ -217,7 +248,7 @@ enum months {
 }
 ```
 
-And like nodes, they can be defined just in place:
+And just like nodes, they can be inlined:
 
 ```
 node sale {
@@ -233,7 +264,11 @@ node sale {
 
 ## Root
 
-**root** is the only mandatory directive that needs to be present in a blueprint (unless a schema file is only meant to be imported, as it's explained later on). It defines the contents that need to be present in an JSON instance for it to be validated and further deserialized. The "root" directive can receive a simple type, an enum or a node, either through a named type or a just in place definition:
+**root** is the only mandatory directive that needs to be present in a blueprint
+(unless a schema file is only meant to be imported, as it's explained later on).
+It defines the contents that need to be present in an JSON instance for it to be
+validated and further deserialized. The "root" directive can receive a simple type,
+an enum or a node, either through a named type or a just in place definition:
 
 Example 1
 ```
@@ -268,11 +303,14 @@ node credentials {
 root credentials
 ```
 
-Only one root can be declared by schema file. Declaring two or more roots will characterize a schema as ambiguos and jsonbp will complain during the schema parsing.
+Only one root can be declared by schema file. Declaring two or more roots
+will characterize a schema as ambiguos and jsonbp will complain during the
+schema parsing.
 
 ## Import
 
-Schema files can be imported by other schema files in order to reuse the definions present in them. The syntax is:
+Schema files can be imported by other schema files in order to reuse the
+definions present in them. The syntax is:
 
 ```
 include <path to schema file inside quotes including extension>
@@ -311,13 +349,24 @@ import "schema10.jbp"
 import "../dir2/schema20.jbp"
 ```
 
-When loading a schema from a string, the execution path is used as base path instead.  "root" directives (if present) are ignored when their schema file is imported.
+When loading a schema from a string, the execution path is used as base path
+instead. "root" directives (if present) are ignored when their schema file is
+imported.
 
-If the same type name is defined in more than one schema (be it a simple type, an enum or a node), jsonbp will complain and throw you an error during schema parsing. However, a single schema can be imported from multiple schemas with no problem (internally jsonbp stores the full paths that have been imported, and won't even load the same file twice)
+If the same type name is defined in more than one schema (be it a simple
+type, an enum or a node), jsonbp will complain and throw you an error during
+schema parsing. However, a single schema can be imported from multiple schemas
+with no problem (internally jsonbp stores the full paths that have been
+imported, and won't even load the same file twice)
 
 # Arrays
 
-To make any field an array, just add brackets "[]" at the end of its definition. The field can be either a simple type, an enum or a node. During deserialization, jsonbp will check if the value is in fact an **Array**, even a empty one, and will reject the JSON instance otherwise. If it is correctly validated by jsonbp, the result will be a Python **list**.  For example:
+To make any field an array, just add brackets "[]" at the end of its
+definition. The field can be either a simple type, an enum or a node.
+During deserialization, jsonbp will check if the value is in fact an **Array**,
+even a empty one, and will reject the JSON instance otherwise. If it is
+correctly validated by jsonbp, the result will be a Python **list**.
+For example:
 
 ```
 node point2d {
@@ -352,4 +401,6 @@ root {
 root point2d[]
 ```
 
-As is ilustrated by the above examples, arrays can have two "specificities", **minLength** and **maxLength**, which limits respectively the minimum and maximum number of elements the array may contain.
+As is ilustrated by the above examples, arrays can have two "specificities",
+**minLength** and **maxLength**, which limits respectively the minimum and
+maximum number of elements the array may contain.

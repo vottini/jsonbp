@@ -8,7 +8,12 @@ Errors related to jsonbp can happen at two stages:
 
 ## Errors during Schema Parsing
 
-This kind of errors are problems with the schema itself. They can happen at the call to jsonbp.load() or jsonbp.loads() functions. These functions will throw a **jsonbp.SchemaViolation** exception (alias for jbp.violation.JsonViolation) when the internal parser finds something that doesn't seem right. As these errors are to be reported to the developers themselves and not to the outside world, they do not have localized messages.
+This kind of errors are problems with the schema itself. They can happen at
+the call to *jsonbp.load()* or *jsonbp.loads()* functions. These functions
+will throw a **jsonbp.SchemaViolation** exception when the internal parser
+finds something that doesn't seem right. As these errors are to be reported
+to the developers themselves and not to the outside world, they do not have
+localized messages.
 
 For example:
 ```py
@@ -32,13 +37,27 @@ would output:
 Something bad occured: Error parsing line 3: token 'dda' misplaced
 ```
 
-**Note**: This specific exception is **not really meant to be caught**, that is, it's not advisable to call loads() or load() from inside a try block. In reality, it is just a means to end execution while printing the reason why the schema failed to be parsed, but this during development stage. In production, after the schema has correctly been written and tested, it seems reasonable that it won't fail to be parsed anymore, unless the schema file is corrupted somehow, in which case the best approach might be to let your program fail and check what is stopping it from starting again.
+**Note**: This specific exception is **not really meant to be caught**, that is,
+it's not advisable to call loads() or load() from inside a try block and catch
+**json.SchemaViolation**. In fact, it is just a means to end execution while
+printing the reason why the schema failed to be parsed, but this should be
+done during development stage. In production, after the schema has correctly
+been written and tested, it seems reasonable that it won't fail to be parsed anymore,
+unless the schema file is corrupted somehow, in which case the best approach
+might be to let your program fail and check what is stopping it from starting again.
 
 ## Errors during JSON deserialization
 
-These errors happen when someone feeds to your program a JSON that is either incomplete or one that has an unexpected/undesired value. The blueprint method **deserialize()** returns a pair of values, the first one indicates whether the deserialization was successful or not. If deserialization fails, the seconds value holds a message explaining why the given string was not accepted.
+These errors happen when someone feeds your program a JSON that is either
+incomplete or that has an unexpected/undesired value. The blueprint
+method **deserialize()** returns a pair of values, the first one indicates
+whether the deserialization was successful or not. If deserialization fails,
+the seconds value holds a message explaining why the given string was not accepted.
 
-Here's a full example ilustrating error reporting: we define a blueprint to accept fields **'a'** and **'b'** that must be stricly decimal. We then do some processing on them (add them together) and return the result with status 200 (success). If, however, a bad JSON is fed to our program, we return status 400 (bad request) and the reason of the failure:
+Here's a full example ilustrating error reporting: we define a blueprint to accept
+fields **'a'** and **'b'** that must be stricly decimal. We then do some processing
+on them and return the result with status 200 (success). If, however, a bad JSON
+is fed to our program, we return status 400 (bad request) and the reason of the failure:
 
 ```py
 import jsonbp
@@ -100,7 +119,11 @@ Here's the output:
 
 ### Localizing JSON deserialization Errors
 
-It's possible to make jsonbp return localized strings from errors of deserialization. To do that, right after importing the jsonbp module, use its function **useLanguage()** to set the desired localization. American English ('en_US') is the default and also the fallback if the desired language is not found.
+It's possible to make jsonbp return localized strings from errors of
+deserialization. To do that, right after importing the jsonbp module, use its
+function **useLanguage()** to set the desired localization. American English
+('en_US') is the default and also the fallback if the desired language is
+not found.
 
 To use Brazilian Portuguese for example, one can do as follows during importing:
 
@@ -120,10 +143,12 @@ and then the previous example would have as output:
 ```
 
 jsonbp first searchs the working directory for the file **messages.\<language code>.ini**.  
-If no such file exists in the working directory, it then searchs for the same file name inside directory **jbp/localization** where jsonbp is installed.
+If no such file exists in the working directory, it then searchs for the same
+file name inside directory **jbp/localization** where jsonbp is installed.
 
 The messages are rather few and can be easily translated should you want to make your own version.  
-They are composed of a prefix (at which level the error happened) plus an explanation of what caused it. The messages are specified in a simple properties (ini) file.
+They are composed of a prefix (signalizing which level the error happened) plus an explanation
+of what caused it. The messages are specified in a simple properties (ini) file.
 
 For example, here's the english version that comes with jsonbp:
 
