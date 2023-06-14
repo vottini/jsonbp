@@ -1,0 +1,23 @@
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jsonbp"
+version = "0.9.2"
+description = "JSON Python Deserializer"
+authors = [
+	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
+]
+requires-python = ">=3.6"
+readme = { file = "README.rst", content-type = "text/markdown" }
+keywords = ["JSON", "deserialization"]
+license = {text = "MIT"}
+classifiers = [
+	"Development Status :: 5 - Production/Stable",
+	"Intended Audience :: Developers",
+	"License :: OSI Approved :: MIT License",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3 :: Only",
+]

@@ -473,9 +473,7 @@ loadedFiles = dict()
 pushedEnvs = list()
 
 def setupEnv(contentPath, output):
-	global blueprint
-	global currentPath
-
+	global blueprint, currentPath
 	currentPath = contentPath
 	blueprint = output
 
@@ -487,8 +485,7 @@ def pushEnv():
 
 
 def popEnv():
-	global currentPath
-	global blueprint
+	global currentPath, blueprint
 
 	mutex.acquire()
 	env = pushedEnvs.pop()
@@ -497,7 +494,6 @@ def popEnv():
 #---------------------------------------------------------------
 
 import os
-import os.path
 
 def load(filepath):
 	abspath = os.path.abspath(filepath)
@@ -539,3 +535,10 @@ def loads(contents, contentPath='.', contentName=None):
 	
 	finally:
 		mutex.release()
+
+#------------------------------------------------------------------------------
+
+def invalidateCache():
+	global loadedFiles
+	loadedFiles = dict()
+
