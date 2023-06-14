@@ -1,0 +1,6 @@
+
+root {
+  login: string (minLength=5, maxLength=64),
+  password: string (minLength=8, maxLength=128)
+}
+

@@ -9,6 +9,6 @@ class TypeDeclaration:
 
 #-------------------------------------------------------------------------------
 
-def create(typeName, specs):
+def createDeclaration(typeName, specs):
 	return TypeDeclaration(typeName, specs)
 

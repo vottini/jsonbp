@@ -1,10 +1,4 @@
 
-# kinds
-
-SIMPLE = 0
-ENUM   = 1
-NODE   = 2
-
 class JsonField:
 	def __init__(self, fieldKind, fieldType):
 		self.fieldKind = fieldKind
@@ -16,6 +10,6 @@ class JsonField:
 
 #-------------------------------------------------------------------------------
 
-def create(fieldKind, fieldType):
+def createField(fieldKind, fieldType):
 	return JsonField(fieldKind, fieldType)
 

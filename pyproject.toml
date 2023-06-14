@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonbp"
-version = "0.9.2"
+version = "0.9.5"
 description = "JSON Python Deserializer"
 authors = [
 	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
@@ -21,3 +21,7 @@ classifiers = [
 	"Operating System :: OS Independent",
 	"Programming Language :: Python :: 3 :: Only",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/vottini/jsonbp"
+

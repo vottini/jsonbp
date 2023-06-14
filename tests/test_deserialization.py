@@ -101,7 +101,7 @@ def testDeserializations():
 
 				assert correct
 				if not shouldSucceed:
-					expectedError = getattr(jsonbp.jbpError, expectedResult)
+					expectedError = getattr(jsonbp.error_type, expectedResult)
 					returnedError = obtainedResult.getErrorType()
 					returnedIsExpected = (expectedError == returnedError)
 
@@ -153,3 +153,4 @@ def testDeserializations():
 
 if __name__ == "__main__":
 	testDeserializations()
+

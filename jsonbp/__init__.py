@@ -1,11 +1,10 @@
 
 import os
 
+from . import error_type
 from .parser import load, loads, invalidateCache
-from .jbp import violation as jbpViolation
-from .jbp import error as jbpError
-
-SchemaViolation = jbpViolation.JsonViolation
+from .exception import SchemaViolation
+from .error import useTranslation
 
 def useLanguage(languageCode):
 	localizationPath = f'messages.{languageCode}.ini'
@@ -16,7 +15,7 @@ def useLanguage(languageCode):
 			"localization",
 			localizationPath)
 
-	jbpError.useTranslation(localizationPath)
+	useTranslation(localizationPath)
 
 
 defaultLanguage = "en_US"

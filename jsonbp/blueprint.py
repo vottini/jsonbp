@@ -4,13 +4,15 @@ import decimal
 import json
 import uuid
 
-from . import error as jbpError
-from . import field as jbpField
-from . import array as jbpArray
-
 from decimal import Decimal
 from datetime import datetime
+
+from . import field_type
+from . import error_type
+
 from .types import primitive_types
+from .error import createErrorForField, createErrorForNode, createErrorForRoot
+from .array import isArray
 
 #-------------------------------------------------------------------------------
 
@@ -25,18 +27,18 @@ def d_integer(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	if None == value:
-		return False, jbpError.createForField(fieldName,
-			jbpError.NULL_VALUE)
+		return False, createErrorForField(fieldName,
+			error_type.NULL_VALUE)
 
 	try:
 		rawValue = int(strValue)
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, jbpError.createForField(fieldName,
-				jbpError.OUTSIDE_RANGE, value=rawValue)
+			return False, createErrorForField(fieldName,
+				error_type.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, jbpError.createForField(fieldName,
-			jbpError.INTEGER_PARSING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.INTEGER_PARSING, text=strValue)
 
 	return True, rawValue
 
@@ -45,20 +47,20 @@ def d_float(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	if None == value:
-		return False, jbpError.createForField(fieldName,
-			jbpError.NULL_VALUE)
+		return False, createErrorForField(fieldName,
+			error_type.NULL_VALUE)
 
 	try:
 		sanedValue = strValue.replace('Infinity', 'inf')
 		rawValue = float(sanedValue)
 
 		if not specs['min'] <= rawValue <= specs['max']:
-			return False, jbpError.createForField(fieldName,
-				jbpError.OUTSIDE_RANGE, value=rawValue)
+			return False, createErrorForField(fieldName,
+				error_type.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, jbpError.createForField(fieldName,
-			jbpError.FLOAT_PARSING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.FLOAT_PARSING, text=strValue)
 
 	return True, rawValue
 
@@ -70,12 +72,12 @@ def d_decimal(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
 	if None == strValue:
-		return False, jbpError.createForField(fieldName,
-			jbpError.NULL_VALUE)
+		return False, createErrorForField(fieldName,
+			error_type.NULL_VALUE)
 
 	if not isinstance(strValue, str):
-		return False, jbpError.createForField(fieldName,
-			jbpError.DECIMAL_PARSING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.DECIMAL_PARSING, text=strValue)
 
 	grpSep = specs['groupSeparator']
 	decSep = specs['decimalSeparator']
@@ -85,8 +87,8 @@ def d_decimal(fieldName, value, specs):
 	decimalPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
 
 	if None == re.match(decimalPattern, strValue):
-		return False, jbpError.createForField(fieldName,
-			jbpError.DECIMAL_PARSING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.DECIMAL_PARSING, text=strValue)
 
 	try:
 		precision = f"1e-{specs['fractionalLength']}"
@@ -96,12 +98,12 @@ def d_decimal(fieldName, value, specs):
 			context=roundingContext)
 
 		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, jbpError.createForField(fieldName,
-				jbpError.OUTSIDE_RANGE, value=rawValue)
+			return False, createErrorForField(fieldName,
+				error_type.OUTSIDE_RANGE, value=rawValue)
 
 	except Exception as e:
-		return False, jbpError.createForField(fieldName,
-			jbpError.DECIMAL_PARSING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.DECIMAL_PARSING, text=strValue)
 
 	return True, rawValue
 
@@ -113,8 +115,8 @@ def d_bool(fieldName, value, specs):
 		return True, value
 
 	if not specs['coerce']:
-		return False, jbpError.createForField(fieldName,
-			jbpError.INVALID_BOOLEAN, value=value)
+		return False, createErrorForField(fieldName,
+			error_type.INVALID_BOOLEAN, value=value)
 
 	# coercion attempt
 	# check if is 'null' or empty string
@@ -143,23 +145,23 @@ def d_datetime(fieldName, value, specs):
 		return True, parsed_date
 
 	except ValueError as e:
-		return False, jbpError.createForField(fieldName,
-			jbpError.INVALID_DATETIME, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.INVALID_DATETIME, text=strValue)
 
 	except TypeError as e:
-		return False, jbpError.createForField(fieldName,
-			jbpError.INVALID_STRING, text=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.INVALID_STRING, text=strValue)
 
 
 def d_string(fieldName, strValue, specs):
 	if not isinstance(strValue, str):
-		return False, jbpError.createForField(fieldName,
-			jbpError.INVALID_STRING, value=strValue)
+		return False, createErrorForField(fieldName,
+			error_type.INVALID_STRING, value=strValue)
 
 	strLength = len(strValue)
 	if not specs['minLength'] <= strLength <= specs['maxLength']:
-		return False, jbpError.createForField(fieldName,
-			jbpError.INVALID_LENGTH, length=strLength)
+		return False, createErrorForField(fieldName,
+			error_type.INVALID_LENGTH, length=strLength)
 
 	return True, strValue
 
@@ -200,36 +202,36 @@ class JsonBlueprint:
 
 	def validate_enum(self, fieldName, enumType, value):
 		if None == value:
-			return False, jbpError.createForField(fieldName,
-				jbpError.NULL_VALUE)
+			return False, createErrorForField(fieldName,
+				error_type.NULL_VALUE)
 
 		if not isinstance(value, str):
-			return False, jbpError.createForField(fieldName,
-				jbpError.INVALID_ENUM, value=value)
+			return False, createErrorForField(fieldName,
+				error_type.INVALID_ENUM, value=value)
 
 		possibleValues = self.find_enum_declaration(enumType)
 
 		if not value in possibleValues:
-			return False, jbpError.createForField(fieldName, 
-				jbpError.UNKNOWN_LITERAL, value=value)
+			return False, createErrorForField(fieldName, 
+				error_type.UNKNOWN_LITERAL, value=value)
 		
 		return True, value
 
 
 	def validate_array(self, fieldName, jArray, contents):
 		if not isinstance(contents, list):
-			return False, jbpError.createForField(fieldName,
-				jbpError.INVALID_ARRAY)
+			return False, createErrorForField(fieldName,
+				error_type.INVALID_ARRAY)
 
 		arrayLen = len(contents)
 		if not jArray.minLength <= arrayLen <= jArray.maxLength:
-			return False, jbpError.createForField(fieldName,
-				jbpError.INVALID_LENGTH, length=arrayLen)
+			return False, createErrorForField(fieldName,
+				error_type.INVALID_LENGTH, length=arrayLen)
 
 		arrayKind = jArray.fieldKind
 		arrayType = jArray.fieldType
 
-		if arrayKind == jbpField.NODE:
+		if arrayKind == field_type.NODE:
 			arrayNode = self.find_node_declaration(arrayType)
 			for idx, content in enumerate(contents):
 				success, processed = self.validate_node(fieldName, arrayNode, content)
@@ -242,7 +244,7 @@ class JsonBlueprint:
 
 			return True, contents
 
-		if arrayKind == jbpField.ENUM:
+		if arrayKind == field_type.ENUM:
 			for idx, value in enumerate(contents):
 				success, processed = self.validate_enum(fieldName, arrayType, value)
 
@@ -268,17 +270,17 @@ class JsonBlueprint:
 
 	def validate_node(self, nodeName, node, contents):
 		if not isinstance(contents, dict):
-			return False, jbpError.createForNode(nodeName,
-				jbpError.INVALID_NODE)
+			return False, createErrorForNode(nodeName,
+				error_type.INVALID_NODE)
 
 		for fieldName, fieldData in node.items():
 			if not fieldName in contents:
 				if fieldData.optional: continue
-				return False, jbpError.createForNode(nodeName,
-					jbpError.MISSING_FIELD, field=fieldName)
+				return False, createErrorForNode(nodeName,
+					error_type.MISSING_FIELD, field=fieldName)
 
 			retrieved = contents[fieldName]
-			if jbpArray.isArray(fieldData):
+			if isArray(fieldData):
 				success, processed = self.validate_array(fieldName, fieldData, retrieved)
 				if success: continue
 				return success, processed
@@ -286,14 +288,14 @@ class JsonBlueprint:
 			fieldKind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
 
-			if fieldKind == jbpField.NODE:
+			if fieldKind == field_type.NODE:
 				nodeSpecs = self.find_node_declaration(fieldType)
 				success, processed = self.validate_node(fieldName, nodeSpecs, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
 				continue
 
-			if fieldKind == jbpField.ENUM:
+			if fieldKind == field_type.ENUM:
 				success, processed = self.validate_enum(fieldName, fieldType, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
@@ -307,21 +309,21 @@ class JsonBlueprint:
 
 
 	def validate(self, rootContents):
-		if jbpArray.isArray(self.root):
+		if isArray(self.root):
 			return self.validate_array(None, self.root, rootContents)
 
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
-		if rootKind == jbpField.NODE:
+		if rootKind == field_type.NODE:
 			rootNode = self.find_node_declaration(rootType)
 			return self.validate_node(None, rootNode, rootContents)
 
-		if rootKind == jbpField.ENUM:
+		if rootKind == field_type.ENUM:
 			rootEnum = self.find_enum_declaration(rootType)
 			return self.validate_enum(None, rootType, rootContents)
 
-		if rootKind == jbpField.SIMPLE:
+		if rootKind == field_type.SIMPLE:
 			return self.deserialize_field(None, rootType, rootContents)
 
 
@@ -335,7 +337,7 @@ class JsonBlueprint:
 				parse_constant=ident)
 
 		except json.JSONDecodeError as e:
-			return False, jbpError.createForRoot(jbpError.JSON_PARSING,
+			return False, createErrorForRoot(error_type.JSON_PARSING,
 				line=e.lineno, column=e.colno, message=e.msg)
 	
 		return self.validate(loaded)

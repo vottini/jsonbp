@@ -1,0 +1,4 @@
+
+class SchemaViolation(Exception):
+	pass
+

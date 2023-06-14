@@ -1,4 +1,0 @@
-
-class JsonViolation(Exception):
-	pass
-
