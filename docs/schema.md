@@ -26,11 +26,11 @@ specificities.
 For example:
 ```
 node weekInstant {
-    hours: integer (min=0, max=12),
-    minutes : integer (min=0, max=59),
-    seconds : integer (min=0, max=59),
-    timezone: string (minLength=3, maxLength=3),
-		DST: bool (coerce=false)
+  hours: integer (min=0, max=12),
+  minutes : integer (min=0, max=59),
+  seconds : integer (min=0, max=59),
+  timezone: string (minLength=3, maxLength=3),
+  DST: bool (coerce=false)
 }
 ```
 
@@ -86,10 +86,10 @@ specialization. To register a kind of node, jsonbp accepts the pattern:
 
 ```
 node <node name> {
-	<field declaration>,
-	<field declaration>,
-	...
-	<field declaration>
+  <field declaration>,
+  <field declaration>,
+  ...
+  <field declaration>
 }
 ```
 
@@ -104,9 +104,9 @@ for example:
 
 ```
 node car {
-	model: string,
-	brand: string,
-	year: integer
+  model: string,
+  brand: string,
+  year: integer
 }
 ```
 
@@ -115,10 +115,10 @@ Nodes can be nested. The "car" node above could be reutilized in a
 
 ```
 node car_sale {
-	description: car,
-	price: decimal,
-	discount: decimal,
-	installments: integer
+  description: car,
+  price: decimal,
+  discount: decimal,
+  installments: integer
 }
 ```
 
@@ -128,15 +128,15 @@ car example above could very well be defined like:
 
 ```
 node car_sale {
-	description: {
-		model: string,
-		brand: string,
-		year: integer
-	},
-
-	price: decimal,
-	discount: decimal,
-	installments: integer
+  description: {
+    model: string,
+    brand: string,
+    year: integer
+  },
+  
+  price: decimal,
+  discount: decimal,
+  installments: integer
 }
 ```
 
@@ -147,10 +147,10 @@ the **"optional"** directive, like this:
 
 ```
 node address {
-	street: string,
-	number: integer,
-	zipCode: string,
-	optional complement: string
+  street: string,
+  number: integer,
+  zipCode: string,
+  optional complement: string
 }
 ```
 
@@ -218,7 +218,7 @@ type broadScale : float (min=0, max=999)
 type narrowScale : broadScale (max=99)
 
 node scaled {
-	restrictedScale : narrowScale (max=9)
+  restrictedScale : narrowScale (max=9)
 }
 ```
 
@@ -233,18 +233,18 @@ are **case sensitive**. Enums can be registered through the **"enum"** directive
 
 ```
 enum months {
-	January,
-	February,
-	March,
-	April,
-	May,
-	June,
-	July,
-	August,
-	September,
-	October,
-	November,
-	December
+  January,
+  February,
+  March,
+  April,
+  May,
+  June,
+  July,
+  August,
+  September,
+  October,
+  November,
+  December
 }
 ```
 
@@ -252,13 +252,13 @@ And just like nodes, they can be inlined:
 
 ```
 node sale {
-	amount: decimal (min=0.00),
-	status: {
-		AWAITING,
-		PAID,
-		REJECTED,
-		CANCELLED
-	}
+  amount: decimal (min=0.00),
+  status: {
+    AWAITING,
+    PAID,
+    REJECTED,
+    CANCELLED
+  }
 }
 ```
 
@@ -288,16 +288,16 @@ root { IDLE, BUSY }
 Example 4
 ```
 root {
-	username: string(minLength=3),
-	password: string(minLength=8)
+  username: string(minLength=3),
+  password: string(minLength=8)
 }
 ```
 
 Example 5
 ```
 node credentials {
-	username: string(minLength=3),
-	password: string(minLength=8)
+  username: string(minLength=3),
+  password: string(minLength=8)
 }
 
 root credentials
@@ -370,19 +370,19 @@ For example:
 
 ```
 node point2d {
-	x: float,
-	y: float
+  x: float,
+  y: float
 }
 
 root {
-	points: point2d[],
-	deltaTs: double (min=0.0) [minLength=2],
-	conditions: {
-		GOOD,
-		REGULAR,
-		BAD,
-		REJECTED
-	} [minLength=1, maxLength=3]
+  points: point2d[],
+  deltaTs: double (min=0.0) [minLength=2],
+  conditions: {
+    GOOD,
+    REGULAR,
+    BAD,
+    REJECTED
+  } [minLength=1, maxLength=3]
 }
 ```
 
@@ -390,10 +390,10 @@ root {
 
 ```
 root {
-	APPLE,
-	ORANGE,
-	STRAWBERRY,
-	PINEAPLE
+  APPLE,
+  ORANGE,
+  STRAWBERRY,
+  PINEAPLE
 } [minLength=2, maxLength=2]
 
 # or even

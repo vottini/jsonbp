@@ -146,11 +146,11 @@ def p_include(p):
 
 	inclusionFile = p[2]
 	inclusionPath = os.path.join(currentPath, inclusionFile)
-	pushEnv(); loadedBlueprint = load(inclusionPath); popEnv()
+	pushEnv()
 
-	if None == loadedBlueprint:
-		msg = f'Unable to open file "{inclusionFile}"'
-		raise SchemaViolation(msg)
+	try: loadedBlueprint = load(inclusionPath)
+	except SchemaViolation as e: raise SchemaViolation(e)
+	finally: popEnv()
 
 	for typeName in loadedBlueprint.collectTypes():
 		if typeExists(typeName, excluded=loadedBlueprint.collectSources()):
@@ -504,7 +504,8 @@ def load(filepath):
 			contents = fd.read()
 
 	except FileNotFoundError:
-		return None
+		msg = f'Unable to open file "{filepath}"'
+		raise SchemaViolation(msg)
 
 	return loads(contents,
 		os.path.dirname(filepath),

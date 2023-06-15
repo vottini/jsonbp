@@ -21,16 +21,16 @@ import jsonbp
 
 blueprint = '''
 root {
-	value: integer (min=dda)
+  value: integer (min=dda)
 }
 '''
 
 try:
-	jsonbp.loads(blueprint)
-	print("All good")
+  jsonbp.loads(blueprint)
+  print("All good")
 	
 except jsonbp.SchemaViolation as e:
-	print("Something bad occured: " + str(e))
+  print("Something bad occured: " + str(e))
 ```
 would output:
 ```
@@ -66,8 +66,8 @@ import jsonbp
 
 blueprint = '''
 root {
-	a: decimal,
-	b: decimal
+  a: decimal,
+  b: decimal
 }
 '''
 
@@ -80,30 +80,30 @@ def add(data): return data['a'] + data['b']
 #------------------------------------
 
 def answer(statusCode, payload):
-	print(f" => status: {statusCode} | payload: {payload}")
+  print(f" => status: {statusCode} | payload: {payload}")
 
 payloads = [
-	'{"a": 42, "b": 1337}',
-	'{"a": 1.2e3, "b": 1337}',
-	'{"a": 42, "b": "Hello"}',
-	'{"a": 42, "c": "30"}',
-	'{"a": 42 "b": "30"}'
+  '{"a": 42, "b": 1337}',
+  '{"a": 1.2e3, "b": 1337}',
+  '{"a": 42, "b": "Hello"}',
+  '{"a": 42, "c": "30"}',
+  '{"a": 42 "b": "30"}'
 ]
 
 for received in payloads:
-	print(received, end='')
-	success, outcome = blueprint.deserialize(received)
-
-	if success:
-		data = outcome
-		processed = add(data)
-		response = {'sum': processed}
-		answer(200, response)
-
-	else:
-		reason = outcome
-		response = {'error': str(reason)}
-		answer(400, response)
+  print(received, end='')
+  success, outcome = blueprint.deserialize(received)
+  
+  if success:
+    data = outcome
+    processed = add(data)
+    response = {'sum': processed}
+    answer(200, response)
+  
+  else:
+    reason = outcome
+    response = {'error': str(reason)}
+    answer(400, response)
 
 ```
 
