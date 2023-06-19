@@ -148,7 +148,7 @@ def p_include(p):
 	inclusionPath = os.path.join(currentPath, inclusionFile)
 	pushEnv()
 
-	try: loadedBlueprint = load(inclusionPath)
+	try: loadedBlueprint = loadFile(inclusionPath, True)
 	except SchemaViolation as e: raise SchemaViolation(e)
 	finally: popEnv()
 
@@ -492,27 +492,7 @@ def popEnv():
 
 #---------------------------------------------------------------
 
-import os
-
-def load(filepath):
-	abspath = os.path.abspath(filepath)
-	if abspath in _loadedFiles:
-		return _loadedFiles[abspath]
-
-	try:
-		with open(filepath, "r") as fd:
-			contents = fd.read()
-
-	except FileNotFoundError:
-		msg = f'Unable to open file "{filepath}"'
-		raise SchemaViolation(msg)
-
-	return loads(contents,
-		os.path.dirname(filepath),
-		os.path.basename(filepath))
-
-	
-def loads(contents, contentPath='.', contentName=None):
+def _load(contents, contentPath='.', contentName=None, as_module=False):
 	lexer = plyLex.lex()
 	parser = plyYacc.yacc()
 
@@ -522,9 +502,10 @@ def loads(contents, contentPath='.', contentName=None):
 		setupEnv(contentPath, result)
 		parser.parse(contents)
 
-		if None == blueprint.root and len(_pushedEnvs) == 0:
-			msg = 'No root defined at topmost level'
-			raise SchemaViolation(msg)
+		if not as_module:
+			if None == blueprint.root and len(_pushedEnvs) == 0:
+				msg = 'No root defined at topmost level'
+				raise SchemaViolation(msg)
 
 		if None != contentName:
 			contentFullpath = os.path.join(contentPath, contentName)
@@ -537,6 +518,32 @@ def loads(contents, contentPath='.', contentName=None):
 		_mutex.release()
 
 #------------------------------------------------------------------------------
+
+import os
+
+def loadFile(filepath, as_module=False):
+	abspath = os.path.abspath(filepath)
+	if abspath in _loadedFiles:
+		return _loadedFiles[abspath]
+
+	try:
+		with open(filepath, "r") as fd:
+			contents = fd.read()
+
+	except FileNotFoundError:
+		msg = f'Unable to open file "{filepath}"'
+		raise SchemaViolation(msg)
+
+	return _load(contents,
+		os.path.dirname(filepath),
+		os.path.basename(filepath),
+		as_module)
+
+
+def loadString(string, as_module=False):
+	return _load(string, '.', None, as_module)
+	
+#-------------------------------------------------------------------------------
 
 def invalidateCache():
 	global _loadedFiles

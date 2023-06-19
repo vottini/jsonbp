@@ -6,7 +6,7 @@ import jsonbp
 def testLocaleEdges():
 	jsonbp.useLanguage('nonExistent')
 	jsonbp.useLanguage('missing')
-	blueprint = jsonbp.loads('''root { positions: integer(min=0) [maxLength=128] }''')
+	blueprint = jsonbp.loadString('''root { positions: integer(min=0) [maxLength=128] }''')
 	# tests blueprint's str()
 	print(blueprint)
 

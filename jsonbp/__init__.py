@@ -2,7 +2,7 @@
 import os
 
 from . import error_type
-from .parser import load, loads, invalidateCache
+from .parser import loadFile, loadString, invalidateCache
 from .exception import SchemaViolation
 from .error import useTranslation
 
@@ -22,8 +22,8 @@ defaultLanguage = "en_US"
 useLanguage(defaultLanguage)
 
 __all__ = [
-	"load",
-	"loads",
+	"loadFile",
+	"loadString",
 	"invalidateCache",
 	"SchemaViolation",
 	"useLanguage"

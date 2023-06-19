@@ -81,7 +81,7 @@ def testDeserializations():
 
 	for key, value in verifications.items():
 		blueprintFile, trials = value
-		blueprint = jsonbp.load(blueprintFile)
+		blueprint = jsonbp.loadFile(blueprintFile)
 		benchmark = {}
 
 		for trial in trials:

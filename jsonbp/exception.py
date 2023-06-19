@@ -1,4 +1,4 @@
 
-class SchemaViolation(Exception):
-	pass
+class SchemaViolation(Exception): pass
+class SerializationException(Exception): pass
 

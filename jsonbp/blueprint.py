@@ -11,6 +11,7 @@ from . import field_type
 from . import error_type
 
 from .types import primitive_types
+from .exception import SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
 from .array import isArray
 
@@ -23,6 +24,7 @@ class taggedNumber:
 
 #-------------------------------------------------------------------------------
 
+def s_integer(value): return value
 def d_integer(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -43,6 +45,7 @@ def d_integer(fieldName, value, specs):
 	return True, rawValue
 
 
+def s_float(value): return value
 def d_float(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -68,6 +71,7 @@ def d_float(fieldName, value, specs):
 roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
 specialChars = r'.^$*+?|'
 
+def s_decimal(value): return value
 def d_decimal(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -108,6 +112,7 @@ def d_decimal(fieldName, value, specs):
 	return True, rawValue
 
 
+def s_bool(value): return "true" if value else "false"
 def d_bool(fieldName, value, specs):
 	value = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -137,6 +142,7 @@ def d_bool(fieldName, value, specs):
 	return True, True
 
 
+def s_datetime(value): return value
 def d_datetime(fieldName, value, specs):
 	strValue = value.strValue if isinstance(value, taggedNumber) else value
 
@@ -153,6 +159,7 @@ def d_datetime(fieldName, value, specs):
 			error_type.INVALID_STRING, text=strValue)
 
 
+def s_string(value): return f'"{value}"'
 def d_string(fieldName, strValue, specs):
 	if not isinstance(strValue, str):
 		return False, createErrorForField(fieldName,
@@ -409,4 +416,91 @@ class JsonBlueprint:
 				if None != found: return found
 
 		return None
+
+	#----------------------------------------------------------------------------
+
+	def chooseRoot(self, rootName):
+		pass
+
+	#----------------------------------------------------------------------------
+
+	def serialize_element(self, element, elementName, content):
+		contentKind = element.fieldKind
+		contentType = element.fieldType
+
+		if isArray(element):
+			try: iterator = iter(content)
+
+			except TypeError:
+				content_type = type(content)
+				msg = f"{elementName}: Array content cannot be extracted from '{content_type}' value"
+				raise SerializationException(msg)
+
+			serialized = list()
+			for idx, item in enumerate(content):
+				idxName = f"{elementName} index {idx}"
+				processed = self.serialize_element(contentType, idxName, item)
+				serialized.append(processed)
+
+			inner = ",".join(serialized)
+			return f"[{inner}]"
+
+		methods = {
+			field_type.NODE: JsonBlueprint.serialize_node,
+			field_type.ENUM: JsonBlueprint.serialize_enum,
+			field_type.SIMPLE: JsonBlueprint.serialize_field
+		}
+
+		method = methods[contentKind]
+		return method(self, contentType, elementName, content)
+
+
+	def serialize_node(self, nodeType, nodeName, content):
+		node = self.find_node_declaration(nodeType)
+
+		if not isinstance(content, dict):
+			msg = f"{nodeName} needs to receive a dict to serialize"
+			raise SerializationException(msg)
+
+		serialized = list()
+		for fieldName, fieldData in node.items():
+			if not fieldName in content:
+				if fieldData.optional: continue
+				msg = f"{nodeName}: missing field {fieldName}"
+				raise SerializationException(msg)
+
+			fieldValue = content[fieldName]
+			processed = self.serialize_element(fieldData, fieldName, fieldValue)
+			serialized.append(f'"{fieldName}":{processed}')
+
+		inner = ",".join(serialized)
+		return f"{{{inner}}}"
+
+
+	def serialize_enum(self, enumType, fieldName, content):
+		possibleValues = self.find_enum_declaration(enumType)
+
+		if not content in possibleValues:
+			msg = f"Value '{value}' is not valid for field '{fieldName}'"
+			raise SerializationException(msg)
+
+		return f'"{content}"'
+
+
+	def serialize_field(self, fieldType, fieldName, content):
+		if fieldType in primitive_types:
+			specs = primitive_types[fieldType]
+			baseType = fieldType
+
+		else:
+			specs = self.find_element_declaration(fieldType)
+			baseType = specs['__baseType__']
+
+		serialize_method = globals()['s_' + baseType]
+		return serialize_method(content)
+
+	#-------------------------------------------------------------------------------
+
+	def serialize(self, content):
+		return self.serialize_element(self.root, "Root Level", content)
 

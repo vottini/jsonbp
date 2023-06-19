@@ -36,7 +36,7 @@ def testViolations():
 		with pytest.raises(jsonbp.SchemaViolation):
 
 			try:
-				blueprint = jsonbp.load(blueprintFile)
+				blueprint = jsonbp.loadFile(blueprintFile)
 				print("KO => Error not found")
 				print("Aborting...")
 				break
