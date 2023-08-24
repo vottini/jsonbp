@@ -17,160 +17,160 @@ from .array import isArray
 
 #-------------------------------------------------------------------------------
 
-class taggedNumber:
+class WrappedNumber:
 	def __init__(self, strValue): self.strValue = strValue
 	def __str__(self): return self.strValue
 	__repr__ =  __str__
 
 #-------------------------------------------------------------------------------
 
-def s_integer(value): return value
-def d_integer(fieldName, value, specs):
-	strValue = value.strValue if isinstance(value, taggedNumber) else value
-
-	if None == value:
-		return False, createErrorForField(fieldName,
-			error_type.NULL_VALUE)
-
-	try:
-		rawValue = int(strValue)
-		if not specs['min'] <= rawValue <= specs['max']:
-			return False, createErrorForField(fieldName,
-				error_type.OUTSIDE_RANGE, value=rawValue)
-
-	except Exception as e:
-		return False, createErrorForField(fieldName,
-			error_type.INTEGER_PARSING, text=strValue)
-
-	return True, rawValue
-
-
-def s_float(value): return value
-def d_float(fieldName, value, specs):
-	strValue = value.strValue if isinstance(value, taggedNumber) else value
-
-	if None == value:
-		return False, createErrorForField(fieldName,
-			error_type.NULL_VALUE)
-
-	try:
-		sanedValue = strValue.replace('Infinity', 'inf')
-		rawValue = float(sanedValue)
-
-		if not specs['min'] <= rawValue <= specs['max']:
-			return False, createErrorForField(fieldName,
-				error_type.OUTSIDE_RANGE, value=rawValue)
-
-	except Exception as e:
-		return False, createErrorForField(fieldName,
-			error_type.FLOAT_PARSING, text=strValue)
-
-	return True, rawValue
+#def s_integer(value): return value
+#def d_integer(fieldName, value, specs):
+#	strValue = value.strValue if isinstance(value, WrappedNumber) else value
+#
+#	if None == value:
+#		return False, createErrorForField(fieldName,
+#			error_type.NULL_VALUE)
+#
+#	try:
+#		rawValue = int(strValue)
+#		if not specs['min'] <= rawValue <= specs['max']:
+#			return False, createErrorForField(fieldName,
+#				error_type.OUTSIDE_RANGE, value=rawValue)
+#
+#	except Exception as e:
+#		return False, createErrorForField(fieldName,
+#			error_type.INTEGER_PARSING, text=strValue)
+#
+#	return True, rawValue
 
 
-roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
-specialChars = r'.^$*+?|'
-
-def s_decimal(value): return value
-def d_decimal(fieldName, value, specs):
-	strValue = value.strValue if isinstance(value, taggedNumber) else value
-
-	if None == strValue:
-		return False, createErrorForField(fieldName,
-			error_type.NULL_VALUE)
-
-	if not isinstance(strValue, str):
-		return False, createErrorForField(fieldName,
-			error_type.DECIMAL_PARSING, text=strValue)
-
-	grpSep = specs['groupSeparator']
-	decSep = specs['decimalSeparator']
-
-	if grpSep in specialChars: grpSep = f'\\{grpSep}'
-	if decSep in specialChars: decSep = f'\\{decSep}'
-	decimalPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
-
-	if None == re.match(decimalPattern, strValue):
-		return False, createErrorForField(fieldName,
-			error_type.DECIMAL_PARSING, text=strValue)
-
-	try:
-		precision = f"1e-{specs['fractionalLength']}"
-		sanedStrValue = strValue.replace(specs['groupSeparator'], '')
-		sanedStrValue = sanedStrValue.replace(specs['decimalSeparator'], '.')
-		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
-			context=roundingContext)
-
-		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, createErrorForField(fieldName,
-				error_type.OUTSIDE_RANGE, value=rawValue)
-
-	except Exception as e:
-		return False, createErrorForField(fieldName,
-			error_type.DECIMAL_PARSING, text=strValue)
-
-	return True, rawValue
+#def s_float(value): return value
+#def d_float(fieldName, value, specs):
+#	strValue = value.strValue if isinstance(value, WrappedNumber) else value
+#
+#	if None == value:
+#		return False, createErrorForField(fieldName,
+#			error_type.NULL_VALUE)
+#
+#	try:
+#		sanedValue = strValue.replace('Infinity', 'inf')
+#		rawValue = float(sanedValue)
+#
+#		if not specs['min'] <= rawValue <= specs['max']:
+#			return False, createErrorForField(fieldName,
+#				error_type.OUTSIDE_RANGE, value=rawValue)
+#
+#	except Exception as e:
+#		return False, createErrorForField(fieldName,
+#			error_type.FLOAT_PARSING, text=strValue)
+#
+#	return True, rawValue
 
 
-def s_bool(value): return "true" if value else "false"
-def d_bool(fieldName, value, specs):
-	value = value.strValue if isinstance(value, taggedNumber) else value
-
-	if isinstance(value, bool):
-		return True, value
-
-	if not specs['coerce']:
-		return False, createErrorForField(fieldName,
-			error_type.INVALID_BOOLEAN, value=value)
-
-	# coercion attempt
-	# check if is 'null' or empty string
-	if None == value or 0 == len(value):
-		return True, False
-
-	try:
-		rawValue = float(value)
-		# check if is effectively zero or NaN
-		if 0 == rawValue or rawValue != rawValue:
-			return True, False
-
-	except Exception as e:
-		# it was just an attempt, no problem
-		pass
-
-	# if none of the above, then most likely it's a truthy value
-	return True, True
-
-
-def s_datetime(value): return value
-def d_datetime(fieldName, value, specs):
-	strValue = value.strValue if isinstance(value, taggedNumber) else value
-
-	try:
-		parsed_date = datetime.strptime(strValue, specs['format'])
-		return True, parsed_date
-
-	except ValueError as e:
-		return False, createErrorForField(fieldName,
-			error_type.INVALID_DATETIME, text=strValue)
-
-	except TypeError as e:
-		return False, createErrorForField(fieldName,
-			error_type.INVALID_STRING, text=strValue)
+#roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
+#specialChars = r'.^$*+?|'
+#
+#def s_decimal(value): return value
+#def d_decimal(fieldName, value, specs):
+#	strValue = value.strValue if isinstance(value, WrappedNumber) else value
+#
+#	if None == strValue:
+#		return False, createErrorForField(fieldName,
+#			error_type.NULL_VALUE)
+#
+#	if not isinstance(strValue, str):
+#		return False, createErrorForField(fieldName,
+#			error_type.DECIMAL_PARSING, text=strValue)
+#
+#	grpSep = specs['groupSeparator']
+#	decSep = specs['decimalSeparator']
+#
+#	if grpSep in specialChars: grpSep = f'\\{grpSep}'
+#	if decSep in specialChars: decSep = f'\\{decSep}'
+#	decimalPattern = f'^[+-]?\\d+({grpSep}\\d+)*({decSep}\\d+)?$'
+#
+#	if None == re.match(decimalPattern, strValue):
+#		return False, createErrorForField(fieldName,
+#			error_type.DECIMAL_PARSING, text=strValue)
+#
+#	try:
+#		precision = f"1e-{specs['fractionalLength']}"
+#		sanedStrValue = strValue.replace(specs['groupSeparator'], '')
+#		sanedStrValue = sanedStrValue.replace(specs['decimalSeparator'], '.')
+#		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
+#			context=roundingContext)
+#
+#		if specs['min'] > rawValue or rawValue > specs['max']:
+#			return False, createErrorForField(fieldName,
+#				error_type.OUTSIDE_RANGE, value=rawValue)
+#
+#	except Exception as e:
+#		return False, createErrorForField(fieldName,
+#			error_type.DECIMAL_PARSING, text=strValue)
+#
+#	return True, rawValue
 
 
-def s_string(value): return f'"{value}"'
-def d_string(fieldName, strValue, specs):
-	if not isinstance(strValue, str):
-		return False, createErrorForField(fieldName,
-			error_type.INVALID_STRING, value=strValue)
+#def s_bool(value): return "true" if value else "false"
+#def d_bool(fieldName, value, specs):
+#	value = value.strValue if isinstance(value, WrappedNumber) else value
+#
+#	if isinstance(value, bool):
+#		return True, value
+#
+#	if not specs['coerce']:
+#		return False, createErrorForField(fieldName,
+#			error_type.INVALID_BOOLEAN, value=value)
+#
+#	# coercion attempt
+#	# check if is 'null' or empty string
+#	if None == value or 0 == len(value):
+#		return True, False
+#
+#	try:
+#		rawValue = float(value)
+#		# check if is effectively zero or NaN
+#		if 0 == rawValue or rawValue != rawValue:
+#			return True, False
+#
+#	except Exception as e:
+#		# it was just an attempt, no problem
+#		pass
+#
+#	# if none of the above, then most likely it's a truthy value
+#	return True, True
 
-	strLength = len(strValue)
-	if not specs['minLength'] <= strLength <= specs['maxLength']:
-		return False, createErrorForField(fieldName,
-			error_type.INVALID_LENGTH, length=strLength)
 
-	return True, strValue
+#def s_datetime(value): return value
+#def d_datetime(fieldName, value, specs):
+#	strValue = value.strValue if isinstance(value, WrappedNumber) else value
+#
+#	try:
+#		parsed_date = datetime.strptime(strValue, specs['format'])
+#		return True, parsed_date
+#
+#	except ValueError as e:
+#		return False, createErrorForField(fieldName,
+#			error_type.INVALID_DATETIME, text=strValue)
+#
+#	except TypeError as e:
+#		return False, createErrorForField(fieldName,
+#			error_type.INVALID_STRING, text=strValue)
+
+
+#def s_string(value): return f'"{value}"'
+#def d_string(fieldName, strValue, specs):
+#	if not isinstance(strValue, str):
+#		return False, createErrorForField(fieldName,
+#			error_type.INVALID_STRING, value=strValue)
+#
+#	strLength = len(strValue)
+#	if not specs['minLength'] <= strLength <= specs['maxLength']:
+#		return False, createErrorForField(fieldName,
+#			error_type.INVALID_LENGTH, length=strLength)
+#
+#	return True, strValue
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -196,15 +196,28 @@ class JsonBlueprint:
 
 	def deserialize_field(self, fieldName, fieldType, value):
 		if fieldType in primitive_types:
-			specs = primitive_types[fieldType]
+			specs = primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
 			specs = self.find_element_declaration(fieldType)
 			baseType = specs['__baseType__']
 
-		deserialize_method = globals()['d_' + baseType]
-		return deserialize_method(fieldName, value, specs)
+		try:
+			deserialize_method = primitive_types[baseType]['parser']
+			unwrappedValue = value.strValue if isinstance(value, WrappedNumber) else value
+			success, outcome = deserialize_method(unwrappedValue, specs)
+
+			if not success:
+				return False, createErrorForField(fieldName,
+					outcome["error"], type=fieldType,
+					**outcome["context"])
+
+			return success, outcome
+
+		except Exception as e:
+			return False, createErrorForField(fieldName,
+				error_type.VALUE_PARSING, type=fieldType)
 
 
 	def validate_enum(self, fieldName, enumType, value):
@@ -335,12 +348,12 @@ class JsonBlueprint:
 
 
 	def deserialize(self, contents):
-		tag_number = lambda x : taggedNumber(x)
+		wrapNumber = lambda x : WrappedNumber(x)
 		ident = lambda x : x
 
 		try:
 			loaded = json.loads(contents,
-				parse_float=tag_number, parse_int=tag_number,
+				parse_float=wrapNumber, parse_int=wrapNumber,
 				parse_constant=ident)
 
 		except json.JSONDecodeError as e:
@@ -379,7 +392,7 @@ class JsonBlueprint:
 	#----------------------------------------------------------------------------
 
 	def find_element_declaration(self, typeName, checked=None):
-		if typeName in primitive_types: return primitive_types[typeName]
+		if typeName in primitive_types: return primitive_types[typeName]['defaults']
 		if typeName in self.derived_types: return self.derived_types[typeName]
 		checked = checked or set()
 		checked.add(self)
@@ -428,6 +441,12 @@ class JsonBlueprint:
 		contentKind = element.fieldKind
 		contentType = element.fieldType
 
+		method = {
+			field_type.NODE: JsonBlueprint.serialize_node,
+			field_type.ENUM: JsonBlueprint.serialize_enum,
+			field_type.SIMPLE: JsonBlueprint.serialize_field
+		} [contentKind]
+
 		if isArray(element):
 			try: iterator = iter(content)
 
@@ -439,19 +458,12 @@ class JsonBlueprint:
 			serialized = list()
 			for idx, item in enumerate(content):
 				idxName = f"{elementName} index {idx}"
-				processed = self.serialize_element(contentType, idxName, item)
+				processed = method(self, contentType, idxName, item)
 				serialized.append(processed)
 
 			inner = ",".join(serialized)
 			return f"[{inner}]"
 
-		methods = {
-			field_type.NODE: JsonBlueprint.serialize_node,
-			field_type.ENUM: JsonBlueprint.serialize_enum,
-			field_type.SIMPLE: JsonBlueprint.serialize_field
-		}
-
-		method = methods[contentKind]
 		return method(self, contentType, elementName, content)
 
 
@@ -489,15 +501,15 @@ class JsonBlueprint:
 
 	def serialize_field(self, fieldType, fieldName, content):
 		if fieldType in primitive_types:
-			specs = primitive_types[fieldType]
+			specs = primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
 			specs = self.find_element_declaration(fieldType)
 			baseType = specs['__baseType__']
 
-		serialize_method = globals()['s_' + baseType]
-		return serialize_method(content)
+		serialize_method = primitive_types[baseType]['formatter']  #globals()['s_' + baseType]
+		return serialize_method(content, specs)
 
 	#-------------------------------------------------------------------------------
 

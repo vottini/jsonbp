@@ -81,6 +81,7 @@ class _instance:
 				assignee=self.assignee,
 				index=self.index)
 
+		print(f"ERROR ID = {self.error_id}")
 		msg = texts[self.error_id]
 		errorMsg = msg.format(**self.context)
 		return " ".join([prefixText, errorMsg])
