@@ -18,13 +18,15 @@ def _parse(value, specs):
 			"context": {}
 		}
 
-	# coercion attempt
+	# coercion attempts
 	# check if is 'null' or empty string
-	if None == value or 0 == len(value):
+
+	sanedValue = str(value) if value is not None else None
+	if None == value or 0 == len(sanedValue):
 		return True, False
 
 	try:
-		rawValue = float(value)
+		rawValue = float(sanedValue)
 		# check if is effectively zero or NaN
 		if 0 == rawValue or rawValue != rawValue:
 			return True, False

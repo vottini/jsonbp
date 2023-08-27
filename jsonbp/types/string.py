@@ -22,9 +22,10 @@ def _parse(value, specs):
 			"context": { "length": strLength }
 		}
 
-	if re.search(specs['format'], value) is None:
+	fullFormat = fr"^{specs['format']}$"
+	if re.search(fullFormat, value) is None:
 		return False, {
-			"error": error.INVALID_FORMAT,
+			"error": error_type.INVALID_FORMAT,
 			"context": {}
 		}
 

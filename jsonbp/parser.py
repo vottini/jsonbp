@@ -39,6 +39,7 @@ types = (
 	'STRING',
 	'BOOLEAN',
 	'FLOAT_AMOUNT',
+	'FLOAT_CONST',
 	'INTEGER_AMOUNT',
 	'IDENTIFIER',
 )
@@ -59,6 +60,12 @@ def t_BOOLEAN(t):
 
 def t_FLOAT_AMOUNT(t):
 	r'[-+]?\d+(\.(\d+)?([eE][-+]?\d+)?|[eE][-+]?\d+)'
+	t.value = float(t.value)
+	return t
+
+def t_FLOAT_CONST(t):
+	r'[+-]?Infinity|NaN'
+	sanedValue = t.value.replace('Infinity', 'inf')
 	t.value = float(t.value)
 	return t
 
@@ -421,6 +428,7 @@ def p_specified_value(p):
 	'''
 	    specified_value : STRING
 	                    | FLOAT_AMOUNT
+											| FLOAT_CONST
 	                    | INTEGER_AMOUNT
 	                    | BOOLEAN
 	'''

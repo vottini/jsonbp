@@ -10,7 +10,8 @@ def _format(value, specs):
 	return value.strftime(specs['format'])
 
 def _parse(value, specs):
-	parsed_date = datetime.strptime(value, specs['format'])
+	sanedValue = str(value)
+	parsed_date = datetime.strptime(sanedValue, specs['format'])
 	return True, parsed_date
 
 type_specs = {
