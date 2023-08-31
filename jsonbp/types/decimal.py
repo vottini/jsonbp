@@ -5,18 +5,19 @@ from decimal import Decimal
 import decimal
 
 from .. import error_type
-from .. import limits
+from .. import numbers
 
 _defaults = {
 	'precision': 2,
-	'min': Decimal(limits.lowestNumber).quantize(Decimal('0.01')),
-	'max': Decimal(limits.greatestNumber).quantize(Decimal('0.01')),
+	'min': Decimal(numbers.lowest).quantize(Decimal('0.01')),
+	'max': Decimal(numbers.greatest).quantize(Decimal('0.01')),
 	'decimal': '.',
 	'separator': '',
-	'indian_format': False,
+	'indianFormat': False,
 	'prefix': "",
 	'suffix': ""
 }
+
 
 roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
 specialChars = r'.^$*+?|'
@@ -33,7 +34,7 @@ def _format(value, specs):
 		hundredths = integerPart[-3:]
 		thousandths = integerPart[:-3]
 
-		groupSize = 3 if not specs['indian_format'] else 2
+		groupSize = 3 if not specs['indianFormat'] else 2
 		leadingSize = len(thousandths) % groupSize
 		leading = thousandths[:leadingSize]
 
@@ -52,19 +53,31 @@ def _format(value, specs):
 		if len(part) > 0
 	])
 
+	needsQuotes = (
+		len(parts) > 1 or
+		'.' != decimalMark or
+		'' != separator)
+
 	formattedParts = "".join(parts)
-	needsQuotes = len(parts) > 1 or '' != separator or '.' != decimalMark
-	return f'"{formattedParts}"' if needsQuotes else formattedParts
+	return (f'"{formattedParts}"' if needsQuotes
+		else formattedParts)
+
 
 def _parse(value, specs):
+	sanedValue = (str(value)
+		.removeprefix(specs['prefix'])
+		.removesuffix(specs['suffix'])
+	)
+
 	decimalMark = specs['decimal']
+	if decimalMark in specialChars:
+		decimalMark = f'\\{decimalMark}'
+
 	separator = specs['separator']
+	if separator in specialChars:
+		separator = f'\\{separator}'
 
-	if separator in specialChars: separator = f'\\{separator}'
-	if decimalMark in specialChars: decimalMark = f'\\{decimalMark}'
 	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({decimalMark}\\d+)?$'
-
-	sanedValue = str(value)
 	if None == re.match(decimalPattern, sanedValue):
 		return False, {
 			"error": error_type.VALUE_PARSING,
@@ -87,6 +100,7 @@ def _parse(value, specs):
 		}
 
 	return True, rawValue
+
 
 type_specs = {
 	'name': 'decimal',

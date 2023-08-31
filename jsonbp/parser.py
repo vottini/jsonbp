@@ -60,7 +60,7 @@ def t_BOOLEAN(t):
 
 def t_FLOAT_AMOUNT(t):
 	r'[-+]?\d+(\.(\d+)?([eE][-+]?\d+)?|[eE][-+]?\d+)'
-	t.value = float(t.value)
+	t.value = decimal(t.value)
 	return t
 
 def t_FLOAT_CONST(t):
@@ -243,7 +243,7 @@ def createType(newTypeName, declaration):
 			raise SchemaViolation(msg)
 
 		oldValue = newType[specName]
-		if type(oldValue) == Decimal and type(value) == float: value = Decimal(value)
+		if type(oldValue) == float and type(value) == Decimal: value = float(value)
 		if type(oldValue) == float and type(value) == int: value = float(value)
 
 		if type(value) != type(oldValue):

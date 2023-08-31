@@ -5,8 +5,10 @@ _defaults = {
 	'coerce': False
 }
 
+
 def _format(value, specs):
 	return "true" if value else "false"
+
 
 def _parse(value, specs):
 	if isinstance(value, bool):
@@ -19,7 +21,7 @@ def _parse(value, specs):
 		}
 
 	# coercion attempts
-	# check if is 'null' or empty string
+	# check if it's 'null' or empty string
 
 	sanedValue = str(value) if value is not None else None
 	if None == value or 0 == len(sanedValue):
@@ -32,14 +34,15 @@ def _parse(value, specs):
 			return True, False
 
 	except Exception as e:
-		# it was just an attempt, no problem
-		# just swallow this exception
+		# just an attempt, no problem
+		# swallow this exception
 		pass
 
 	# if none of the above, then most likely
 	# it's a truthy value
 
 	return True, True
+
 
 type_specs = {
 	'name': 'bool',

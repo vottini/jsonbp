@@ -8,8 +8,10 @@ _defaults = {
 	'format': r".*"
 }
 
+
 def _format(value, specs):
 	return f'"{value}"'
+
 
 def _parse(value, specs):
 	if not isinstance(value, str):
@@ -30,6 +32,7 @@ def _parse(value, specs):
 		}
 
 	return True, value
+
 
 type_specs = {
 	'name': 'string',

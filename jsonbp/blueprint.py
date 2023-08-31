@@ -7,13 +7,11 @@ from . import field_type
 from . import error_type
 
 from .types import primitive_types
-from .number import WrappedNumber, WrappedConstant
 from .exception import SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
 from .array import isArray
 
 #-------------------------------------------------------------------------------
-
 
 class JsonBlueprint:
 	def __init__(self):
@@ -187,13 +185,12 @@ class JsonBlueprint:
 
 
 	def deserialize(self, contents):
-		wrapNumber = lambda x : WrappedNumber(x)
-		wrapConstant = lambda x : WrappedConstant(x)
+		identity = lambda x : x
 
 		try:
 			loaded = json.loads(contents,
-				parse_float=wrapNumber, parse_int=wrapNumber,
-				parse_constant=wrapConstant)
+				parse_float=identity, parse_int=identity,
+				parse_constant=identity)
 
 		except json.JSONDecodeError as e:
 			return False, createErrorForRoot(error_type.JSON_PARSING,

@@ -1,21 +1,19 @@
 
-from .. import number
 from .. import error_type
-from .. import limits
+from .. import numbers
 
 _defaults = {
-	'min': limits.lowestNumber,
-	'max': limits.greatestNumber
+	'min': numbers.lowest,
+	'max': numbers.greatest
 }
+
 
 def _format(value, specs):
 	return str(value)
 
-def _parse(value, specs):
-	if not isinstance(value, number.WrappedNumber):
-		return False, error_type.VALUE_PARSING
 
-	intValue = int(value.strValue)
+def _parse(value, specs):
+	intValue = int(value)
 	if not specs['min'] <= intValue <= specs['max']:
 		return False, {
 			"error": error_type.OUTSIDE_RANGE,
@@ -23,6 +21,7 @@ def _parse(value, specs):
 		}
 
 	return True, intValue
+
 
 type_specs = {
 	'name': 'integer',

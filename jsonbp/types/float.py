@@ -1,13 +1,16 @@
 
 import math
 from .. import error_type
-from .. import number
 
 nan = float('nan')
 minus_infinity = float('-inf')
 plus_infinity = float('+inf')
 
+# for format options, see:
+# https://cplusplus.com/reference/cstdio/printf/
+
 _defaults = {
+	'format': '%g',
 	'atLeast': minus_infinity,
 	'atMost': plus_infinity,
 	'greaterThan': nan,
@@ -15,31 +18,28 @@ _defaults = {
 	'allowNaN': False
 }
 
+
 def _format(value, specs):
 	if value == minus_infinity: return "-Infinity"
 	if value == plus_infinity: return "+Infinity"
 	if value != value: return "NaN"
-	return str(value)
+
+	strFormat = specs['format']
+	return strFormat % value
+
 
 def _parse(value, specs):
-	if isinstance(value, number.WrappedNumber):
-		rawValue = float(value.strValue)
+	sanedValue = value.replace('Infinity', 'inf')
+	rawValue = float(sanedValue)
 
-	elif isinstance(value, number.WrappedConstant):
-		sanedValue = value.strValue.replace('Infinity', 'inf')
-		rawValue = float(sanedValue)
-
-		if rawValue != rawValue:
-			if specs['allowNaN']:
-				return True, rawValue
-				
-			return False, {
-				"error": error_type.OUTSIDE_RANGE,
-				"context": {"value": rawValue}
-			}
-
-	else:
-		return False, error_type.VALUE_PARSING
+	if rawValue != rawValue:
+		if specs['allowNaN']:
+			return True, rawValue
+			
+		return False, {
+			"error": error_type.OUTSIDE_RANGE,
+			"context": {"value": rawValue}
+		}
 
 	checks = [
 		lambda : not rawValue < specs['atLeast'],
@@ -64,6 +64,7 @@ def _parse(value, specs):
 			}
 
 	return True, rawValue
+
 
 type_specs = {
 	'name': 'float',
