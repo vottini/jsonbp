@@ -1,10 +1,10 @@
 
-from .. import error_type
-from .. import numbers
+from jsonbp import error_type
+import limits
 
 _defaults = {
-	'min': numbers.lowest,
-	'max': numbers.greatest
+	'min': limits.lowestNumber,
+	'max': limits.greatestNumber
 }
 
 

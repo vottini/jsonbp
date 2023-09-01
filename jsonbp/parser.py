@@ -4,12 +4,15 @@ from .ply import lex as plyLex
 from .ply import yacc as plyYacc
 
 from . import field_type
-from .types import primitive_types
 from .exception import SchemaViolation
+from .loader import loadTypes
 from .blueprint import JsonBlueprint
 from .declaration import createDeclaration
 from .field import createField
 from .array import makeArray
+
+#from .types import primitive_types
+primitive_types = dict()
 
 reserved = (
 	'root',
@@ -113,9 +116,9 @@ def typeExists(typeName, excluded=None):
 	excluded = excluded or set()
 
 	found = (
-		blueprint.find_element_declaration(typeName, excluded.copy()) or
-		blueprint.find_node_declaration(typeName, excluded.copy()) or
-		blueprint.find_enum_declaration(typeName, excluded.copy()))
+		currentBlueprint.find_element_declaration(typeName, excluded.copy()) or
+		currentBlueprint.find_node_declaration(typeName, excluded.copy()) or
+		currentBlueprint.find_enum_declaration(typeName, excluded.copy()))
 
 	return found != None
 
@@ -164,7 +167,7 @@ def p_include(p):
 			msg = f"Error including '{inclusionFile}': type '{typeName}' already defined"
 			raise SchemaViolation(msg)
 
-	blueprint.includes.append(loadedBlueprint)
+	currentBlueprint.includes.append(loadedBlueprint)
 
 
 def p_root(p):
@@ -174,11 +177,11 @@ def p_root(p):
 
 	'''
 
-	if None != blueprint.root:
+	if None != currentBlueprint.root:
 		msg = 'Only one root can be defined'
 		raise SchemaViolation(msg)
 
-	blueprint.root = p[2]
+	currentBlueprint.root = p[2]
 
 
 def p_node(p):
@@ -194,7 +197,7 @@ def p_node(p):
 
 	if len(p) == 6:
 		baseNode = p[4]
-		baseFields = blueprint.find_node_declaration(baseNode)
+		baseFields = currentBlueprint.find_node_declaration(baseNode)
 
 		if None == baseFields:
 			msg = f"Node '{baseNode}' is not defined"
@@ -207,11 +210,11 @@ def p_node(p):
 				raise SchemaViolation(msg)
 
 		nodeFields.update(baseFields)
-		blueprint.nodes[nodeName] = nodeFields
+		currentBlueprint.nodes[nodeName] = nodeFields
 
 	else:
 		nodeFields = p[3]
-		blueprint.nodes[nodeName] = nodeFields
+		currentBlueprint.nodes[nodeName] = nodeFields
 
 
 def p_node_specs(p):
@@ -229,7 +232,7 @@ def p_node_specs(p):
 
 def createType(newTypeName, declaration):
 	base_type = declaration.typeName
-	origin = blueprint.find_element_declaration(
+	origin = currentBlueprint.find_element_declaration(
 		base_type)
 
 	newType = dict()
@@ -252,12 +255,12 @@ def createType(newTypeName, declaration):
 
 		newType[specName] = value
 
-	while not base_type in primitive_types:
-		parent_type = blueprint.derived_types[base_type]
+	while not base_type in currentBlueprint.primitive_types:
+		parent_type = currentBlueprint.derived_types[base_type]
 		base_type = parent_type['__baseType__']
 
 	newType['__baseType__'] = base_type
-	blueprint.derived_types[newTypeName] = newType
+	currentBlueprint.derived_types[newTypeName] = newType
 	return newType
 
 
@@ -338,19 +341,19 @@ def p_single_declaration(p):
 	declaration = p[1]
 	if isinstance(declaration, dict):
 		adhoc_node = '_node_type_' + str(getNextAdhoc()) + '_'
-		blueprint.nodes[adhoc_node] = declaration
+		currentBlueprint.nodes[adhoc_node] = declaration
 		fieldKind = field_type.NODE
 		fieldId = adhoc_node
 
 	elif isinstance(declaration, list):
 		adhoc_enum = '_enum_type_' + str(getNextAdhoc()) + '_'
-		blueprint.enums[adhoc_enum] = declaration
+		currentBlueprint.enums[adhoc_enum] = declaration
 		fieldKind = field_type.ENUM
 		fieldId = adhoc_enum
 
 	else:
 		declType = declaration.typeName
-		if blueprint.find_element_declaration(declType):
+		if currentBlueprint.find_element_declaration(declType):
 			fieldKind = field_type.SIMPLE
 
 			if not declaration.isCustomized():
@@ -361,11 +364,11 @@ def p_single_declaration(p):
 				createType(adhoc_type, declaration)
 				fieldId = adhoc_type
 
-		elif blueprint.find_enum_declaration(declType):
+		elif currentBlueprint.find_enum_declaration(declType):
 			fieldKind = field_type.ENUM
 			fieldId = declType
 
-		elif blueprint.find_node_declaration(declType):
+		elif currentBlueprint.find_node_declaration(declType):
 			fieldKind = field_type.NODE
 			fieldId = declType
 
@@ -382,14 +385,14 @@ def p_element_declaration(p):
 
 	if len(p) == 5:
 		not_simple = (
-			blueprint.find_node_declaration(typeName) or
-			blueprint.find_enum_declaration(typeName))
+			currentBlueprint.find_node_declaration(typeName) or
+			currentBlueprint.find_enum_declaration(typeName))
 
 		if not_simple:
 			msg = f"Unable to apply specificities to '{typeName}', only simple types can be specialized"
 			raise SchemaViolation(msg)
 
-		if not blueprint.find_element_declaration(typeName):
+		if not currentBlueprint.find_element_declaration(typeName):
 			msg = f"Unknown simple type '{typeName}'"
 			raise SchemaViolation(msg)
 
@@ -447,7 +450,7 @@ def p_enum(p):
 		msg = f"Duplicated type '{enum_name}'"
 		raise SchemaViolation(msg)
 
-	blueprint.enums[enum_name] = p[3]
+	currentBlueprint.enums[enum_name] = p[3]
 
 
 def p_enum_declaration(p):
@@ -480,23 +483,23 @@ _loadedFiles = dict()
 _pushedEnvs = list()
 
 def setupEnv(contentPath, output):
-	global blueprint, currentPath
+	global currentBlueprint, currentPath
 	currentPath = contentPath
-	blueprint = output
+	currentBlueprint = output
 
 
 def pushEnv():
-	env = (currentPath, blueprint)
+	env = (currentPath, currentBlueprint)
 	_pushedEnvs.append(env)
 	_mutex.release()
 
 
 def popEnv():
-	global currentPath, blueprint
+	global currentPath, currentBlueprint
 
 	_mutex.acquire()
 	env = _pushedEnvs.pop()
-	(currentPath, blueprint) = env
+	(currentPath, currentBlueprint) = env
 
 #---------------------------------------------------------------
 
@@ -504,14 +507,23 @@ def _load(contents, contentPath='.', contentName=None, as_module=False):
 	lexer = plyLex.lex()
 	parser = plyYacc.yacc()
 
+	ownPath = os.path.dirname(os.path.realpath(__file__))
+	primitivesPath = os.path.join(ownPath, "types")
+	loaded, notLoaded = loadTypes(primitivesPath)
+
+	primitive_types = dict()
+	for type_spec in loaded:
+		name = type_spec['name']
+		primitive_types[name] = type_spec
+		
 	try:
 		_mutex.acquire()
-		result = JsonBlueprint()
+		result = JsonBlueprint(primitive_types)
 		setupEnv(contentPath, result)
 		parser.parse(contents)
 
 		if not as_module:
-			if None == blueprint.root and len(_pushedEnvs) == 0:
+			if None == currentBlueprint.root and len(_pushedEnvs) == 0:
 				msg = 'No root defined at topmost level'
 				raise SchemaViolation(msg)
 

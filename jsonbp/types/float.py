@@ -1,6 +1,6 @@
 
 import math
-from .. import error_type
+from jsonbp import error_type
 
 nan = float('nan')
 minus_infinity = float('-inf')

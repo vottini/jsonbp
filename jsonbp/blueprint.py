@@ -6,7 +6,6 @@ import uuid
 from . import field_type
 from . import error_type
 
-from .types import primitive_types
 from .exception import SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
 from .array import isArray
@@ -14,7 +13,8 @@ from .array import isArray
 #-------------------------------------------------------------------------------
 
 class JsonBlueprint:
-	def __init__(self):
+	def __init__(self, primitive_types):
+		self.primitive_types = primitive_types
 		self.uuid = uuid.uuid4()
 		self.includes = list()
 		self.derived_types = dict()
@@ -33,8 +33,8 @@ class JsonBlueprint:
 	#-----------------------------------------------------------------------------
 
 	def deserialize_field(self, fieldName, fieldType, value):
-		if fieldType in primitive_types:
-			specs = primitive_types[fieldType]['defaults']
+		if fieldType in self.primitive_types:
+			specs = self.primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
@@ -42,7 +42,7 @@ class JsonBlueprint:
 			baseType = specs['__baseType__']
 
 		try:
-			deserialize_method = primitive_types[baseType]['parser']
+			deserialize_method = self.primitive_types[baseType]['parser']
 			success, outcome = deserialize_method(value, specs)
 
 			if not success:
@@ -228,7 +228,7 @@ class JsonBlueprint:
 	#----------------------------------------------------------------------------
 
 	def find_element_declaration(self, typeName, checked=None):
-		if typeName in primitive_types: return primitive_types[typeName]['defaults']
+		if typeName in self.primitive_types: return self.primitive_types[typeName]['defaults']
 		if typeName in self.derived_types: return self.derived_types[typeName]
 		checked = checked or set()
 		checked.add(self)
@@ -336,15 +336,15 @@ class JsonBlueprint:
 
 
 	def serialize_field(self, fieldType, fieldName, content):
-		if fieldType in primitive_types:
-			specs = primitive_types[fieldType]['defaults']
+		if fieldType in self.primitive_types:
+			specs = self.primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
 			specs = self.find_element_declaration(fieldType)
 			baseType = specs['__baseType__']
 
-		serialize_method = primitive_types[baseType]['formatter']  #globals()['s_' + baseType]
+		serialize_method = self.primitive_types[baseType]['formatter']  #globals()['s_' + baseType]
 		return serialize_method(content, specs)
 
 	#-------------------------------------------------------------------------------

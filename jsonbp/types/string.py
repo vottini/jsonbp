@@ -1,6 +1,6 @@
 
 import re
-from .. import error_type
+from jsonbp import error_type
 
 _defaults = {
 	'minLength': 0,

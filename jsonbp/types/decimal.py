@@ -4,13 +4,13 @@ import datetime
 from decimal import Decimal
 import decimal
 
-from .. import error_type
-from .. import numbers
+from jsonbp import error_type
+import limits
 
 _defaults = {
 	'precision': 2,
-	'min': Decimal(numbers.lowest).quantize(Decimal('0.01')),
-	'max': Decimal(numbers.greatest).quantize(Decimal('0.01')),
+	'min': Decimal(limits.lowestNumber).quantize(Decimal('0.01')),
+	'max': Decimal(limits.greatestNumber).quantize(Decimal('0.01')),
 	'decimal': '.',
 	'separator': '',
 	'indianFormat': False,
