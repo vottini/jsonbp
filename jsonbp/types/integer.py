@@ -1,5 +1,5 @@
 
-from jsonbp import error_type
+import jsonbp
 import limits
 
 _defaults = {
@@ -16,7 +16,7 @@ def _parse(value, specs):
 	intValue = int(value)
 	if not specs['min'] <= intValue <= specs['max']:
 		return False, {
-			"error": error_type.OUTSIDE_RANGE,
+			"error": jsonbp.errorType.OUTSIDE_RANGE,
 			"context": {"value": intValue}
 		}
 

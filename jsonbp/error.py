@@ -1,15 +1,15 @@
 
 import configparser
-from . import error_type
+from . import errorType
 
 _error_names = ([ entry
-	for entry in dir(error_type)
+	for entry in dir(errorType)
 	if not entry.startswith('_')
 ])
 
 _error_codes = dict()
 for error_name in _error_names:
-	error_code = getattr(error_type, error_name)
+	error_code = getattr(errorType, error_name)
 	_error_codes[error_name] = error_code
 
 #-------------------------------------------------------------------------------

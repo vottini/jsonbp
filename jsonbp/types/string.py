@@ -1,6 +1,6 @@
 
 import re
-from jsonbp import error_type
+import jsonbp
 
 _defaults = {
 	'minLength': 0,
@@ -15,19 +15,19 @@ def _format(value, specs):
 
 def _parse(value, specs):
 	if not isinstance(value, str):
-		return False, error_type.VALUE_PARSING
+		return False, jsonbp.errorType.VALUE_PARSING
 
 	strLength = len(value)
 	if not specs['minLength'] <= strLength <= specs['maxLength']:
 		return False, {
-			"error": error_type.INVALID_LENGTH,
+			"error": jsonbp.errorType.INVALID_LENGTH,
 			"context": { "length": strLength }
 		}
 
 	fullFormat = fr"^{specs['format']}$"
 	if re.search(fullFormat, value) is None:
 		return False, {
-			"error": error_type.INVALID_FORMAT,
+			"error": jsonbp.errorType.INVALID_FORMAT,
 			"context": {}
 		}
 

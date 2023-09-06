@@ -3,16 +3,13 @@ from decimal import Decimal
 from .ply import lex as plyLex
 from .ply import yacc as plyYacc
 
-from . import field_type
+from . import fieldKind
 from .exception import SchemaViolation
 from .loader import loadTypes
 from .blueprint import JsonBlueprint
 from .declaration import createDeclaration
 from .field import createField
 from .array import makeArray
-
-#from .types import primitive_types
-primitive_types = dict()
 
 reserved = (
 	'root',
@@ -342,19 +339,19 @@ def p_single_declaration(p):
 	if isinstance(declaration, dict):
 		adhoc_node = '_node_type_' + str(getNextAdhoc()) + '_'
 		currentBlueprint.nodes[adhoc_node] = declaration
-		fieldKind = field_type.NODE
+		kind = fieldKind.NODE
 		fieldId = adhoc_node
 
 	elif isinstance(declaration, list):
 		adhoc_enum = '_enum_type_' + str(getNextAdhoc()) + '_'
 		currentBlueprint.enums[adhoc_enum] = declaration
-		fieldKind = field_type.ENUM
+		kind = fieldKind.ENUM
 		fieldId = adhoc_enum
 
 	else:
 		declType = declaration.typeName
 		if currentBlueprint.find_element_declaration(declType):
-			fieldKind = field_type.SIMPLE
+			kind = fieldKind.SIMPLE
 
 			if not declaration.isCustomized():
 				fieldId = declaration.typeName
@@ -365,14 +362,14 @@ def p_single_declaration(p):
 				fieldId = adhoc_type
 
 		elif currentBlueprint.find_enum_declaration(declType):
-			fieldKind = field_type.ENUM
+			kind = fieldKind.ENUM
 			fieldId = declType
 
 		elif currentBlueprint.find_node_declaration(declType):
-			fieldKind = field_type.NODE
+			kind = fieldKind.NODE
 			fieldId = declType
 
-	p[0] = createField(fieldKind, fieldId)
+	p[0] = createField(kind, fieldId)
 
 
 def p_element_declaration(p):

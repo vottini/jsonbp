@@ -3,8 +3,8 @@ import re
 import json
 import uuid
 
-from . import field_type
-from . import error_type
+from . import fieldKind
+from . import errorType
 
 from .exception import SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
@@ -54,23 +54,23 @@ class JsonBlueprint:
 
 		except Exception as e:
 			return False, createErrorForField(fieldName,
-				error_type.VALUE_PARSING, type=baseType)
+				errorType.VALUE_PARSING, type=baseType)
 
 
 	def validate_enum(self, fieldName, enumType, value):
 		if None == value:
 			return False, createErrorForField(fieldName,
-				error_type.NULL_VALUE)
+				errorType.NULL_VALUE)
 
 		if not isinstance(value, str):
 			return False, createErrorForField(fieldName,
-				error_type.INVALID_ENUM, value=value)
+				errorType.INVALID_ENUM, value=value)
 
 		possibleValues = self.find_enum_declaration(enumType)
 
 		if not value in possibleValues:
 			return False, createErrorForField(fieldName, 
-				error_type.UNKNOWN_LITERAL, value=value)
+				errorType.UNKNOWN_LITERAL, value=value)
 		
 		return True, value
 
@@ -78,17 +78,17 @@ class JsonBlueprint:
 	def validate_array(self, fieldName, jArray, contents):
 		if not isinstance(contents, list):
 			return False, createErrorForField(fieldName,
-				error_type.INVALID_ARRAY)
+				errorType.INVALID_ARRAY)
 
 		arrayLen = len(contents)
 		if not jArray.minLength <= arrayLen <= jArray.maxLength:
 			return False, createErrorForField(fieldName,
-				error_type.INVALID_LENGTH, length=arrayLen)
+				errorType.INVALID_LENGTH, length=arrayLen)
 
 		arrayKind = jArray.fieldKind
 		arrayType = jArray.fieldType
 
-		if arrayKind == field_type.NODE:
+		if arrayKind == fieldKind.NODE:
 			arrayNode = self.find_node_declaration(arrayType)
 			for idx, content in enumerate(contents):
 				success, processed = self.validate_node(fieldName, arrayNode, content)
@@ -101,7 +101,7 @@ class JsonBlueprint:
 
 			return True, contents
 
-		if arrayKind == field_type.ENUM:
+		if arrayKind == fieldKind.ENUM:
 			for idx, value in enumerate(contents):
 				success, processed = self.validate_enum(fieldName, arrayType, value)
 
@@ -128,13 +128,13 @@ class JsonBlueprint:
 	def validate_node(self, nodeName, node, contents):
 		if not isinstance(contents, dict):
 			return False, createErrorForNode(nodeName,
-				error_type.INVALID_NODE)
+				errorType.INVALID_NODE)
 
 		for fieldName, fieldData in node.items():
 			if not fieldName in contents:
 				if fieldData.optional: continue
 				return False, createErrorForNode(nodeName,
-					error_type.MISSING_FIELD, field=fieldName)
+					errorType.MISSING_FIELD, field=fieldName)
 
 			retrieved = contents[fieldName]
 			if isArray(fieldData):
@@ -142,17 +142,17 @@ class JsonBlueprint:
 				if success: continue
 				return success, processed
 
-			fieldKind = fieldData.fieldKind
+			kind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
 
-			if fieldKind == field_type.NODE:
+			if kind == fieldKind.NODE:
 				nodeSpecs = self.find_node_declaration(fieldType)
 				success, processed = self.validate_node(fieldName, nodeSpecs, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
 				continue
 
-			if fieldKind == field_type.ENUM:
+			if kind == fieldKind.ENUM:
 				success, processed = self.validate_enum(fieldName, fieldType, retrieved)
 				if not success: return success, processed
 				contents[fieldName] = processed
@@ -172,15 +172,15 @@ class JsonBlueprint:
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
-		if rootKind == field_type.NODE:
+		if rootKind == fieldKind.NODE:
 			rootNode = self.find_node_declaration(rootType)
 			return self.validate_node(None, rootNode, rootContents)
 
-		if rootKind == field_type.ENUM:
+		if rootKind == fieldKind.ENUM:
 			rootEnum = self.find_enum_declaration(rootType)
 			return self.validate_enum(None, rootType, rootContents)
 
-		if rootKind == field_type.SIMPLE:
+		if rootKind == fieldKind.SIMPLE:
 			return self.deserialize_field(None, rootType, rootContents)
 
 
@@ -193,7 +193,7 @@ class JsonBlueprint:
 				parse_constant=identity)
 
 		except json.JSONDecodeError as e:
-			return False, createErrorForRoot(error_type.JSON_PARSING,
+			return False, createErrorForRoot(errorType.JSON_PARSING,
 				line=e.lineno, column=e.colno, message=e.msg)
 	
 		return self.validate(loaded)
@@ -278,9 +278,9 @@ class JsonBlueprint:
 		contentType = element.fieldType
 
 		method = {
-			field_type.NODE: JsonBlueprint.serialize_node,
-			field_type.ENUM: JsonBlueprint.serialize_enum,
-			field_type.SIMPLE: JsonBlueprint.serialize_field
+			fieldKind.NODE: JsonBlueprint.serialize_node,
+			fieldKind.ENUM: JsonBlueprint.serialize_enum,
+			fieldKind.SIMPLE: JsonBlueprint.serialize_field
 		} [contentKind]
 
 		if isArray(element):

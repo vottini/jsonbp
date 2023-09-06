@@ -1,5 +1,5 @@
 
-from jsonbp import error_type
+import jsonbp
 
 _defaults = {
 	'coerce': False
@@ -16,7 +16,7 @@ def _parse(value, specs):
 
 	if not specs['coerce']:
 		return False, {
-			"error": error_type.VALUE_PARSING,
+			"error": jsonbp.errorType.VALUE_PARSING,
 			"context": {}
 		}
 

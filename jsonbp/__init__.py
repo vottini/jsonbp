@@ -1,7 +1,7 @@
 
 import os
 
-from . import error_type
+from . import errorType
 from .parser import loadFile, loadString, invalidateCache
 from .exception import SchemaViolation
 from .error import useTranslation

@@ -4,7 +4,7 @@ import datetime
 from decimal import Decimal
 import decimal
 
-from jsonbp import error_type
+import jsonbp
 import limits
 
 _defaults = {
@@ -80,13 +80,13 @@ def _parse(value, specs):
 	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({decimalMark}\\d+)?$'
 	if None == re.match(decimalPattern, sanedValue):
 		return False, {
-			"error": error_type.VALUE_PARSING,
+			"error": jsonbp.errorType.VALUE_PARSING,
 			"context": {}
 		}
 
 	sanedStrValue = (sanedValue
-		.replace(decimalMark, '.')
 		.replace(separator, '')
+		.replace(decimalMark, '.')
 	)
 
 	precision = f"1e-{specs['precision']}"
@@ -95,7 +95,7 @@ def _parse(value, specs):
 
 	if specs['min'] > rawValue or rawValue > specs['max']:
 		return False, {
-			"error": error_type.OUTSIDE_RANGE,
+			"error": jsonbp.errorType.OUTSIDE_RANGE,
 			"context": { "value": rawValue }
 		}
 

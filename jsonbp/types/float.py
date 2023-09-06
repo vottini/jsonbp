@@ -1,6 +1,6 @@
 
 import math
-from jsonbp import error_type
+import jsonbp
 
 nan = float('nan')
 minus_infinity = float('-inf')
@@ -37,7 +37,7 @@ def _parse(value, specs):
 			return True, rawValue
 			
 		return False, {
-			"error": error_type.OUTSIDE_RANGE,
+			"error": jsonbp.errorType.OUTSIDE_RANGE,
 			"context": {"value": rawValue}
 		}
 
@@ -59,7 +59,7 @@ def _parse(value, specs):
 	for check in checks:
 		if not check():
 			return False, {
-				"error": error_type.OUTSIDE_RANGE,
+				"error": jsonbp.errorType.OUTSIDE_RANGE,
 				"context": {"value": rawValue}
 			}
 

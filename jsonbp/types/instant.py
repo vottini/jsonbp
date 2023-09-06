@@ -1,6 +1,5 @@
 
 from datetime import datetime
-from jsonbp import error_type
 
 _defaults = {
 	'format': "%Y-%m-%dT%H:%M:%S%z",
