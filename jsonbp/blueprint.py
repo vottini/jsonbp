@@ -6,18 +6,19 @@ import uuid
 from . import fieldKind
 from . import errorType
 
-from .exception import SerializationException
+from .field import createField
+from .exception import DeserializationException, SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
-from .array import isArray
+from .array import makeArray, isArray
 
 #-------------------------------------------------------------------------------
 
 class JsonBlueprint:
-	def __init__(self, primitive_types):
-		self.primitive_types = primitive_types
+	def __init__(self, primitiveTypes):
+		self.primitiveTypes = primitiveTypes
 		self.uuid = uuid.uuid4()
 		self.includes = list()
-		self.derived_types = dict()
+		self.derivedTypes = dict()
 		self.enums = dict()
 		self.nodes = dict()
 		self.root = None
@@ -25,25 +26,25 @@ class JsonBlueprint:
 	def __str__(self):
 		return (
 			f"blueprint: {self.uuid}\n" +
-			f"|-> types = {self.derived_types}\n" +
+			f"|-> types = {self.derivedTypes}\n" +
 			f"|-> enums = {self.enums}\n" +
 			f"|-> nodes = {self.nodes}\n" +
 			f"'-> root = {self.root}")
 
 	#-----------------------------------------------------------------------------
 
-	def deserialize_field(self, fieldName, fieldType, value):
-		if fieldType in self.primitive_types:
-			specs = self.primitive_types[fieldType]['defaults']
+	def deserializeField(self, fieldName, fieldType, value):
+		if fieldType in self.primitiveTypes:
+			specs = self.primitiveTypes[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
-			specs = self.find_element_declaration(fieldType)
+			specs = self.findElementDeclaration(fieldType)
 			baseType = specs['__baseType__']
 
 		try:
-			deserialize_method = self.primitive_types[baseType]['parser']
-			success, outcome = deserialize_method(value, specs)
+			deserializeMethod = self.primitiveTypes[baseType]['parser']
+			success, outcome = deserializeMethod(value, specs)
 
 			if not success:
 				return False, createErrorForField(fieldName,
@@ -57,7 +58,7 @@ class JsonBlueprint:
 				errorType.VALUE_PARSING, type=baseType)
 
 
-	def validate_enum(self, fieldName, enumType, value):
+	def validateEnum(self, fieldName, enumType, value):
 		if None == value:
 			return False, createErrorForField(fieldName,
 				errorType.NULL_VALUE)
@@ -66,7 +67,7 @@ class JsonBlueprint:
 			return False, createErrorForField(fieldName,
 				errorType.INVALID_ENUM, value=value)
 
-		possibleValues = self.find_enum_declaration(enumType)
+		possibleValues = self.findEnumDeclaration(enumType)
 
 		if not value in possibleValues:
 			return False, createErrorForField(fieldName, 
@@ -75,7 +76,7 @@ class JsonBlueprint:
 		return True, value
 
 
-	def validate_array(self, fieldName, jArray, contents):
+	def validateArray(self, fieldName, jArray, contents):
 		if not isinstance(contents, list):
 			return False, createErrorForField(fieldName,
 				errorType.INVALID_ARRAY)
@@ -89,9 +90,9 @@ class JsonBlueprint:
 		arrayType = jArray.fieldType
 
 		if arrayKind == fieldKind.NODE:
-			arrayNode = self.find_node_declaration(arrayType)
+			arrayNode = self.findNodeDeclaration(arrayType)
 			for idx, content in enumerate(contents):
-				success, processed = self.validate_node(fieldName, arrayNode, content)
+				success, processed = self.validateNode(fieldName, arrayNode, content)
 
 				if not success:
 					processed.setAsArrayElement(idx)
@@ -103,7 +104,7 @@ class JsonBlueprint:
 
 		if arrayKind == fieldKind.ENUM:
 			for idx, value in enumerate(contents):
-				success, processed = self.validate_enum(fieldName, arrayType, value)
+				success, processed = self.validateEnum(fieldName, arrayType, value)
 
 				if not success:
 					processed.setAsArrayElement(idx)
@@ -114,7 +115,7 @@ class JsonBlueprint:
 			return True, contents
 
 		for idx, value in enumerate(contents):
-			success, processed = self.deserialize_field(fieldName, arrayType, value)
+			success, processed = self.deserializeField(fieldName, arrayType, value)
 
 			if not success:
 				processed.setAsArrayElement(idx)
@@ -125,7 +126,7 @@ class JsonBlueprint:
 		return True, contents
 
 
-	def validate_node(self, nodeName, node, contents):
+	def validateNode(self, nodeName, node, contents):
 		if not isinstance(contents, dict):
 			return False, createErrorForNode(nodeName,
 				errorType.INVALID_NODE)
@@ -138,27 +139,27 @@ class JsonBlueprint:
 
 			retrieved = contents[fieldName]
 			if isArray(fieldData):
-				success, processed = self.validate_array(fieldName, fieldData, retrieved)
-				if success: continue
-				return success, processed
+				success, processed = self.validateArray(fieldName, fieldData, retrieved)
+				if not success: return False, processed
+				continue
 
 			kind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
 
 			if kind == fieldKind.NODE:
-				nodeSpecs = self.find_node_declaration(fieldType)
-				success, processed = self.validate_node(fieldName, nodeSpecs, retrieved)
-				if not success: return success, processed
+				nodeSpecs = self.findNodeDeclaration(fieldType)
+				success, processed = self.validateNode(fieldName, nodeSpecs, retrieved)
+				if not success: return False, processed
 				contents[fieldName] = processed
 				continue
 
 			if kind == fieldKind.ENUM:
-				success, processed = self.validate_enum(fieldName, fieldType, retrieved)
-				if not success: return success, processed
+				success, processed = self.validateEnum(fieldName, fieldType, retrieved)
+				if not success: return False, processed
 				contents[fieldName] = processed
 				continue
 
-			success, processed = self.deserialize_field(fieldName, fieldType, retrieved)
+			success, processed = self.deserializeField(fieldName, fieldType, retrieved)
 			if not success: return False, processed
 			contents[fieldName] = processed
 
@@ -167,27 +168,30 @@ class JsonBlueprint:
 
 	def validate(self, rootContents):
 		if isArray(self.root):
-			return self.validate_array(None, self.root, rootContents)
+			return self.validateArray(None, self.root, rootContents)
 
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
 		if rootKind == fieldKind.NODE:
-			rootNode = self.find_node_declaration(rootType)
-			return self.validate_node(None, rootNode, rootContents)
+			rootNode = self.findNodeDeclaration(rootType)
+			return self.validateNode(None, rootNode, rootContents)
 
 		if rootKind == fieldKind.ENUM:
-			rootEnum = self.find_enum_declaration(rootType)
-			return self.validate_enum(None, rootType, rootContents)
+			rootEnum = self.findEnumDeclaration(rootType)
+			return self.validateEnum(None, rootType, rootContents)
 
 		if rootKind == fieldKind.SIMPLE:
-			return self.deserialize_field(None, rootType, rootContents)
+			return self.deserializeField(None, rootType, rootContents)
 
 
 	def deserialize(self, contents):
-		identity = lambda x : x
+		if self.root is None:
+			msg = "No root defined for blueprint, unable to deserialize"
+			raise DeserializationException(msg)
 
 		try:
+			identity = lambda x : x
 			loaded = json.loads(contents,
 				parse_float=identity, parse_int=identity,
 				parse_constant=identity)
@@ -215,7 +219,7 @@ class JsonBlueprint:
 		sources = self.collectSources()
 
 		for source in sources:
-			collected.extend(source.derived_types.keys())
+			collected.extend(source.derivedTypes.keys())
 			collected.extend(source.enums.keys())
 			collected.extend(source.nodes.keys())
 
@@ -227,60 +231,95 @@ class JsonBlueprint:
 
 	#----------------------------------------------------------------------------
 
-	def find_element_declaration(self, typeName, checked=None):
-		if typeName in self.primitive_types: return self.primitive_types[typeName]['defaults']
-		if typeName in self.derived_types: return self.derived_types[typeName]
+	def findElementDeclaration(self, typeName, checked=None):
+		if typeName in self.primitiveTypes: return self.primitiveTypes[typeName]['defaults']
+		if typeName in self.derivedTypes: return self.derivedTypes[typeName]
 		checked = checked or set()
 		checked.add(self)
 
 		for blueprint in self.includes:
 			if not blueprint in checked:
-				found = blueprint.find_element_declaration(typeName, checked)
+				found = blueprint.findElementDeclaration(typeName, checked)
 				if None != found: return found
 		
 		return None
 	
 	
-	def find_node_declaration(self, nodeName, checked=None):
+	def findNodeDeclaration(self, nodeName, checked=None):
 		if nodeName in self.nodes: return self.nodes[nodeName]
 		checked = checked or set()
 		checked.add(self)
 	
 		for blueprint in self.includes:
 			if not blueprint in checked:
-				found = blueprint.find_node_declaration(nodeName, checked)
+				found = blueprint.findNodeDeclaration(nodeName, checked)
 				if None != found: return found
 	
 		return None
 	
 	
-	def find_enum_declaration(self, enumName, checked=None):
+	def findEnumDeclaration(self, enumName, checked=None):
 		if enumName in self.enums: return self.enums[enumName]
 		checked = checked or set()
 		checked.add(self)
 	
 		for blueprint in self.includes:
 			if not blueprint in checked:
-				found = blueprint.find_enum_declaration(enumName, checked)
+				found = blueprint.findEnumDeclaration(enumName, checked)
 				if None != found: return found
 
 		return None
 
 	#----------------------------------------------------------------------------
 
-	def chooseRoot(self, rootName):
-		pass
+	def chooseRoot(self, rootType, asArray=False,
+		minArrayLength=None, maxArrayLength=None):
+
+		lookups = [
+			(self.findNodeDeclaration, fieldKind.NODE),
+			(self.findElementDeclaration, fieldKind.SIMPLE),
+			(self.findEnumDeclaration, fieldKind.ENUM)
+		]
+
+		foundRoot = None
+		rootKind = None
+
+		for method, kind in lookups:
+			if candidate := method(rootType, set()):
+				foundRoot = candidate
+				rootKind = kind
+				break
+
+		if foundRoot is None:
+			msg = f"No element found with name '{rootType}'"
+			raise SchemaViolation(msg)
+
+		rootField = createField(rootKind, rootType)
+		newBp = JsonBlueprint(self.primitiveTypes)
+		newBp.root = (makeArray(rootField) if asArray else
+			rootField)
+
+		if asArray:
+			if minArrayLength: newBp.root.applySpec('minLength', minArrayLength)
+			if maxArrayLength: newBp.root.applySpec('maxLength', maxArrayLength)
+
+		newBp.includes = self.includes
+		newBp.derivedTypes = self.derivedTypes
+		newBp.enums = self.enums
+		newBp.nodes = self.nodes
+
+		return newBp
 
 	#----------------------------------------------------------------------------
 
-	def serialize_element(self, element, elementName, content):
+	def serializeElement(self, element, elementName, content):
 		contentKind = element.fieldKind
 		contentType = element.fieldType
 
 		method = {
-			fieldKind.NODE: JsonBlueprint.serialize_node,
-			fieldKind.ENUM: JsonBlueprint.serialize_enum,
-			fieldKind.SIMPLE: JsonBlueprint.serialize_field
+			fieldKind.NODE: JsonBlueprint.serializeNode,
+			fieldKind.ENUM: JsonBlueprint.serializeEnum,
+			fieldKind.SIMPLE: JsonBlueprint.serializeField
 		} [contentKind]
 
 		if isArray(element):
@@ -288,8 +327,10 @@ class JsonBlueprint:
 
 			except TypeError:
 				content_type = type(content)
-				msg = f"{elementName}: Array content cannot be extracted from '{content_type}' value"
-				raise SerializationException(msg)
+				raise SerializationException(
+					f"{elementName}: Array content cannot be extracted "
+					f"from '{content_type}' value"
+				)
 
 			serialized = list()
 			for idx, item in enumerate(content):
@@ -303,8 +344,8 @@ class JsonBlueprint:
 		return method(self, contentType, elementName, content)
 
 
-	def serialize_node(self, nodeType, nodeName, content):
-		node = self.find_node_declaration(nodeType)
+	def serializeNode(self, nodeType, nodeName, content):
+		node = self.findNodeDeclaration(nodeType)
 
 		if not isinstance(content, dict):
 			msg = f"{nodeName} needs to receive a dict to serialize"
@@ -313,20 +354,22 @@ class JsonBlueprint:
 		serialized = list()
 		for fieldName, fieldData in node.items():
 			if not fieldName in content:
-				if fieldData.optional: continue
+				if fieldData.optional:
+					continue
+
 				msg = f"{nodeName}: missing field {fieldName}"
 				raise SerializationException(msg)
 
 			fieldValue = content[fieldName]
-			processed = self.serialize_element(fieldData, fieldName, fieldValue)
+			processed = self.serializeElement(fieldData, fieldName, fieldValue)
 			serialized.append(f'"{fieldName}":{processed}')
 
 		inner = ",".join(serialized)
 		return f"{{{inner}}}"
 
 
-	def serialize_enum(self, enumType, fieldName, content):
-		possibleValues = self.find_enum_declaration(enumType)
+	def serializeEnum(self, enumType, fieldName, content):
+		possibleValues = self.findEnumDeclaration(enumType)
 
 		if not content in possibleValues:
 			msg = f"Value '{value}' is not valid for field '{fieldName}'"
@@ -335,20 +378,25 @@ class JsonBlueprint:
 		return f'"{content}"'
 
 
-	def serialize_field(self, fieldType, fieldName, content):
-		if fieldType in self.primitive_types:
-			specs = self.primitive_types[fieldType]['defaults']
+	def serializeField(self, fieldType, fieldName, content):
+		if fieldType in self.primitiveTypes:
+			specs = self.primitiveTypes[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
-			specs = self.find_element_declaration(fieldType)
+			specs = self.findElementDeclaration(fieldType)
 			baseType = specs['__baseType__']
 
-		serialize_method = self.primitive_types[baseType]['formatter']  #globals()['s_' + baseType]
+		serialize_method = self.primitiveTypes[baseType]['formatter']
 		return serialize_method(content, specs)
 
 	#-------------------------------------------------------------------------------
 
 	def serialize(self, content):
-		return self.serialize_element(self.root, "Root Level", content)
+		if self.root is None:
+			msg = "No root defined for blueprint, unable to serialize"
+			raise SerializationException(msg)
+			
+		return self.serializeElement(self.root,
+			"Root Level", content)
 

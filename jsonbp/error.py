@@ -27,7 +27,7 @@ def useTranslation(filename):
 			contents = fd.read()
 
 	except IOError as e:
-		print(f"Unable to read localization file: {e.strerror}")
+		printWarning(f"Unable to read localization file: {e.strerror}")
 		return
 
 	config = configparser.ConfigParser()
@@ -81,7 +81,6 @@ class _instance:
 				assignee=self.assignee,
 				index=self.index)
 
-		print(f"ERROR ID = {self.error_id}")
 		msg = texts[self.error_id]
 		errorMsg = msg.format(**self.context)
 		return " ".join([prefixText, errorMsg])
@@ -106,6 +105,18 @@ def createErrorForRoot(error_id, **context):
 	result = _instance(error_id, **context)
 	result.setAssignee("ROOT")
 	return result
+
+#-------------------------------------------------------------------------------
+
+from sys import stderr
+
+def printWarning(message):
+	print(f"\033[92m[Warning]\033[00m {message}",
+		file=stderr)
+	
+def printError(message):
+	print(f"\033[91m[Error]\033[00m {message}",
+		file=stderr)
 
 #-------------------------------------------------------------------------------
 

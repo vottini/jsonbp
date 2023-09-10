@@ -3,11 +3,15 @@ import sys
 import jsonbp
 
 if len(sys.argv) < 3:
-	print(f"Usage: {sys.argv[0]} <blueprint> <json>")
+	print(f"Usage: {sys.argv[0]} <blueprint> <json> [additional type dirs]*")
 	sys.exit(0)
 
+typeDirs = None
+if len(sys.argv) > 3:
+	typeDirs = sys.argv[3:]
+
 blueprintFile = sys.argv[1]
-blueprint = jsonbp.loadFile(blueprintFile)
+blueprint = jsonbp.loadFile(blueprintFile, typeDirs)
 print(blueprint)
 
 jsonFile = sys.argv[2]

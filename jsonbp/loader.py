@@ -35,7 +35,6 @@ def loadTypes(path):
 				loaded.append(module.type_specs)
 
 		except Exception as e:
-			print("!!!! " + str(e))
 			notLoaded.append((file_path, e))
 			continue
 
