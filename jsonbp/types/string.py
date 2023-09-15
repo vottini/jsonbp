@@ -14,7 +14,7 @@ def _format(value, specs):
 
 
 def _parse(value, specs):
-	if not isinstance(value, str):
+	if isinstance(value, jsonbp.unquotedStr):
 		return False, jsonbp.errorType.VALUE_PARSING
 
 	strLength = len(value)

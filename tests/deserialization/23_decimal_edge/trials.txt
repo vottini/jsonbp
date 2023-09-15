@@ -1,2 +1,2 @@
 
-Decimal fractional length is too big | json1.js | KO | DECIMAL_PARSING
+Decimal fractional length is too big | json1.js | KO | VALUE_PARSING

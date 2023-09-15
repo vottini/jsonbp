@@ -3,4 +3,4 @@ Parsing float from decimal value | json1.js | OK | json1.py
 Parsing float from scientific value | json2.js | OK | json2.py
 Parsing float from minus infinity | json3.js | OK | json3.py
 Catching null assigned to float field | json4.js | KO | NULL_VALUE
-Catching boolean assigned to float field | json5.js | KO | FLOAT_PARSING
+Catching boolean assigned to float field | json5.js | KO | VALUE_PARSING

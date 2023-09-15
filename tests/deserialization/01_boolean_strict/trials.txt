@@ -1,8 +1,8 @@
 
 Parsing true boolean | json7.js | OK | json7.py
 Parsing false boolean | json8.js | OK | json8.py
-Catching integer as strict boolean | json1.js | KO | INVALID_BOOLEAN
-Catching string "true" as strict boolean | json2.js | KO | INVALID_BOOLEAN
-Catching empty string as strict boolean | json3.js | KO | INVALID_BOOLEAN
-Catching compound object as strict boolean | json4.js | KO | INVALID_BOOLEAN
-Catching null as strict boolean | json5.js | KO | INVALID_BOOLEAN
+Catching integer as strict boolean | json1.js | KO | VALUE_PARSING
+Catching string "true" as strict boolean | json2.js | KO | VALUE_PARSING
+Catching empty string as strict boolean | json3.js | KO | VALUE_PARSING
+Catching compound object as strict boolean | json4.js | KO | VALUE_PARSING
+Catching null as strict boolean | json5.js | KO | NULL_VALUE

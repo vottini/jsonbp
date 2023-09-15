@@ -1,0 +1,4 @@
+
+class unquotedStr(str):
+	pass
+

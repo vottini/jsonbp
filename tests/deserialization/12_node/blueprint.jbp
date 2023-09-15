@@ -6,12 +6,12 @@ enum origin {
 }
 
 node position {
-	latitude: float (min=-90, max=+90),
-	longitude: float (min=-180, max=+180),
+	latitude: float (atLeast=-90, atMost=+90),
+	longitude: float (atLeast=-180, atMost=+180),
 	origin: origin
 }
 
 root {
 	position: position,
-	moment: datetime
+	moment: instant
 }

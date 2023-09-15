@@ -10,6 +10,18 @@ from .field import createField
 from .exception import DeserializationException, SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
 from .array import makeArray, isArray
+from .unquoted import unquotedStr
+
+#-------------------------------------------------------------------------------
+
+# as taken from
+# https://stackoverflow.com/a/62395407/21680913
+
+def noBoolConvert(pairs):
+	return { key: unquotedStr(str(value).lower())
+		if isinstance(value, bool) else value
+		for key, value in pairs
+	}
 
 #-------------------------------------------------------------------------------
 
@@ -63,7 +75,7 @@ class JsonBlueprint:
 			return False, createErrorForField(fieldName,
 				errorType.NULL_VALUE)
 
-		if not isinstance(value, str):
+		if isinstance(value, unquotedStr):
 			return False, createErrorForField(fieldName,
 				errorType.INVALID_ENUM, value=value)
 
@@ -91,7 +103,16 @@ class JsonBlueprint:
 
 		if arrayKind == fieldKind.NODE:
 			arrayNode = self.findNodeDeclaration(arrayType)
+
 			for idx, content in enumerate(contents):
+				if content is None:
+					if jArray.nullable:
+						contents[idx] = None
+						continue
+
+					return False, createErrorForNode(nodeName,
+						errorType.NULL_VALUE, field=fieldName)
+
 				success, processed = self.validateNode(fieldName, arrayNode, content)
 
 				if not success:
@@ -104,6 +125,14 @@ class JsonBlueprint:
 
 		if arrayKind == fieldKind.ENUM:
 			for idx, value in enumerate(contents):
+				if value is None:
+					if jArray.nullable:
+						contents[idx] = None
+						continue
+
+					return False, createErrorForNode(fieldName,
+						errorType.NULL_VALUE, field=fieldName)
+
 				success, processed = self.validateEnum(fieldName, arrayType, value)
 
 				if not success:
@@ -115,6 +144,14 @@ class JsonBlueprint:
 			return True, contents
 
 		for idx, value in enumerate(contents):
+			if value is None:
+				if jArray.nullable:
+					contents[idx] = None
+					continue
+
+				return False, createErrorForNode(fieldName,
+					errorType.NULL_VALUE, field=fieldName)
+
 			success, processed = self.deserializeField(fieldName, arrayType, value)
 
 			if not success:
@@ -138,6 +175,17 @@ class JsonBlueprint:
 					errorType.MISSING_FIELD, field=fieldName)
 
 			retrieved = contents[fieldName]
+
+			if retrieved is None:
+				#print(f"RETRIEVED: {retrieved}")
+				#print(f"RETRIEVED: {fieldName}")
+				#print(f"RETRIEVED: {fieldData.nullable}")
+				if fieldData.nullable:
+					return True, None
+
+				return False, createErrorForNode(nodeName,
+					errorType.NULL_VALUE, field=fieldName)
+
 			if isArray(fieldData):
 				success, processed = self.validateArray(fieldName, fieldData, retrieved)
 				if not success: return False, processed
@@ -167,22 +215,30 @@ class JsonBlueprint:
 
 
 	def validate(self, rootContents):
+		if None == rootContents and not self.root.nullable:
+				return False, createErrorForNode(None,
+					errorType.NULL_VALUE, field="root")
+
 		if isArray(self.root):
-			return self.validateArray(None, self.root, rootContents)
+			return self.validateArray(None, self.root,
+				rootContents)
 
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
 		if rootKind == fieldKind.NODE:
 			rootNode = self.findNodeDeclaration(rootType)
-			return self.validateNode(None, rootNode, rootContents)
+			return self.validateNode(None, rootNode,
+				rootContents)
 
 		if rootKind == fieldKind.ENUM:
 			rootEnum = self.findEnumDeclaration(rootType)
-			return self.validateEnum(None, rootType, rootContents)
+			return self.validateEnum(None, rootType,
+				rootContents)
 
 		if rootKind == fieldKind.SIMPLE:
-			return self.deserializeField(None, rootType, rootContents)
+			return self.deserializeField(None, rootType,
+				rootContents)
 
 
 	def deserialize(self, contents):
@@ -192,8 +248,11 @@ class JsonBlueprint:
 
 		try:
 			identity = lambda x : x
+			unquote = lambda x : unquotedStr(x)
+
 			loaded = json.loads(contents,
-				parse_float=identity, parse_int=identity,
+				object_pairs_hook=noBoolConvert,
+				parse_float=unquote, parse_int=unquote,
 				parse_constant=identity)
 
 		except json.JSONDecodeError as e:

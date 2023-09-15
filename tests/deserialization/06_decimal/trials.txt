@@ -5,6 +5,6 @@ Parsing decimal as string | json9.js | OK | json9.py
 Parsing decimal missing precision | json3.js | OK | json3.py
 Parsing decimal superfluous precision | json4.js | OK | json4.py
 Catching null assigned to decimal field | json5.js | KO | NULL_VALUE
-Catching boolean assigned to decimal field | json7.js | KO | DECIMAL_PARSING
-Catching object as decimal | json8.js | KO | DECIMAL_PARSING
-Catching invalid string as decimal | json6.js | KO | DECIMAL_PARSING
+Catching boolean assigned to decimal field | json7.js | KO | VALUE_PARSING
+Catching object as decimal | json8.js | KO | VALUE_PARSING
+Catching invalid string as decimal | json6.js | KO | VALUE_PARSING

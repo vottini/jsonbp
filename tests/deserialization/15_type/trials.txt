@@ -1,6 +1,6 @@
 
 Parsing custom types I | json1.js | OK | json1.py
 Parsing custom types II | json2.js | OK | json2.py
-Catching type violation | json3.js | KO | INVALID_DATETIME
+Catching type violation | json3.js | KO | VALUE_PARSING
 Catching parent type violation | json4.js | KO | OUTSIDE_RANGE
 

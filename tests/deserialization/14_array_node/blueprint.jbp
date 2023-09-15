@@ -8,10 +8,11 @@ enum color {
 node point {
 	x: float,
 	y: float,
-	when: datetime (format="%d/%m/%Y")
+	when: instant (format="%d/%m/%Y")
 }
 
 root {
 	colors: color[maxLength=3],
 	points: point[minLength=2]
 }
+

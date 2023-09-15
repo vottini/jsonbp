@@ -1,5 +1,0 @@
-
-Parsing datetime | json1.js | OK | json1.py
-Catching datetime missing time | json2.js | KO | INVALID_DATETIME
-Catching datetime missing seconds | json3.js | KO | INVALID_DATETIME
-Catching datetime with bad values | json4.js | KO | INVALID_DATETIME

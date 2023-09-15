@@ -1,2 +1,2 @@
 
-root decimal (fractionalLength=30)
+root decimal (precision=30)

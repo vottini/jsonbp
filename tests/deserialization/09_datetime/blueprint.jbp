@@ -1,4 +1,0 @@
-
-root {
-	some_datetime: datetime
-}

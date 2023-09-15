@@ -19,6 +19,7 @@ reserved = (
 	'type',
 	'enum',
 	'optional',
+	'nullable',
 	'extends',
 	'include'
 )
@@ -62,7 +63,7 @@ def t_BOOLEAN(t):
 
 def t_FLOAT_AMOUNT(t):
 	r'[-+]?\d+(\.(\d+)?([eE][-+]?\d+)?|[eE][-+]?\d+)'
-	t.value = decimal(t.value)
+	t.value = Decimal(t.value)
 	return t
 
 def t_FLOAT_CONST(t):
@@ -157,7 +158,7 @@ def p_include(p):
 	inclusionPath = os.path.join(currentPath, inclusionFile)
 	pushEnv()
 
-	try: loadedBlueprint = loadFile(inclusionPath, True)
+	try: loadedBlueprint = loadFile(inclusionPath)
 	except SchemaViolation as e: raise SchemaViolation(e)
 	finally: popEnv()
 
@@ -306,7 +307,7 @@ def p_attribute(p):
 
 	if len(p) == 3:
 		fieldName, fieldData = p[2]
-		fieldData.setOptional()
+		fieldData.optional = True
 		p[0] = p[2]
 
 	else:
@@ -340,7 +341,21 @@ def p_array_declaration(p):
 
 def p_single_declaration(p):
 	'''
-		single_declaration : node_declaration
+		single_declaration : NULLABLE atomic_declaration
+		                   | atomic_declaration
+	'''
+
+	if len(p) == 3:
+		p[2].nullable = True
+		p[0] = p[2]
+		return
+
+	p[0] = p[1]
+
+
+def p_atomic_declaration(p):
+	'''
+		atomic_declaration : node_declaration
 		                   | enum_declaration
 		                   | element_declaration
 	'''
@@ -525,6 +540,7 @@ def _load(contents, contentPath, contentName, typeDirs):
 		primitiveTypes[name] = typeSpec
 
 	if typeDirs is not None:
+		print(f"typeDirs {typeDirs}")
 		for typeDir in typeDirs:
 			loaded, notLoaded = loadTypes(typeDir)
 

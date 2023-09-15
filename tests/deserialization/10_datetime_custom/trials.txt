@@ -1,5 +1,5 @@
 
 Parsing custom datetime | json1.js | OK | json1.py
-Catching non existent date I | json2.js | KO | INVALID_DATETIME
-Catching non existent date II | json4.js | KO | INVALID_DATETIME
-Catching mispelled date | json3.js | KO | INVALID_DATETIME
+Catching non existent date I | json2.js | KO | VALUE_PARSING
+Catching non existent date II | json4.js | KO | VALUE_PARSING
+Catching mispelled date | json3.js | KO | VALUE_PARSING

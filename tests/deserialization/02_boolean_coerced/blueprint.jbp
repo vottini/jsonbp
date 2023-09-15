@@ -1,4 +1,5 @@
 
 root {
-	some_boolean: bool (coerce=true)
+	some_boolean: bool
 }
+

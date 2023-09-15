@@ -4,12 +4,12 @@
 
 type small : integer (max=10)
 type positive : small (min=1)
-type instant : datetime (format="%Y-%m-%d %H:%M")
-type thousandth : decimal (fractionalLength=3)
+type moment : instant (format="%Y-%m-%d %H:%M")
+type thousandth : decimal (precision=3)
 
 root {
 	dummy1: positive,
-	dummy2: thousandth (decimalSeparator=","),
-	dummy3: instant
+	dummy2: thousandth (decimal=","),
+	dummy3: moment
 }
 

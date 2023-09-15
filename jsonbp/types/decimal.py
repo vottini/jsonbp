@@ -64,7 +64,7 @@ def _format(value, specs):
 
 
 def _parse(value, specs):
-	sanedValue = (str(value)
+	sanedValue = (value
 		.removeprefix(specs['prefix'])
 		.removesuffix(specs['suffix'])
 	)
@@ -85,8 +85,8 @@ def _parse(value, specs):
 		}
 
 	sanedStrValue = (sanedValue
-		.replace(separator, '')
-		.replace(decimalMark, '.')
+		.replace(specs['separator'], '')
+		.replace(specs['decimal'], '.')
 	)
 
 	precision = f"1e-{specs['precision']}"

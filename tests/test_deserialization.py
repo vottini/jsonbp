@@ -4,7 +4,7 @@ import os.path
 import sys
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import pytest
 
 verificationDir = 'deserialization'
@@ -94,14 +94,14 @@ def testDeserializations():
 				correct = (outcome == shouldSucceed)
 
 				if not correct:
-						print('Failed!')
-						print(f'Expected outcome = {shouldSucceed}')
-						print(f'Obtained outcome = {outcome}')
-						print("###", obtainedResult)
+					print('Failed!')
+					print(f'Expected outcome = {shouldSucceed}')
+					print(f'Obtained outcome = {outcome}')
+					print("###", obtainedResult)
 
 				assert correct
 				if not shouldSucceed:
-					expectedError = getattr(jsonbp.error_type, expectedResult)
+					expectedError = getattr(jsonbp.errorType, expectedResult)
 					returnedError = obtainedResult.getErrorType()
 					returnedIsExpected = (expectedError == returnedError)
 
