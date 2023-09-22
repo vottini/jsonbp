@@ -38,7 +38,8 @@ class JsonBlueprint:
 	def __str__(self):
 		return (
 			f"blueprint: {self.uuid}\n" +
-			f"|-> types = {self.derivedTypes}\n" +
+			f"|-> primitive types = {self.primitiveTypes}\n" +
+			f"|-> derived types = {self.derivedTypes}\n" +
 			f"|-> enums = {self.enums}\n" +
 			f"|-> nodes = {self.nodes}\n" +
 			f"'-> root = {self.root}")
@@ -177,11 +178,9 @@ class JsonBlueprint:
 			retrieved = contents[fieldName]
 
 			if retrieved is None:
-				#print(f"RETRIEVED: {retrieved}")
-				#print(f"RETRIEVED: {fieldName}")
-				#print(f"RETRIEVED: {fieldData.nullable}")
 				if fieldData.nullable:
-					return True, None
+					contents[fieldName] = None
+					continue
 
 				return False, createErrorForNode(nodeName,
 					errorType.NULL_VALUE, field=fieldName)
@@ -215,7 +214,11 @@ class JsonBlueprint:
 
 
 	def validate(self, rootContents):
-		if None == rootContents and not self.root.nullable:
+		if None == rootContents:
+			if self.root.nullable:
+				return True, None
+
+			else:
 				return False, createErrorForNode(None,
 					errorType.NULL_VALUE, field="root")
 

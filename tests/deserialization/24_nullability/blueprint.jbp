@@ -1,0 +1,22 @@
+
+enum origin {
+	ACQUIRED,
+	RECEIVED,
+	GUESSED
+}
+
+node position {
+	latitude: float (atLeast=-90, atMost=+90),
+	longitude: float (atLeast=-180, atMost=+180),
+	origin: nullable origin
+}
+
+root nullable {
+	position: nullable position,
+	optional orientation: nullable {
+		EAST,
+		WEST,
+		NORTH,
+		SOUTH
+	}
+}

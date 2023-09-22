@@ -1,0 +1,6 @@
+
+Parsing nullable root | json1.js | OK | json1.py
+Parsing nullable field inside node | json2.js | OK | json2.py
+Parsing nullable simple field | json3.js | OK | json3.py
+Catching nullable but not optional field missing | json4.js | KO | MISSING_FIELD
+

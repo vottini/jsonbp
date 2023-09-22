@@ -6,9 +6,6 @@ class JsonField:
 		self.optional = False
 		self.nullable = False
 
-	def setOptional(self): self.optional = True
-	def setNullable(self): self.nullable = True
-
 #-------------------------------------------------------------------------------
 
 def createField(fieldKind, fieldType):

@@ -1,0 +1,5 @@
+
+benchmark['result'] = {
+	"position": None
+}
+

@@ -1,4 +1,5 @@
 
 root {
-	some_float: float
+	some_float: float (allowNaN=true)
 }
+

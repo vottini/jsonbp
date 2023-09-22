@@ -115,12 +115,18 @@ def p_error(p):
 def typeExists(typeName, excluded=None):
 	excluded = excluded or set()
 
-	found = (
-		currentBlueprint.findElementDeclaration(typeName, excluded.copy()) or
-		currentBlueprint.findNodeDeclaration(typeName, excluded.copy()) or
-		currentBlueprint.findEnumDeclaration(typeName, excluded.copy()))
+	lookups = (
+		currentBlueprint.findNodeDeclaration,
+		currentBlueprint.findElementDeclaration,
+		currentBlueprint.findEnumDeclaration
+	)
 
-	return found != None
+	for method in lookups:
+		found = method(typeName, excluded.copy())
+		if found is not None:
+			return True
+
+	return False
 
 
 adhoc_counter = 0
@@ -375,7 +381,7 @@ def p_atomic_declaration(p):
 
 	else:
 		declType = declaration.typeName
-		if currentBlueprint.findElementDeclaration(declType):
+		if currentBlueprint.findElementDeclaration(declType) is not None:
 			kind = fieldKind.SIMPLE
 
 			if not declaration.isCustomized():
@@ -390,7 +396,7 @@ def p_atomic_declaration(p):
 			kind = fieldKind.ENUM
 			fieldId = declType
 
-		elif currentBlueprint.findNodeDeclaration(declType):
+		else:
 			kind = fieldKind.NODE
 			fieldId = declType
 
@@ -540,7 +546,6 @@ def _load(contents, contentPath, contentName, typeDirs):
 		primitiveTypes[name] = typeSpec
 
 	if typeDirs is not None:
-		print(f"typeDirs {typeDirs}")
 		for typeDir in typeDirs:
 			loaded, notLoaded = loadTypes(typeDir)
 
@@ -553,8 +558,8 @@ def _load(contents, contentPath, contentName, typeDirs):
 				primitiveTypes[name] = typeSpec
 
 			for file, problem in notLoaded:
-					msg = f"Unable to load file '{file}' => {problem}"
-					printError(msg)
+				msg = f"Unable to load file '{file}' => {problem}"
+				printError(msg)
 
 	try:
 		_mutex.acquire()

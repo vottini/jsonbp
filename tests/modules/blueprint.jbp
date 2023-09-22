@@ -1,0 +1,6 @@
+
+root {
+	oddBall: odd,
+	divisible: even
+}
+

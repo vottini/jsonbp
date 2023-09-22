@@ -137,7 +137,11 @@ def testDeserializations():
 								print('It was not possible to check deserialization')
 
 						assert resultInBenchmark
-						correctResult = obtainedResult == benchmark['result']
+						benchmarkResult = benchmark['result']
+
+						obtainedResult = {k: v if v == v else 'nan' for k, v in obtainedResult.items()} if isinstance(obtainedResult, dict) else obtainedResult
+						benchmarkResult = {k: v if v == v else 'nan' for k, v in benchmarkResult.items()} if isinstance(benchmarkResult, dict) else benchmarkResult
+						correctResult = obtainedResult == benchmarkResult
 
 						if not correctResult:
 								print('Failed!')
