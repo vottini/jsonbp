@@ -7,7 +7,7 @@ from . import fieldKind
 from . import errorType
 
 from .field import createField
-from .exception import DeserializationException, SerializationException
+from .exception import SchemaViolation, SerializationException
 from .error import createErrorForField, createErrorForNode, createErrorForRoot
 from .array import makeArray, isArray
 from .unquoted import unquotedStr
@@ -227,7 +227,7 @@ class JsonBlueprint:
 	def deserialize(self, contents):
 		if self.root is None:
 			msg = "No root defined for blueprint, unable to deserialize"
-			raise DeserializationException(msg)
+			raise SchemaViolation(msg)
 
 		try:
 			identity = lambda x : x
