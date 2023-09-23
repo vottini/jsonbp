@@ -72,10 +72,6 @@ class JsonBlueprint:
 
 
 	def validateEnum(self, fieldName, enumType, value):
-		if None == value:
-			return False, createErrorForField(fieldName,
-				errorType.NULL_VALUE)
-
 		if isinstance(value, unquotedStr):
 			return False, createErrorForField(fieldName,
 				errorType.INVALID_ENUM, value=value)
@@ -102,47 +98,14 @@ class JsonBlueprint:
 		arrayKind = jArray.fieldKind
 		arrayType = jArray.fieldType
 
+		elementType = arrayType
+		deserializer = (self.validateEnum 
+			if arrayKind == fieldKind.ENUM
+			else self.deserializeField)
+
 		if arrayKind == fieldKind.NODE:
-			arrayNode = self.findNodeDeclaration(arrayType)
-
-			for idx, content in enumerate(contents):
-				if content is None:
-					if jArray.nullable:
-						contents[idx] = None
-						continue
-
-					return False, createErrorForNode(nodeName,
-						errorType.NULL_VALUE, field=fieldName)
-
-				success, processed = self.validateNode(fieldName, arrayNode, content)
-
-				if not success:
-					processed.setAsArrayElement(idx)
-					return False, processed
-
-				contents[idx] = processed
-
-			return True, contents
-
-		if arrayKind == fieldKind.ENUM:
-			for idx, value in enumerate(contents):
-				if value is None:
-					if jArray.nullable:
-						contents[idx] = None
-						continue
-
-					return False, createErrorForNode(fieldName,
-						errorType.NULL_VALUE, field=fieldName)
-
-				success, processed = self.validateEnum(fieldName, arrayType, value)
-
-				if not success:
-					processed.setAsArrayElement(idx)
-					return False, processed
-
-				contents[idx] = processed
-
-			return True, contents
+			elementType = self.findNodeDeclaration(arrayType)
+			deserializer = self.validateNode
 
 		for idx, value in enumerate(contents):
 			if value is None:
@@ -153,7 +116,7 @@ class JsonBlueprint:
 				return False, createErrorForNode(fieldName,
 					errorType.NULL_VALUE, field=fieldName)
 
-			success, processed = self.deserializeField(fieldName, arrayType, value)
+			success, processed = deserializer(fieldName, elementType, value)
 
 			if not success:
 				processed.setAsArrayElement(idx)
@@ -177,6 +140,20 @@ class JsonBlueprint:
 
 			retrieved = contents[fieldName]
 
+			if isArray(fieldData):
+				if retrieved is None:
+					if fieldData.nullableArray:
+						contents[fieldName] = None
+						continue
+
+					else:
+						return False, createErrorForNode(nodeName,
+							errorType.NULL_VALUE, field=fieldName)
+
+				success, processed = self.validateArray(fieldName, fieldData, retrieved)
+				if not success: return False, processed
+				continue
+
 			if retrieved is None:
 				if fieldData.nullable:
 					contents[fieldName] = None
@@ -184,11 +161,6 @@ class JsonBlueprint:
 
 				return False, createErrorForNode(nodeName,
 					errorType.NULL_VALUE, field=fieldName)
-
-			if isArray(fieldData):
-				success, processed = self.validateArray(fieldName, fieldData, retrieved)
-				if not success: return False, processed
-				continue
 
 			kind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
@@ -214,6 +186,18 @@ class JsonBlueprint:
 
 
 	def validate(self, rootContents):
+		if isArray(self.root):
+			if rootContents is not None:
+				return self.validateArray(None, self.root,
+					rootContents)
+
+				if self.root.nullableArray:
+					return True, None
+
+				else:
+					return False, createErrorForNode(None,
+						errorType.NULL_VALUE, field="root")
+
 		if None == rootContents:
 			if self.root.nullable:
 				return True, None
@@ -221,10 +205,6 @@ class JsonBlueprint:
 			else:
 				return False, createErrorForNode(None,
 					errorType.NULL_VALUE, field="root")
-
-		if isArray(self.root):
-			return self.validateArray(None, self.root,
-				rootContents)
 
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType

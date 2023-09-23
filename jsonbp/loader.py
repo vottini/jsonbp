@@ -41,7 +41,7 @@ def loadTypes(path):
 			if hasattr(module, 'type_specs'):
 				for field in _required_fields:
 					if not field in module.type_specs:
-						msg = "Missing required field '{field}'"
+						msg = f"Missing required field '{field}'"
 						notLoaded.append((file_path, msg))
 						continue
 

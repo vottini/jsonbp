@@ -549,6 +549,11 @@ def _load(contents, contentPath, contentName, typeDirs):
 		for typeDir in typeDirs:
 			loaded, notLoaded = loadTypes(typeDir)
 
+			if len(loaded) == len(notLoaded) == 0:
+				msg = f"No files found in dir '{typeDir}'"
+				printWarning(msg)
+				continue
+
 			for typeSpec in loaded:
 				name = typeSpec['name']
 				if name in primitiveTypes:

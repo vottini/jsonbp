@@ -1,0 +1,5 @@
+
+root {
+	some_float: float (greaterThan=-Infinity, lessThan=+Infinity)
+}
+

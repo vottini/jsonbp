@@ -1,0 +1,4 @@
+
+Parsing float not infinity | json1.js | OK | json1.py
+Catching infinity float | json2.js | KO | OUTSIDE_RANGE
+Catching float NaN | json3.js | KO | OUTSIDE_RANGE

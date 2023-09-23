@@ -1,0 +1,8 @@
+
+Parsing array with null values | json1.js | OK | json1.py
+Parsing nullable array  | json2.js | OK | json2.py
+Catching null as non nullable array | json3.js | KO | NULL_VALUE
+Catching null inside array | json4.js | KO | NULL_VALUE
+
+
+
