@@ -1,6 +1,7 @@
 *.swp
 *.pyc
 /tests/.coverage
+.coverage
 /.env
 /dist
 /jsonbp.egg-info
