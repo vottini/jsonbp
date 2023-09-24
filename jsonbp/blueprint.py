@@ -365,6 +365,11 @@ class JsonBlueprint:
 		} [contentKind]
 
 		if isArray(element):
+			if content is None:
+				if element.nullableArray: return 'null'
+				msg = f"{elementName}: Array cannot be null"
+				raise SerializationException(msg)
+
 			try: iterator = iter(content)
 
 			except TypeError:
@@ -376,12 +381,26 @@ class JsonBlueprint:
 
 			serialized = list()
 			for idx, item in enumerate(content):
+				if item is None:
+					if element.nullable:
+						serialized.append('null')
+						continue
+
+					else:
+						msg = f"{elementName} is not nullable"
+						raise SerializationException(msg)
+
 				idxName = f"{elementName} index {idx}"
 				processed = method(self, contentType, idxName, item)
 				serialized.append(processed)
 
 			inner = ",".join(serialized)
 			return f"[{inner}]"
+
+		if content is None:
+			if element.nullable: return 'null'
+			msg = f"{elementName} is not nullable"
+			raise SerializationException(msg)
 
 		return method(self, contentType, elementName, content)
 
@@ -414,7 +433,7 @@ class JsonBlueprint:
 		possibleValues = self.findEnumDeclaration(enumType)
 
 		if not content in possibleValues:
-			msg = f"Value '{value}' is not valid for field '{fieldName}'"
+			msg = f"Value '{content}' is not valid for field '{fieldName}'"
 			raise SerializationException(msg)
 
 		return f'"{content}"'
@@ -438,6 +457,10 @@ class JsonBlueprint:
 		if self.root is None:
 			msg = "No root defined for blueprint, unable to serialize"
 			raise SerializationException(msg)
+
+		if content is None:
+			if self.root.nullable:
+				return 'null'
 			
 		return self.serializeElement(self.root,
 			"Root Level", content)

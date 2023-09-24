@@ -1,0 +1,5 @@
+
+Serializing array of objects | json1.py | OK
+Serializing array of objects with nulls | json2.py | OK
+Catching non array | json3.py | KO
+

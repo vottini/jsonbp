@@ -1,0 +1,5 @@
+
+root nullable {
+	optional content: nullable string
+}
+

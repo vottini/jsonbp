@@ -1,0 +1,6 @@
+
+Serializing null | json1.py | OK
+Serializing empty object | json2.py | OK
+Serializing nullable field | json3.py | OK
+Serializing simple content | json4.py | OK
+

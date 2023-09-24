@@ -3,7 +3,7 @@ import os
 
 from . import errorType
 from .parser import loadFile, loadString, invalidateCache
-from .exception import SchemaViolation
+from .exception import SchemaViolation, SerializationException
 from .error import useTranslation
 from .unquoted import unquotedStr
 

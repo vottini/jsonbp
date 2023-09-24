@@ -7,7 +7,8 @@ _defaults = {
 
 
 def _format(value, specs):
-	return value.strftime(specs['format'])
+	result = value.strftime(specs['format'])
+	return f'"{result}"'
 
 
 def _parse(value, specs):

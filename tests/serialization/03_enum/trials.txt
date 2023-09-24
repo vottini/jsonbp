@@ -1,0 +1,8 @@
+
+Serializing nullable enums | json1.py | OK
+Serializing null array | json2.py | OK
+Catching non array in array field | json3.py | KO
+Catching null inside array | json4.py | KO
+Catching invalid enum | json5.py | KO
+
+

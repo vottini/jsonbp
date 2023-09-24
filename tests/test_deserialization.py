@@ -132,9 +132,9 @@ def testDeserializations():
 						resultInBenchmark = 'result' in benchmark
 
 						if not resultInBenchmark:
-								print('Failed!')
-								print(f'In file "{resultFile}": "result" was not defined for dict benchmark')
-								print('It was not possible to check deserialization')
+							print('Failed!')
+							print(f'In file "{resultFile}": "result" was not defined for dict benchmark')
+							print('It was not possible to check deserialization')
 
 						assert resultInBenchmark
 						benchmarkResult = benchmark['result']
@@ -144,11 +144,10 @@ def testDeserializations():
 						correctResult = obtainedResult == benchmarkResult
 
 						if not correctResult:
-								print('Failed!')
-								print(f'Obtained result = {obtainedResult}')
-								print(f'Expected result = {benchmark["result"]}')
-
-
+							print('Failed!')
+							print(f'Obtained result = {obtainedResult}')
+							print(f'Expected result = {benchmark["result"]}')
+	
 						assert correctResult
 						del benchmark['result']
 

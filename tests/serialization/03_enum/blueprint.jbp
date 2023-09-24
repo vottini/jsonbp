@@ -1,0 +1,13 @@
+
+enum color {
+	RED,
+	GOLD,
+	GREEN
+}
+
+root {
+	foreground: color,
+	background: nullable color,
+	contents: string [nullableArray=true]
+}
+

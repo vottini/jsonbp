@@ -40,11 +40,16 @@ import jsonbp
 
 def testChooseRoot():
 	blueprint = jsonbp.loadString(blueprint_txt)
-	with pytest.raises(jsonbp.SchemaViolation):
-		blueprint.deserialize(json_txt)
 
-	with pytest.raises(jsonbp.SchemaViolation):
-		blueprint.chooseRoot("nonExistent")
+	bad_calls = [
+		(lambda : blueprint.deserialize(json_txt), jsonbp.SchemaViolation),
+		(lambda : blueprint.chooseRoot("nonExistent"), jsonbp.SchemaViolation),
+		(lambda : blueprint.serialize({"foo": "bar"}), jsonbp.SerializationException)
+	]
+
+	for bad_call, excepionType in bad_calls:
+		with pytest.raises(excepionType):
+			bad_call()
 
 	derived = blueprint.chooseRoot("payload")
 	success, _ = derived.deserialize(json_txt)
