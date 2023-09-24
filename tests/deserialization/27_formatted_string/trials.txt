@@ -1,0 +1,6 @@
+
+Parsing formatted string | json1.js | OK | json1.py
+Catching non conformant string I | json2.js | KO | INVALID_FORMAT
+Catching non conformant string II | json3.js | KO | INVALID_FORMAT
+Catching non conformant string III | json4.js | KO | INVALID_FORMAT
+

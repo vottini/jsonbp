@@ -1,5 +1,5 @@
 
 data['input'] = {
-	"content": "Dummy"
+	"content": True
 }
 

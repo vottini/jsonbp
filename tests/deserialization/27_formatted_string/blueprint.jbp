@@ -1,0 +1,8 @@
+
+node credentials {
+	login: string (minLength=6, maxLength=15, format="[a-z]+[a-z0-9]*"),
+	password: string (minLength=8, format="[a-zA-Z0-9]*")
+}
+
+root credentials
+

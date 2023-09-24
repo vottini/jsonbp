@@ -1,0 +1,6 @@
+
+Parsing customized decimal | json1.js | OK | json1.py
+Catching bad prefix on decimal | json2.js | KO | VALUE_PARSING
+
+
+

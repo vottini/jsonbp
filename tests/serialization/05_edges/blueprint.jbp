@@ -1,5 +1,5 @@
 
 root nullable {
-	optional content: nullable string
+	optional content: nullable bool
 }
 
