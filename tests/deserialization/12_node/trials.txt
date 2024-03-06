@@ -1,13 +1,13 @@
 
-Parsing node with primitive types and enums I | json1.js | OK | json1.py
-Parsing node with primitive types and enums II | json2.js | OK | json2.py
-Catching field missing in child node | json3.js | KO | MISSING_FIELD
-Catching field missing in root node | json4.js | KO | MISSING_FIELD
-Catching invalid enum inside node | json5.js | KO | UNKNOWN_LITERAL
-Catching invalid float inside node | json6.js | KO | VALUE_PARSING
-Catching integer in place of a node | json7.js | KO | INVALID_NODE
-Catching string in place of a node | json8.js | KO | INVALID_NODE
-Catching null in place of a node | json9.js | KO | NULL_VALUE
-Catching array in place of a node | jsonA.js | KO | INVALID_NODE
+Parsing object with primitive types and enums I | json1.js | OK | json1.py
+Parsing object with primitive types and enums II | json2.js | OK | json2.py
+Catching field missing in child object | json3.js | KO | MISSING_FIELD
+Catching field missing in root object | json4.js | KO | MISSING_FIELD
+Catching invalid enum inside object | json5.js | KO | UNKNOWN_LITERAL
+Catching invalid float inside object | json6.js | KO | VALUE_PARSING
+Catching integer in place of a object | json7.js | KO | INVALID_OBJECT
+Catching string in place of a object | json8.js | KO | INVALID_OBJECT
+Catching null in place of a object | json9.js | KO | NULL_VALUE
+Catching array in place of a object | jsonA.js | KO | INVALID_OBJECT
 Catching invalid json | jsonB.js | KO | JSON_PARSING
 

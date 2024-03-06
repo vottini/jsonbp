@@ -2,6 +2,6 @@
 include "color.jbp"
 include "point.jbp"
 
-node colored_point extends point {
+object colored_point extends point {
 	color: color
 }

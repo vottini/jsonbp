@@ -5,7 +5,7 @@ enum color {
 	GREEN
 }
 
-node point {
+object point {
 	x: float,
 	y: float,
 	when: instant (format="%d/%m/%Y")

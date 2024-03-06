@@ -1,14 +1,14 @@
 
 type unsignedByte : integer(min=0, max=255)
 
-node color {
+object color {
 	red: unsignedByte,
 	green: unsignedByte,
 	blue: unsignedByte,
 	alpha: unsignedByte
 }
 
-node translucentColor extends color {
+object translucentColor extends color {
 	alpha: unsignedByte
 }
 

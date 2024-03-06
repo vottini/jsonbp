@@ -7,7 +7,7 @@ enum color {
 
 type unsignedByte : integer(min=0, max=255)
 
-node color {
+object color {
 	red: unsignedByte,
 	green: unsignedByte,
 	blue: unsignedByte

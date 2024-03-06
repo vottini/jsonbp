@@ -1,6 +1,6 @@
 
-Serializing node with primitive types and enums I | json1.py | OK
-Serializing node with primitive types and enums II | json2.py | OK
+Serializing object with primitive types and enums I | json1.py | OK
+Serializing object with primitive types and enums II | json2.py | OK
 Catching null on object | json3.py | KO
 Catching missing field | json4.py | KO
 Catching null root | json5.py | KO

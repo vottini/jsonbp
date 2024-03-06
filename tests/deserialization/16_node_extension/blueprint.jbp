@@ -4,7 +4,7 @@
 
 type timestamp : integer (min=0)
 
-node point {
+object point {
 	x: float,
 	y: float,
 	moment: timestamp
@@ -16,7 +16,7 @@ enum color {
 	GREEN
 }
 
-node colored_point extends point {
+object colored_point extends point {
 	color: color
 }
 

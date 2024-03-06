@@ -15,7 +15,7 @@ from .array import makeArray
 
 reserved = (
 	'root',
-	'node',
+	'object',
 	'type',
 	'enum',
 	'optional',
@@ -147,7 +147,7 @@ def p_construction(p):
 	'''
 	    construction : type
 					         | enum
-									 | node
+									 | object
 									 | root
 									 | include
 	'''
@@ -192,15 +192,15 @@ def p_root(p):
 	currentBlueprint.root = p[2]
 
 
-def p_node(p):
+def p_object(p):
 	'''
-		node : NODE IDENTIFIER EXTENDS IDENTIFIER node_declaration
-		     | NODE IDENTIFIER node_declaration
+		object : OBJECT IDENTIFIER EXTENDS IDENTIFIER object_declaration
+		       | OBJECT IDENTIFIER object_declaration
 	'''
 
-	nodeName = p[2]
-	if typeExists(nodeName):
-		msg = f"Duplicated type '{nodeName}'"
+	objectName = p[2]
+	if typeExists(objectName):
+		msg = f"Duplicated type '{objectName}'"
 		raise SchemaViolation(msg)
 
 	if len(p) == 6:
@@ -211,25 +211,25 @@ def p_node(p):
 			msg = f"Node '{baseNode}' is not defined"
 			raise SchemaViolation(msg)
 
-		nodeFields = p[5]
-		for fieldName, fieldDeclaration in nodeFields.items():
+		objectFields = p[5]
+		for fieldName, fieldDeclaration in objectFields.items():
 			if fieldName in baseFields:
 				raise SchemaViolation(
-					f"Field '{fieldName}' in node '{nodeName}' "
-					f"is already defined in base node '{baseNode}'"
+					f"Field '{fieldName}' in object '{objectName}' "
+					f"is already defined in base object '{baseNode}'"
 				)
 
-		nodeFields.update(baseFields)
-		currentBlueprint.nodes[nodeName] = nodeFields
+		objectFields.update(baseFields)
+		currentBlueprint.objects[objectName] = objectFields
 
 	else:
-		nodeFields = p[3]
-		currentBlueprint.nodes[nodeName] = nodeFields
+		objectFields = p[3]
+		currentBlueprint.objects[objectName] = objectFields
 
 
-def p_node_specs(p):
+def p_object_specs(p):
 	'''
-		node_declaration : '{' attributes '}'
+		object_declaration : '{' attributes '}'
 	'''
 
 	decls = p[2]
@@ -336,7 +336,7 @@ def p_array_declaration(p):
 	'''
 
 	jArray = makeArray(p[1])
-	
+
 	if len(p) == 5:
 		for specificity in p[3]:
 			spec, value = specificity
@@ -361,17 +361,17 @@ def p_single_declaration(p):
 
 def p_atomic_declaration(p):
 	'''
-		atomic_declaration : node_declaration
+		atomic_declaration : object_declaration
 		                   | enum_declaration
 		                   | element_declaration
 	'''
-	
+
 	declaration = p[1]
 	if isinstance(declaration, dict):
-		adhoc_node = '_node_type_' + str(getNextAdhoc()) + '_'
-		currentBlueprint.nodes[adhoc_node] = declaration
-		kind = fieldKind.NODE
-		fieldId = adhoc_node
+		adhoc_object = '_object_type_' + str(getNextAdhoc()) + '_'
+		currentBlueprint.objects[adhoc_object] = declaration
+		kind = fieldKind.OBJECT
+		fieldId = adhoc_object
 
 	elif isinstance(declaration, list):
 		adhoc_enum = '_enum_type_' + str(getNextAdhoc()) + '_'
@@ -397,7 +397,7 @@ def p_atomic_declaration(p):
 			fieldId = declType
 
 		else:
-			kind = fieldKind.NODE
+			kind = fieldKind.OBJECT
 			fieldId = declType
 
 	p[0] = createField(kind, fieldId)
@@ -433,7 +433,7 @@ def p_element_declaration(p):
 			raise SchemaViolation(msg)
 
 		specs = list()
-	
+
 	p[0] = createDeclaration(typeName, specs)
 
 
@@ -499,7 +499,7 @@ def p_constants(p):
 	if len(p) == 4:
 		p[1].append(p[3])
 		p[0] = p[1]
-	
+
 	else:
 		p[0] = [p[1]]
 
@@ -578,7 +578,7 @@ def _load(contents, contentPath, contentName, typeDirs):
 			_loadedFiles[abspath] = result
 
 		return result
-	
+
 	finally:
 		_mutex.release()
 
@@ -608,7 +608,7 @@ def loadFile(filepath, typeDirs=None):
 def loadString(string, typeDirs=None):
 	return _load(string, '.', None,
 		typeDirs)
-	
+
 #-------------------------------------------------------------------------------
 
 def invalidateCache():

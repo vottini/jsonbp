@@ -1,6 +1,6 @@
 
-Serializing node with nullable object | json1.py | OK
-Serializing node with nested node | json1.py | OK
+Serializing object with nullable object | json1.py | OK
+Serializing object with nested object | json1.py | OK
 Serializing with optional field | json5.py | OK
 Catching non array field | json3.py | KO
 Catching null array | json4.py | KO

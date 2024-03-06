@@ -15,7 +15,7 @@ for error_name in _error_names:
 #-------------------------------------------------------------------------------
 
 texts = dict()
-possiblePrefixes = {'FIELD', 'NODE', 'ARRAY', 'ROOT'}
+possiblePrefixes = {'FIELD', 'OBJECT', 'ARRAY', 'ROOT'}
 prefixes = dict()
 
 #-------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ def createErrorForField(fieldName, error_id, **context):
 
 def createErrorForNode(nodeName, error_id, **context):
 	result = _instance(error_id, **context)
-	args = ("NODE", nodeName) if nodeName != None else ("ROOT",)
+	args = ("OBJECT", nodeName) if nodeName != None else ("ROOT",)
 	result.setAssignee(*args)
 	return result
 
@@ -113,7 +113,7 @@ from sys import stderr
 def printWarning(message):
 	print(f"\033[92m[Warning]\033[00m {message}",
 		file=stderr)
-	
+
 def printError(message):
 	print(f"\033[91m[Error]\033[00m {message}",
 		file=stderr)

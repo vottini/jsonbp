@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonbp"
-version = "1.0.0"
-description = "Schema based JSON Encoder/Decoder"
+version = "1.0.2"
+description = "Schema based JSON Parser/Serializer"
 authors = [
 	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
 ]

@@ -1,5 +1,5 @@
 
-enum node {
+enum object {
 	SOMEWHAT,
 	INEXPECTED
 }

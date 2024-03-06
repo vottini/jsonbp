@@ -2,6 +2,7 @@
 import re
 import json
 import uuid
+import collections.abc
 
 from . import fieldKind
 from . import errorType
@@ -32,7 +33,7 @@ class JsonBlueprint:
 		self.includes = list()
 		self.derivedTypes = dict()
 		self.enums = dict()
-		self.nodes = dict()
+		self.objects = dict()
 		self.root = None
 
 	def __str__(self):
@@ -41,7 +42,7 @@ class JsonBlueprint:
 			f"|-> primitive types = {self.primitiveTypes}\n" +
 			f"|-> derived types = {self.derivedTypes}\n" +
 			f"|-> enums = {self.enums}\n" +
-			f"|-> nodes = {self.nodes}\n" +
+			f"|-> objects = {self.objects}\n" +
 			f"'-> root = {self.root}")
 
 	#-----------------------------------------------------------------------------
@@ -79,14 +80,14 @@ class JsonBlueprint:
 		possibleValues = self.findEnumDeclaration(enumType)
 
 		if not value in possibleValues:
-			return False, createErrorForField(fieldName, 
+			return False, createErrorForField(fieldName,
 				errorType.UNKNOWN_LITERAL, value=value)
-		
+
 		return True, value
 
 
 	def validateArray(self, fieldName, jArray, contents):
-		if not isinstance(contents, list):
+		if not isinstance(contents, collections.abc.Sequence):
 			return False, createErrorForField(fieldName,
 				errorType.INVALID_ARRAY)
 
@@ -99,11 +100,11 @@ class JsonBlueprint:
 		arrayType = jArray.fieldType
 
 		elementType = arrayType
-		deserializer = (self.validateEnum 
+		deserializer = (self.validateEnum
 			if arrayKind == fieldKind.ENUM
 			else self.deserializeField)
 
-		if arrayKind == fieldKind.NODE:
+		if arrayKind == fieldKind.OBJECT:
 			elementType = self.findNodeDeclaration(arrayType)
 			deserializer = self.validateNode
 
@@ -127,15 +128,15 @@ class JsonBlueprint:
 		return True, contents
 
 
-	def validateNode(self, nodeName, node, contents):
-		if not isinstance(contents, dict):
-			return False, createErrorForNode(nodeName,
-				errorType.INVALID_NODE)
+	def validateNode(self, objectName, objectInstance, contents):
+		if not isinstance(contents, collections.abc.Mapping):
+			return False, createErrorForNode(objectName,
+				errorType.INVALID_OBJECT)
 
-		for fieldName, fieldData in node.items():
+		for fieldName, fieldData in objectInstance.items():
 			if not fieldName in contents:
 				if fieldData.optional: continue
-				return False, createErrorForNode(nodeName,
+				return False, createErrorForNode(objectName,
 					errorType.MISSING_FIELD, field=fieldName)
 
 			retrieved = contents[fieldName]
@@ -147,7 +148,7 @@ class JsonBlueprint:
 						continue
 
 					else:
-						return False, createErrorForNode(nodeName,
+						return False, createErrorForNode(objectName,
 							errorType.NULL_VALUE, field=fieldName)
 
 				success, processed = self.validateArray(fieldName, fieldData, retrieved)
@@ -159,15 +160,15 @@ class JsonBlueprint:
 					contents[fieldName] = None
 					continue
 
-				return False, createErrorForNode(nodeName,
+				return False, createErrorForNode(objectName,
 					errorType.NULL_VALUE, field=fieldName)
 
 			kind = fieldData.fieldKind
 			fieldType = fieldData.fieldType
 
-			if kind == fieldKind.NODE:
-				nodeSpecs = self.findNodeDeclaration(fieldType)
-				success, processed = self.validateNode(fieldName, nodeSpecs, retrieved)
+			if kind == fieldKind.OBJECT:
+				objectSpecs = self.findNodeDeclaration(fieldType)
+				success, processed = self.validateNode(fieldName, objectSpecs, retrieved)
 				if not success: return False, processed
 				contents[fieldName] = processed
 				continue
@@ -209,7 +210,7 @@ class JsonBlueprint:
 		rootKind = self.root.fieldKind
 		rootType = self.root.fieldType
 
-		if rootKind == fieldKind.NODE:
+		if rootKind == fieldKind.OBJECT:
 			rootNode = self.findNodeDeclaration(rootType)
 			return self.validateNode(None, rootNode,
 				rootContents)
@@ -241,7 +242,7 @@ class JsonBlueprint:
 		except json.JSONDecodeError as e:
 			return False, createErrorForRoot(errorType.JSON_PARSING,
 				line=e.lineno, column=e.colno, message=e.msg)
-	
+
 		return self.validate(loaded)
 
 	#----------------------------------------------------------------------------
@@ -263,7 +264,7 @@ class JsonBlueprint:
 		for source in sources:
 			collected.extend(source.derivedTypes.keys())
 			collected.extend(source.enums.keys())
-			collected.extend(source.nodes.keys())
+			collected.extend(source.objects.keys())
 
 		return collected
 
@@ -283,28 +284,28 @@ class JsonBlueprint:
 			if not blueprint in checked:
 				found = blueprint.findElementDeclaration(typeName, checked)
 				if None != found: return found
-		
+
 		return None
-	
-	
-	def findNodeDeclaration(self, nodeName, checked=None):
-		if nodeName in self.nodes: return self.nodes[nodeName]
+
+
+	def findNodeDeclaration(self, objectName, checked=None):
+		if objectName in self.objects: return self.objects[objectName]
 		checked = checked or set()
 		checked.add(self)
-	
+
 		for blueprint in self.includes:
 			if not blueprint in checked:
-				found = blueprint.findNodeDeclaration(nodeName, checked)
+				found = blueprint.findNodeDeclaration(objectName, checked)
 				if None != found: return found
-	
+
 		return None
-	
-	
+
+
 	def findEnumDeclaration(self, enumName, checked=None):
 		if enumName in self.enums: return self.enums[enumName]
 		checked = checked or set()
 		checked.add(self)
-	
+
 		for blueprint in self.includes:
 			if not blueprint in checked:
 				found = blueprint.findEnumDeclaration(enumName, checked)
@@ -318,7 +319,7 @@ class JsonBlueprint:
 		minArrayLength=None, maxArrayLength=None):
 
 		lookups = [
-			(self.findNodeDeclaration, fieldKind.NODE),
+			(self.findNodeDeclaration, fieldKind.OBJECT),
 			(self.findElementDeclaration, fieldKind.SIMPLE),
 			(self.findEnumDeclaration, fieldKind.ENUM)
 		]
@@ -348,7 +349,7 @@ class JsonBlueprint:
 		newBp.includes = self.includes
 		newBp.derivedTypes = self.derivedTypes
 		newBp.enums = self.enums
-		newBp.nodes = self.nodes
+		newBp.objects = self.objects
 
 		return newBp
 
@@ -359,7 +360,7 @@ class JsonBlueprint:
 		contentType = element.fieldType
 
 		method = {
-			fieldKind.NODE: JsonBlueprint.serializeNode,
+			fieldKind.OBJECT: JsonBlueprint.serializeNode,
 			fieldKind.ENUM: JsonBlueprint.serializeEnum,
 			fieldKind.SIMPLE: JsonBlueprint.serializeField
 		} [contentKind]
@@ -405,20 +406,20 @@ class JsonBlueprint:
 		return method(self, contentType, elementName, content)
 
 
-	def serializeNode(self, nodeType, nodeName, content):
-		node = self.findNodeDeclaration(nodeType)
+	def serializeNode(self, objectType, objectName, content):
+		objectInstance = self.findNodeDeclaration(objectType)
 
-		if not isinstance(content, dict):
-			msg = f"{nodeName} needs to receive a dict to serialize"
+		if not isinstance(content, collections.abc.Mapping):
+			msg = f"{objectName} needs to receive a dict to serialize"
 			raise SerializationException(msg)
 
 		serialized = list()
-		for fieldName, fieldData in node.items():
+		for fieldName, fieldData in objectInstance.items():
 			if not fieldName in content:
 				if fieldData.optional:
 					continue
 
-				msg = f"{nodeName}: missing field {fieldName}"
+				msg = f"{objectName}: missing field {fieldName}"
 				raise SerializationException(msg)
 
 			fieldValue = content[fieldName]
@@ -461,7 +462,7 @@ class JsonBlueprint:
 		if content is None:
 			if self.root.nullable:
 				return 'null'
-			
+
 		return self.serializeElement(self.root,
 			"Root Level", content)
 

@@ -9,12 +9,12 @@ blueprint_txt = """
 		GUESSED
 	}
 
-	node position {
+	object position {
 		latitude: float (atLeast=-90, atMost=+90),
 		longitude: float (atLeast=-180, atMost=+180)
 	}
 
-	node payload {
+	object payload {
 		position: position,
 		origin: origin
 	}

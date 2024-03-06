@@ -1,5 +1,5 @@
 
-Parsing extended node | json1.js | OK | json1.py
-Parsing node with optional field | json2.js | OK | json2.py
-Catching extended node with base node field missing | json3.js | KO | MISSING_FIELD
+Parsing extended object | json1.js | OK | json1.py
+Parsing object with optional field | json2.js | OK | json2.py
+Catching extended object with base object field missing | json3.js | KO | MISSING_FIELD
 

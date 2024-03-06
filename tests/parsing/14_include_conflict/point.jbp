@@ -1,5 +1,5 @@
 
-node point {
+object point {
 	x: float,
 	y: float,
 	timestamp: integer (min=0)
