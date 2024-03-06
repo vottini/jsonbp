@@ -94,9 +94,9 @@ def createErrorForField(fieldName, error_id, **context):
 	return result
 
 
-def createErrorForNode(nodeName, error_id, **context):
+def createErrorForObject(objectName, error_id, **context):
 	result = _instance(error_id, **context)
-	args = ("OBJECT", nodeName) if nodeName != None else ("ROOT",)
+	args = ("OBJECT", objectName) if objectName != None else ("ROOT",)
 	result.setAssignee(*args)
 	return result
 
@@ -123,7 +123,7 @@ def printError(message):
 __all__ = [
 	"useTranslation",
 	"createErrorForField",
-	"createErrorForNode",
+	"createErrorForObject",
 	"createErrorForRoot"
 ]
 

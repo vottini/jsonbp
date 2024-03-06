@@ -116,7 +116,7 @@ def typeExists(typeName, excluded=None):
 	excluded = excluded or set()
 
 	lookups = (
-		currentBlueprint.findNodeDeclaration,
+		currentBlueprint.findObjectDeclaration,
 		currentBlueprint.findElementDeclaration,
 		currentBlueprint.findEnumDeclaration
 	)
@@ -204,11 +204,11 @@ def p_object(p):
 		raise SchemaViolation(msg)
 
 	if len(p) == 6:
-		baseNode = p[4]
-		baseFields = currentBlueprint.findNodeDeclaration(baseNode)
+		baseObject = p[4]
+		baseFields = currentBlueprint.findObjectDeclaration(baseObject)
 
 		if None == baseFields:
-			msg = f"Node '{baseNode}' is not defined"
+			msg = f"Object '{baseObject}' is not defined"
 			raise SchemaViolation(msg)
 
 		objectFields = p[5]
@@ -216,7 +216,7 @@ def p_object(p):
 			if fieldName in baseFields:
 				raise SchemaViolation(
 					f"Field '{fieldName}' in object '{objectName}' "
-					f"is already defined in base object '{baseNode}'"
+					f"is already defined in base object '{baseObject}'"
 				)
 
 		objectFields.update(baseFields)
@@ -233,11 +233,11 @@ def p_object_specs(p):
 	'''
 
 	decls = p[2]
-	newNode = dict()
+	newObject = dict()
 	for decl in decls:
-		newNode[decl[0]] = decl[1]
+		newObject[decl[0]] = decl[1]
 
-	p[0] = newNode
+	p[0] = newObject
 
 
 def createType(newTypeName, declaration):
@@ -413,7 +413,7 @@ def p_element_declaration(p):
 
 	if len(p) == 5:
 		not_simple = (
-			currentBlueprint.findNodeDeclaration(typeName) or
+			currentBlueprint.findObjectDeclaration(typeName) or
 			currentBlueprint.findEnumDeclaration(typeName))
 
 		if not_simple:
