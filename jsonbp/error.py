@@ -14,13 +14,18 @@ for error_name in _error_names:
 
 #-------------------------------------------------------------------------------
 
-texts = dict()
+fallbackLanguage = "en_US"
 possiblePrefixes = {'FIELD', 'OBJECT', 'ARRAY', 'ROOT'}
-prefixes = dict()
+translations = dict()
+
+defaultLanguage = "en_US"
+def useDefaultLanguage(language):
+	global defaultLanguage
+	defaultLanguage = language
 
 #-------------------------------------------------------------------------------
 
-def useTranslation(filename):
+def loadTranslation(filename, language):
 
 	try:
 		with open(filename) as fd:
@@ -30,20 +35,29 @@ def useTranslation(filename):
 		printWarning(f"Unable to read localization file: {e.strerror}")
 		return
 
+	translation = translations.get(language, dict())
+	translations[language] = translation
+
 	config = configparser.ConfigParser()
 	config.read_string(contents)
 	sections = config.sections()
 
 	if 'Messages' in sections:
+		messages = translation.get('messages', dict())
+		translation['messages'] = messages
+
 		section = config['Messages']
 		for entry in config.options('Messages'):
 			sanedEntry = entry.upper()
 
 			if sanedEntry in _error_codes:
 				index = _error_codes[sanedEntry]
-				texts[index] = section[sanedEntry]
+				messages[index] = section[sanedEntry]
 
 	if 'Prefixes' in sections:
+		prefixes = translation.get('prefixes', dict())
+		translation['prefixes'] = prefixes
+
 		section = config['Prefixes']
 		for entry in config.options('Prefixes'):
 			sanedEntry = entry.upper()
@@ -73,17 +87,29 @@ class _instance:
 		self.prefix = "ARRAY"
 		self.index = arrayIndex
 
-	def __str__(self):
-		prefixText = ""
-		if None != self.prefix:
-			prefix = prefixes[self.prefix]
-			prefixText = prefix.format(
-				assignee=self.assignee,
-				index=self.index)
+	def format(self, localizationPriority=None):
+		localizationPriority = (localizationPriority
+			if localizationPriority is not None
+			else [defaultLanguage])
 
-		msg = texts[self.error_id]
-		errorMsg = msg.format(**self.context)
-		return " ".join([prefixText, errorMsg])
+		for candidate in localizationPriority:
+			translation = translations.get(candidate)
+			if translation is not None:
+				break
+
+		else:
+			translation = translations[fallbackLanguage]
+
+		prefix = translation["prefixes"][self.prefix]
+		prefixText = prefix.format(assignee=self.assignee,
+			index=self.index)
+
+		message = translation["messages"][self.error_id]
+		messageText = message.format(**self.context)
+		return ": ".join([prefixText, messageText])
+
+	def __str__(self):
+		return self.format()
 
 #-------------------------------------------------------------------------------
 
@@ -121,7 +147,8 @@ def printError(message):
 #-------------------------------------------------------------------------------
 
 __all__ = [
-	"useTranslation",
+	"loadTranslation",
+	"useDefaultLanguage",
 	"createErrorForField",
 	"createErrorForObject",
 	"createErrorForRoot"

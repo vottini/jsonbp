@@ -36,7 +36,7 @@ class JsonBlueprint:
 		self.objects = dict()
 		self.root = None
 
-	def __str__(self):
+	def __str__(self): # pragma: no cover
 		return (
 			f"blueprint: {self.uuid}\n" +
 			f"|-> primitive types = {self.primitiveTypes}\n" +
