@@ -11,13 +11,13 @@ def _format(value, specs):
 
 
 def _parse(value, specs):
-	if isinstance(value, jsonbp.unquotedStr):
+	if isinstance(value, jsonbp.unquoted_str):
 		if value in ('true', 'false'):
 			return True, value == "true"
 
 	if not specs['coerce']:
 		return False, {
-			"error": jsonbp.errorType.VALUE_PARSING,
+			"error": jsonbp.ErrorType.VALUE_PARSING,
 			"context": {}
 		}
 

@@ -80,7 +80,7 @@ def _parse(value, specs):
 	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({decimalMark}\\d+)?$'
 	if None == re.match(decimalPattern, sanedValue):
 		return False, {
-			"error": jsonbp.errorType.VALUE_PARSING,
+			"error": jsonbp.ErrorType.VALUE_PARSING,
 			"context": {}
 		}
 
@@ -95,7 +95,7 @@ def _parse(value, specs):
 
 	if specs['min'] > rawValue or rawValue > specs['max']:
 		return False, {
-			"error": jsonbp.errorType.OUTSIDE_RANGE,
+			"error": jsonbp.ErrorType.OUTSIDE_RANGE,
 			"context": { "value": rawValue }
 		}
 

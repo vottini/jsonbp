@@ -36,11 +36,11 @@ def testViolations():
 		with pytest.raises(jsonbp.SchemaViolation):
 
 			try:
-				blueprint = jsonbp.loadFile(blueprintFile)
+				blueprint = jsonbp.load_file(blueprintFile)
 				print("KO => Error not found")
 				print("Aborting...")
 				break
-			
+
 			except jsonbp.SchemaViolation as e:
 				print(f"OK <{e}>")
 				verified += 1

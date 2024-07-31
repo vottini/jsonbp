@@ -11,7 +11,7 @@ _required_fields = [
 	"defaults"
 ]
 
-def listScripts(path):
+def list_scripts(path):
 	try: path_files = os.listdir(path)
 	except FileNotFoundError:
 		return list()
@@ -23,13 +23,13 @@ def listScripts(path):
 	]
 
 
-def loadTypes(path):
-	files = listScripts(path)
+def load_types(path):
+	files = list_scripts(path)
 	if not path in sys.path:
 		sys.path.insert(0, path)
 
 	loaded = list()
-	notLoaded = list()
+	not_loaded = list()
 	for file_path in files:
 		random_name = str(uuid.uuid1())
 
@@ -42,14 +42,14 @@ def loadTypes(path):
 				for field in _required_fields:
 					if not field in module.type_specs:
 						msg = f"Missing required field '{field}'"
-						notLoaded.append((file_path, msg))
+						not_loaded.append((file_path, msg))
 						continue
 
 				loaded.append(module.type_specs)
 
 		except Exception as e:
-			notLoaded.append((file_path, e))
+			not_loaded.append((file_path, e))
 			continue
 
-	return loaded, notLoaded
+	return loaded, not_loaded
 

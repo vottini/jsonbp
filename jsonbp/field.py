@@ -8,6 +8,6 @@ class JsonField:
 
 #-------------------------------------------------------------------------------
 
-def createField(fieldKind, fieldType):
+def create_field(fieldKind, fieldType):
 	return JsonField(fieldKind, fieldType)
 

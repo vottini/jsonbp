@@ -9,9 +9,10 @@ _array_specs = [
 	"nullableArray"
 ]
 
-def checkedInt(value):
+def checked_int(value):
 	if type(value) is not int: raise Exception(f"Bad integer: {value}")
 	return value
+
 
 class JsonArray(JsonField):
 	def __init__(self, baseField):
@@ -25,14 +26,14 @@ class JsonArray(JsonField):
 		self.minLength = 0
 
 
-	def applySpec(self, spec, value):
+	def apply_spec(self, spec, value):
 		if not spec in _array_specs:
 			msg = f"Invalid array spec '{spec}'"
 			raise SchemaViolation(msg)
 
 		try:
-			if "minLength" == spec: self.minLength = checkedInt(value)
-			if "maxLength" == spec: self.maxLength = checkedInt(value)
+			if "minLength" == spec: self.minLength = checked_int(value)
+			if "maxLength" == spec: self.maxLength = checked_int(value)
 
 			if "nullableArray" == spec:
 				if value in (True, False):
@@ -52,9 +53,9 @@ class JsonArray(JsonField):
 
 #------------------------------------------------------------------------------
 
-def makeArray(baseField):
+def make_array(baseField):
 	return JsonArray(baseField)
 
-def isArray(decl):
+def is_array(decl):
 	return isinstance(decl, JsonArray)
 

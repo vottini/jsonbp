@@ -59,7 +59,7 @@ for subdir in verificationSubdirs:
 					columnName = trialColumns[i]
 					print(f"[WARN] In file '{trialFile}' at line {lineNo}: column '{columnName}' is empty, skipping...")
 					break
-				
+
 				else:
 					fullPath = os.path.join(subdirPath, 'instances', columns[1])
 					if os.path.isfile(fullPath):
@@ -81,7 +81,7 @@ def testDeserializations():
 
 	for key, value in verifications.items():
 		blueprintFile, trials = value
-		blueprint = jsonbp.loadFile(blueprintFile)
+		blueprint = jsonbp.load_file(blueprintFile)
 		benchmark = {}
 
 		for trial in trials:
@@ -101,8 +101,8 @@ def testDeserializations():
 
 				assert correct
 				if not shouldSucceed:
-					expectedError = getattr(jsonbp.errorType, expectedResult)
-					returnedError = obtainedResult.getErrorType()
+					expectedError = getattr(jsonbp.ErrorType, expectedResult)
+					returnedError = obtainedResult.error_type()
 					returnedIsExpected = (expectedError == returnedError)
 
 					if not returnedIsExpected:
@@ -147,7 +147,7 @@ def testDeserializations():
 							print('Failed!')
 							print(f'Obtained result = {obtainedResult}')
 							print(f'Expected result = {benchmark["result"]}')
-	
+
 						assert correctResult
 						del benchmark['result']
 

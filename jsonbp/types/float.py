@@ -35,9 +35,9 @@ def _parse(value, specs):
 	if rawValue != rawValue:
 		if specs['allowNaN']:
 			return True, rawValue
-			
+
 		return False, {
-			"error": jsonbp.errorType.OUTSIDE_RANGE,
+			"error": jsonbp.ErrorType.OUTSIDE_RANGE,
 			"context": {"value": rawValue}
 		}
 
@@ -59,7 +59,7 @@ def _parse(value, specs):
 	for check in checks:
 		if not check():
 			return False, {
-				"error": jsonbp.errorType.OUTSIDE_RANGE,
+				"error": jsonbp.ErrorType.OUTSIDE_RANGE,
 				"context": {"value": rawValue}
 			}
 

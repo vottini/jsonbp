@@ -58,7 +58,7 @@ for subdir in verificationSubdirs:
 					columnName = trialColumns[i]
 					print(f"[WARN] In file '{trialFile}' at line {lineNo}: column '{columnName}' is empty, skipping...")
 					break
-				
+
 				else:
 					fullPath = os.path.join(subdirPath, 'data', columns[1])
 					if os.path.isfile(fullPath):
@@ -80,7 +80,7 @@ def testSerializations():
 
 	for key, value in verifications.items():
 		blueprintFile, trials = value
-		blueprint = jsonbp.loadFile(blueprintFile)
+		blueprint = jsonbp.load_file(blueprintFile)
 		data = {}
 
 		for trial in trials:

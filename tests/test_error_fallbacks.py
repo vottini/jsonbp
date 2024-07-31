@@ -4,13 +4,13 @@ sys.path.append('..')
 import jsonbp
 
 def testLocaleEdges():
-	jsonbp.loadTranslation("inexistentFile", "it_IT")
-	blueprint = jsonbp.loadString('''root { positions: integer(min=0) [maxLength=128] }''')
+	jsonbp.load_translation("inexistentFile", "it_IT")
+	blueprint = jsonbp.load_string('''root { positions: integer(min=0) [maxLength=128] }''')
 	badInstance = ''' {"positions": [ 32, 12, "Wally"]}'''
 
 	success, outcome = blueprint.deserialize(badInstance)
 	print(outcome.format(["it_IT", "pt_BR", "en_US"]))
-	jsonbp.useDefaultLanguage('nonExistent')
+	jsonbp.use_default_language('nonExistent')
 	print(str(outcome))
 
 

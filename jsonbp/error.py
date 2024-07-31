@@ -1,38 +1,38 @@
 
 import configparser
-from . import errorType
+from .types import ErrorType
 
 _error_names = ([ entry
-	for entry in dir(errorType)
+	for entry in dir(ErrorType)
 	if not entry.startswith('_')
 ])
 
 _error_codes = dict()
 for error_name in _error_names:
-	error_code = getattr(errorType, error_name)
+	error_code = getattr(ErrorType, error_name)
 	_error_codes[error_name] = error_code
 
 #-------------------------------------------------------------------------------
 
-fallbackLanguage = "en_US"
-possiblePrefixes = {'FIELD', 'OBJECT', 'ARRAY', 'ROOT'}
+fallback_language = "en_US"
+possible_prefixes = {'FIELD', 'OBJECT', 'ARRAY', 'ROOT'}
 translations = dict()
 
-defaultLanguage = "en_US"
-def useDefaultLanguage(language):
-	global defaultLanguage
-	defaultLanguage = language
+default_language = "en_US"
+def use_default_language(language):
+	global default_language
+	default_language = language
 
 #-------------------------------------------------------------------------------
 
-def loadTranslation(filename, language):
+def load_translation(filename, language):
 
 	try:
 		with open(filename) as fd:
 			contents = fd.read()
 
 	except IOError as e:
-		printWarning(f"Unable to read localization file: {e.strerror}")
+		print_warning(f"Unable to read localization file: {e.strerror}")
 		return
 
 	translation = translations.get(language, dict())
@@ -62,7 +62,7 @@ def loadTranslation(filename, language):
 		for entry in config.options('Prefixes'):
 			sanedEntry = entry.upper()
 
-			if sanedEntry in possiblePrefixes:
+			if sanedEntry in possible_prefixes:
 				prefixValue = section[sanedEntry]
 				prefixes[sanedEntry] = prefixValue
 
@@ -76,21 +76,21 @@ class _instance:
 		self.assignee = None
 		self.index = None
 
-	def getErrorType(self):
+	def error_type(self):
 		return self.error_id
 
-	def setAssignee(self, assigneeType, assigneeName=None):
+	def set_assignee(self, assigneeType, assigneeName=None):
 		self.prefix = assigneeType
 		self.assignee = assigneeName
 
-	def setAsArrayElement(self, arrayIndex):
+	def set_as_array_index(self, arrayIndex):
 		self.prefix = "ARRAY"
 		self.index = arrayIndex
 
 	def format(self, localizationPriority=None):
 		localizationPriority = (localizationPriority
 			if localizationPriority is not None
-			else [defaultLanguage])
+			else [default_language])
 
 		for candidate in localizationPriority:
 			translation = translations.get(candidate)
@@ -98,7 +98,7 @@ class _instance:
 				break
 
 		else:
-			translation = translations[fallbackLanguage]
+			translation = translations[fallback_language]
 
 		prefix = translation["prefixes"][self.prefix]
 		prefixText = prefix.format(assignee=self.assignee,
@@ -113,44 +113,44 @@ class _instance:
 
 #-------------------------------------------------------------------------------
 
-def createErrorForField(fieldName, error_id, **context):
+def create_field_error(fieldName, error_id, **context):
 	result = _instance(error_id, **context)
 	args = ("FIELD", fieldName) if fieldName != None else ("ROOT",)
-	result.setAssignee(*args)
+	result.set_assignee(*args)
 	return result
 
 
-def createErrorForObject(objectName, error_id, **context):
+def create_object_error(objectName, error_id, **context):
 	result = _instance(error_id, **context)
 	args = ("OBJECT", objectName) if objectName != None else ("ROOT",)
-	result.setAssignee(*args)
+	result.set_assignee(*args)
 	return result
 
 
-def createErrorForRoot(error_id, **context):
+def create_root_error(error_id, **context):
 	result = _instance(error_id, **context)
-	result.setAssignee("ROOT")
+	result.set_assignee("ROOT")
 	return result
 
 #-------------------------------------------------------------------------------
 
 from sys import stderr
 
-def printWarning(message):
+def print_warning(message):
 	print(f"\033[92m[Warning]\033[00m {message}",
 		file=stderr)
 
-def printError(message):
+def print_error(message):
 	print(f"\033[91m[Error]\033[00m {message}",
 		file=stderr)
 
 #-------------------------------------------------------------------------------
 
 __all__ = [
-	"loadTranslation",
-	"useDefaultLanguage",
-	"createErrorForField",
-	"createErrorForObject",
-	"createErrorForRoot"
+	"load_translation",
+	"use_default_language",
+	"create_field_error",
+	"create_object_error",
+	"create_root_error"
 ]
 
