@@ -70,7 +70,7 @@ An optional field 'color' can also exist, and if present it needs to be either
 jsonbp offers the following directives to organize a schema:
 - **"root"** -> defines which type will correspond to some JSON
 - **"type"** -> defines specialized (restricted) simple types
-- **"object"** -> specififies the contents of compound types (Objects)
+- **"object"** -> specifies the contents of compound types (Objects)
 - **"enum"** -> defines a list of allowed values for a given field
 - **"import"** -> reuses directives from existing blueprints
 

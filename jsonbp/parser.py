@@ -269,12 +269,12 @@ def createType(newTypeName, declaration):
 
     newType[specName] = value
 
-  while not base_type in currentBlueprint.primitiveTypes:
-    parent_type = currentBlueprint.derivedTypes[base_type]
+  while not base_type in currentBlueprint.primitive_types:
+    parent_type = currentBlueprint.derived_types[base_type]
     base_type = parent_type['__baseType__']
 
   newType['__baseType__'] = base_type
-  currentBlueprint.derivedTypes[newTypeName] = newType
+  currentBlueprint.derived_types[newTypeName] = newType
   return newType
 
 
@@ -540,10 +540,10 @@ def _load(contents, contentPath, contentName, typeDirs):
   primitivesPath = os.path.join(ownPath, "types")
   loaded, notLoaded = load_types(primitivesPath)
 
-  primitiveTypes = dict()
+  primitive_types = dict()
   for typeSpec in loaded:
     name = typeSpec['name']
-    primitiveTypes[name] = typeSpec
+    primitive_types[name] = typeSpec
 
   if typeDirs is not None:
     for typeDir in typeDirs:
@@ -556,11 +556,11 @@ def _load(contents, contentPath, contentName, typeDirs):
 
       for typeSpec in loaded:
         name = typeSpec['name']
-        if name in primitiveTypes:
+        if name in primitive_types:
           msg = f"Overwriting previously defined type '{name}'"
           print_warning(msg)
 
-        primitiveTypes[name] = typeSpec
+        primitive_types[name] = typeSpec
 
       for file, problem in notLoaded:
         msg = f"Unable to load file '{file}' => {problem}"
@@ -568,7 +568,7 @@ def _load(contents, contentPath, contentName, typeDirs):
 
   try:
     _mutex.acquire()
-    result = JsonBlueprint(primitiveTypes)
+    result = JsonBlueprint(primitive_types)
     setupEnv(contentPath, result)
     parser.parse(contents)
 

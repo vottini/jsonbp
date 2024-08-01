@@ -24,11 +24,11 @@ def no_bool_converter(pairs):
 #-------------------------------------------------------------------------------
 
 class JsonBlueprint:
-	def __init__(self, primitiveTypes):
-		self.primitiveTypes = primitiveTypes
+	def __init__(self, primitive_types):
 		self.uuid = uuid.uuid4()
 		self.includes = list()
-		self.derivedTypes = dict()
+		self.primitive_types = primitive_types
+		self.derived_types = dict()
 		self.enums = dict()
 		self.objects = dict()
 		self.root = None
@@ -36,8 +36,8 @@ class JsonBlueprint:
 	def __str__(self): # pragma: no cover
 		return (
 			f"blueprint: {self.uuid}\n" +
-			f"|-> primitive types = {self.primitiveTypes}\n" +
-			f"|-> derived types = {self.derivedTypes}\n" +
+			f"|-> primitive types = {self.primitive_types}\n" +
+			f"|-> derived types = {self.derived_types}\n" +
 			f"|-> enums = {self.enums}\n" +
 			f"|-> objects = {self.objects}\n" +
 			f"'-> root = {self.root}")
@@ -45,8 +45,8 @@ class JsonBlueprint:
 	#-----------------------------------------------------------------------------
 
 	def _deserialize_field(self, fieldName, fieldType, value):
-		if fieldType in self.primitiveTypes:
-			specs = self.primitiveTypes[fieldType]['defaults']
+		if fieldType in self.primitive_types:
+			specs = self.primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
@@ -54,7 +54,7 @@ class JsonBlueprint:
 			baseType = specs['__baseType__']
 
 		try:
-			deserializeMethod = self.primitiveTypes[baseType]['parser']
+			deserializeMethod = self.primitive_types[baseType]['parser']
 			success, outcome = deserializeMethod(value, specs)
 
 			if not success:
@@ -259,7 +259,7 @@ class JsonBlueprint:
 		sources = self._collect_sources()
 
 		for source in sources:
-			collected.extend(source.derivedTypes.keys())
+			collected.extend(source.derived_types.keys())
 			collected.extend(source.enums.keys())
 			collected.extend(source.objects.keys())
 
@@ -272,8 +272,8 @@ class JsonBlueprint:
 	#----------------------------------------------------------------------------
 
 	def _find_element_decl(self, typeName, checked=None):
-		if typeName in self.primitiveTypes: return self.primitiveTypes[typeName]['defaults']
-		if typeName in self.derivedTypes: return self.derivedTypes[typeName]
+		if typeName in self.primitive_types: return self.primitive_types[typeName]['defaults']
+		if typeName in self.derived_types: return self.derived_types[typeName]
 		checked = checked or set()
 		checked.add(self)
 
@@ -337,7 +337,7 @@ class JsonBlueprint:
 			raise SchemaViolation(msg)
 
 		rootField = create_field(rootKind, rootType)
-		newBp = JsonBlueprint(self.primitiveTypes)
+		newBp = JsonBlueprint(self.primitive_types)
 		newBp.root = (make_array(rootField) if asArray else
 			rootField)
 
@@ -346,7 +346,7 @@ class JsonBlueprint:
 			if maxArrayLength: newBp.root.apply_spec('maxLength', maxArrayLength)
 
 		newBp.includes = self.includes
-		newBp.derivedTypes = self.derivedTypes
+		newBp.derived_types = self.derived_types
 		newBp.enums = self.enums
 		newBp.objects = self.objects
 
@@ -440,15 +440,15 @@ class JsonBlueprint:
 
 
 	def _serialize_field(self, fieldType, fieldName, content):
-		if fieldType in self.primitiveTypes:
-			specs = self.primitiveTypes[fieldType]['defaults']
+		if fieldType in self.primitive_types:
+			specs = self.primitive_types[fieldType]['defaults']
 			baseType = fieldType
 
 		else:
 			specs = self._find_element_decl(fieldType)
 			baseType = specs['__baseType__']
 
-		serialize_method = self.primitiveTypes[baseType]['formatter']
+		serialize_method = self.primitive_types[baseType]['formatter']
 		return serialize_method(content, specs)
 
 	#-------------------------------------------------------------------------------
