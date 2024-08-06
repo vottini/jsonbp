@@ -74,8 +74,8 @@ jsonbp offers the following directives to organize a schema:
 - **"enum"** -> defines a list of allowed values for a given field
 - **"import"** -> reuses directives from existing blueprints
 
-One can make use of these features to simplify and make the schema more
-modular. In the above example, we could split the definitions and get
+These structures can be employed to simplify and make the schema more
+modular. In the above example, one could split the definitions and get
 something more reusable, like the following:
 
 ```
@@ -105,26 +105,27 @@ enum color {
 }
 ```
 
-(For detailed information using these directives, see the [Documentation section](#documentation))
+(For further information, see the [Documentation section](#documentation))
 
 ## Usage
 
 ### Schema parsing
 
-- jsonbp.loadFile(\<schema file path>) => \<blueprint object>
-- jsonbp.loadString(\<schema string>) => \<blueprint object>
+- jsonbp.load\_file(\<schema file path>: str) => \<blueprint object>
+- jsonbp.load\_string(\<schema string>: str) => \<blueprint object>
 
-These functions are used for schema/blueprint loading.
-They do the same thing, the only difference is that the former expects a path to a file
-storing the schema content while the latter expects a string with the schema content itself.
+These functions are used for blueprint loading, one treats the sring parameter
+as the path to the schema definition while the other interprets it as the content
+itself, as their name suggests.
 Whenever there's a problem with the supplied schema, an exception is thrown. More on this can
 be read on [`Error handling and error localization`](docs/error.md). These functions, when
 succeed loading the schema, return a blueprint instance that can then be used to
 serialize/deserialize JSON to and from Python.
 
-When loading a file, the blueprint is stored in a cache and associated with the absolute
-path of that file. Thus, loading the same file twice won't make jsonbp parse it a second
-time. To force the parsing of posterior calls, call *jsonbp.invalidateCache()*.
+One caveat is that in the load\_file() function, the blueprint is stored in a cache and
+associated with the absolute path of that file. Then, request to load the same file twice
+won't make jsonbp parse it a second time, but instead return the previously obtained
+blueprint. To force the parsing of posterior calls, call *jsonbp.invalidateCache()*.
 
 ### JSON deserialization
 
@@ -135,7 +136,8 @@ returns a tuple in the form **(success, outcome)**. **success** being a boolean 
 the deserialization was successful or not. If successful, **outcome** will hold the Python data
 obtained from the JSON string, which can range from a single integer to a list of dictionaries,
 depending on what is expected to be received. On the other hand, if **success** is false
-**outcome** will have a message explaining what was not compliant according to the schema.
+**outcome** will have a localizable message explaining what was not compliant according
+to the schema.
 
 ### Python serialization
 
@@ -148,12 +150,12 @@ instance.
 
 ### Example
 
-Here's how one uses these functions in code:
+Here's how these functions can be used:
 
 ```py
 import jsonbp
 
-blueprint = jsonbp.loadString('''
+blueprint = jsonbp.load_string('''
 root {
   success: {
     YES,
@@ -177,7 +179,7 @@ Outcome: {"success":"YES"}
 
 ## Requirements and Dependencies
 
-jsonbp requires Python 3.6+, that's it.
+jsonbp requires Python 3.7+, that's it.
 Under the hood, jsonbp uses [PLY][ply] for its schema parsing. PLY comes
 included with jsonbp already, there's no need to download it separately.
 
@@ -192,7 +194,7 @@ pip install jsonbp
 
 ## Documentation
 
-That was just an introduction, if you are interested in using jsonbp here are some more detailed information:
+Here are some more detailed information about using jsonbp:
 - [`Schema definition`](docs/schema.md)
 - [`Error handling and error localization`](docs/error.md)
 - [`Sample of using jsonbp in Flask`](https://github.com/vottini/sample-jsonbp-flask)
