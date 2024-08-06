@@ -7,6 +7,14 @@ _defaults = {
 	'isoResolution': 'milliseconds'
 }
 
+# https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat
+# allowed_resolutions:
+# - 'auto'
+# - 'hours'
+# - 'minutes'
+# - 'seconds'
+# - 'milliseconds'
+# - 'microseconds'
 
 def _format(value, specs):
 	if specs['iso']:
@@ -20,7 +28,12 @@ def _format(value, specs):
 
 def _parse(value, specs):
 	sanedValue = str(value)
-	parsed_date = datetime.strptime(sanedValue, specs['format'])
+
+	parsed_date = (
+		datetime.fromisoformat(sanedValue) if specs['iso']
+		else datetime.strptime(sanedValue, specs['format'])
+	)
+
 	return True, parsed_date
 
 

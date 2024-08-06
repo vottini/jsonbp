@@ -1,0 +1,5 @@
+
+root {
+	milli_datetime: instant (iso=true),
+	sec_datetime: instant (iso=true, isoResolution="seconds")
+}
