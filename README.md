@@ -105,54 +105,21 @@ enum color {
 }
 ```
 
-(For further information, see the [Documentation section](#documentation))
+> **_NOTE:_**  For full documentation, see [Documentation](#documentation)
 
-## Usage
+## Usage overview
 
 ### Schema parsing
 
 - jsonbp.load\_file(blueprint\_path: str) => JsonBlueprint
 - jsonbp.load\_string(blueprint\_string: str) => JsonBlueprint
 
-These functions are used for blueprint loading, one treats the string parameter
-as the path to the schema definition while the other interprets it as the content
-itself, as their name suggest.
-Whenever there's a problem with the supplied schema, a **jsonbp.SchemaViolation**
-exception is thrown. More on this can
-be read on [`Error handling and error localization`](docs/error.md). These functions, when
-succeed loading the schema, return a blueprint instance that can then be used to
-serialize/deserialize JSON to and from Python.
-
-One caveat is that in the load\_file() function, the blueprint is stored in a cache and
-associated with the absolute path of that file. Therefore, requests to load the same file
-twice will not cause jsonbp to parse it a second time, but instead return the
-previously obtained blueprint. To force re-parsing of subsequent calls,
-call *jsonbp.invalidate_cache()*.
-
 ### JSON deserialization
 
 - JsonBlueprint.deserialize(contents: str) => (success: bool, outcome: object)
-
-This function expects a string holding the JSON contents to be deserialized and
-returns a tuple in the form **(success, outcome)**. **success** being a boolean indicating
-whether the deserialization was successful. If successful, **outcome** will contain the
-Python data obtained from the JSON string, which can range from a single integer to a list
-of dictionaries, depending on what is expected to be received. On the other hand,
-if **success** is false, **outcome** will contain a localizable message explaining what
-was not compliant according to the schema.
-
-### Python serialization
-
-- JsonBlueprint.serialize(payload: object) => (success: bool, outcome: str)
-
-Similarly to *deserialize()*, the *serialize()* method returns a tuple in the form of
-**(success, outcome)** indicating whether all the constraints were met when building the
-JSON from the Python data according to the schema that was source of the blueprint
-instance.
+- JsonBlueprint.serialize(payload: object) => str
 
 ### Example
-
-Here's how these functions can be used:
 
 ```py
 import jsonbp
@@ -178,6 +145,8 @@ Output:
 Success: true
 Outcome: {"success":"YES"}
 ```
+
+> **_NOTE:_**  For full documentation, see [Documentation](#documentation)
 
 ## Requirements and Dependencies
 
