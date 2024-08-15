@@ -11,7 +11,7 @@ _defaults = {
 	'precision': 2,
 	'min': Decimal(limits.lowestNumber).quantize(Decimal('0.01')),
 	'max': Decimal(limits.greatestNumber).quantize(Decimal('0.01')),
-	'decimal': '.',
+	'radix': '.',
 	'separator': '',
 	'indianFormat': False,
 	'prefix': "",
@@ -23,7 +23,7 @@ roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
 specialChars = r'.^$*+?|'
 
 def _format(value, specs):
-	decimalMark = specs['decimal']
+	radix = specs['radix']
 	separator = specs['separator']
 
 	rawString = str(value)
@@ -44,7 +44,7 @@ def _format(value, specs):
 		integerPart = separator.join((*thousandths, hundredths))
 
 	decimalPart = parts[1]
-	content = (decimalMark.join([integerPart, decimalPart])
+	content = (radix.join([integerPart, decimalPart])
 		if len(parts) > 1
 		else integerPart)
 
@@ -55,7 +55,7 @@ def _format(value, specs):
 
 	needsQuotes = (
 		len(parts) > 1 or
-		'.' != decimalMark or
+		'.' != radix or
 		'' != separator)
 
 	formattedParts = "".join(parts)
@@ -69,15 +69,15 @@ def _parse(value, specs):
 		.removesuffix(specs['suffix'])
 	)
 
-	decimalMark = specs['decimal']
-	if decimalMark in specialChars:
-		decimalMark = f'\\{decimalMark}'
+	radix = specs['radix']
+	if radix in specialChars:
+		radix = f'\\{radix}'
 
 	separator = specs['separator']
 	if separator in specialChars:
 		separator = f'\\{separator}'
 
-	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({decimalMark}\\d+)?$'
+	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({radix}\\d+)?$'
 	if None == re.match(decimalPattern, sanedValue):
 		return False, {
 			"error": jsonbp.ErrorType.VALUE_PARSING,
@@ -86,7 +86,7 @@ def _parse(value, specs):
 
 	sanedStrValue = (sanedValue
 		.replace(specs['separator'], '')
-		.replace(specs['decimal'], '.')
+		.replace(specs['radix'], '.')
 	)
 
 	precision = f"1e-{specs['precision']}"

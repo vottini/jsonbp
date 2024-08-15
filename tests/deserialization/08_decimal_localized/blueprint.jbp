@@ -1,5 +1,5 @@
 
 root {
-	some_fixed: decimal (decimal=",", separator=".")
+	some_fixed: decimal (radix=",", separator=".")
 }
 

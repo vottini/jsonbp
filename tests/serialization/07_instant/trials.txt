@@ -1,2 +1,4 @@
 
 Serializing iso instant | json1.py | OK
+Serializing formatted instant | json2.py | OK
+

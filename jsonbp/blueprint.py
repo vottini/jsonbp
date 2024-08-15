@@ -17,451 +17,488 @@ from .array import make_array, is_array
 
 def no_bool_converter(pairs):
 	return { key: unquoted_str(str(value).lower())
-		if isinstance(value, bool) else value
-		for key, value in pairs
+	  if isinstance(value, bool) else value
+	  for key, value in pairs
 	}
 
 #-------------------------------------------------------------------------------
 
 class JsonBlueprint:
+	"""
+	  Class to serialize Python objects to JSON strings and vice-versa.
+	"""
+
 	def __init__(self, primitive_types):
-		self.uuid = uuid.uuid4()
-		self.includes = list()
-		self.primitive_types = primitive_types
-		self.derived_types = dict()
-		self.enums = dict()
-		self.objects = dict()
-		self.root = None
+	  self.uuid = uuid.uuid4()
+	  self.includes = list()
+	  self.primitive_types = primitive_types
+	  self.derived_types = dict()
+	  self.enums = dict()
+	  self.objects = dict()
+	  self.root = None
 
 	def __str__(self): # pragma: no cover
-		return (
-			f"blueprint: {self.uuid}\n" +
-			f"|-> primitive types = {self.primitive_types}\n" +
-			f"|-> derived types = {self.derived_types}\n" +
-			f"|-> enums = {self.enums}\n" +
-			f"|-> objects = {self.objects}\n" +
-			f"'-> root = {self.root}")
+	  return (
+	    f"blueprint: {self.uuid}\n" +
+	    f"|-> primitive types = {self.primitive_types}\n" +
+	    f"|-> derived types = {self.derived_types}\n" +
+	    f"|-> enums = {self.enums}\n" +
+	    f"|-> objects = {self.objects}\n" +
+	    f"'-> root = {self.root}")
 
 	#-----------------------------------------------------------------------------
 
 	def _deserialize_field(self, fieldName, fieldType, value):
-		if fieldType in self.primitive_types:
-			specs = self.primitive_types[fieldType]['defaults']
-			baseType = fieldType
+	  if fieldType in self.primitive_types:
+	    specs = self.primitive_types[fieldType]['defaults']
+	    baseType = fieldType
 
-		else:
-			specs = self._find_element_decl(fieldType)
-			baseType = specs['__baseType__']
+	  else:
+	    specs = self._find_element_decl(fieldType)
+	    baseType = specs['__baseType__']
 
-		try:
-			deserializeMethod = self.primitive_types[baseType]['parser']
-			success, outcome = deserializeMethod(value, specs)
+	  try:
+	    deserializeMethod = self.primitive_types[baseType]['parser']
+	    success, outcome = deserializeMethod(value, specs)
 
-			if not success:
-				return False, create_field_error(fieldName,
-					outcome["error"], type=baseType,
-					**outcome["context"])
+	    if not success:
+	      return False, create_field_error(fieldName,
+	        outcome["error"], type=baseType,
+	        **outcome["context"])
 
-			return success, outcome
+	    return success, outcome
 
-		except Exception as e:
-			return False, create_field_error(fieldName,
-				ErrorType.VALUE_PARSING, type=baseType)
+	  except Exception as e:
+	    return False, create_field_error(fieldName,
+	      ErrorType.VALUE_PARSING, type=baseType)
 
 
 	def _validate_enum(self, fieldName, enumType, value):
-		if isinstance(value, unquoted_str):
-			return False, create_field_error(fieldName,
-				ErrorType.INVALID_ENUM, value=value)
+	  if isinstance(value, unquoted_str):
+	    return False, create_field_error(fieldName,
+	      ErrorType.INVALID_ENUM, value=value)
 
-		possibleValues = self._find_enum_decl(enumType)
+	  possibleValues = self._find_enum_decl(enumType)
 
-		if not value in possibleValues:
-			return False, create_field_error(fieldName,
-				ErrorType.UNKNOWN_LITERAL, value=value)
+	  if not value in possibleValues:
+	    return False, create_field_error(fieldName,
+	      ErrorType.UNKNOWN_LITERAL, value=value)
 
-		return True, value
+	  return True, value
 
 
 	def _validate_array(self, fieldName, jArray, contents):
-		if not isinstance(contents, collections.abc.Sequence):
-			return False, create_field_error(fieldName,
-				ErrorType.INVALID_ARRAY)
+	  if not isinstance(contents, collections.abc.Sequence):
+	    return False, create_field_error(fieldName,
+	      ErrorType.INVALID_ARRAY)
 
-		arrayLen = len(contents)
-		if not jArray.minLength <= arrayLen <= jArray.maxLength:
-			return False, create_field_error(fieldName,
-				ErrorType.INVALID_LENGTH, length=arrayLen)
+	  arrayLen = len(contents)
+	  if not jArray.minLength <= arrayLen <= jArray.maxLength:
+	    return False, create_field_error(fieldName,
+	      ErrorType.INVALID_LENGTH, length=arrayLen)
 
-		arrayKind = jArray.fieldKind
-		arrayType = jArray.fieldType
+	  arrayKind = jArray.fieldKind
+	  arrayType = jArray.fieldType
 
-		elementType = arrayType
-		deserializer = (self._validate_enum
-			if arrayKind == FieldType.ENUM
-			else self._deserialize_field)
+	  elementType = arrayType
+	  deserializer = (self._validate_enum
+	    if arrayKind == FieldType.ENUM
+	    else self._deserialize_field)
 
-		if arrayKind == FieldType.OBJECT:
-			elementType = self._find_object_decl(arrayType)
-			deserializer = self._validate_object
+	  if arrayKind == FieldType.OBJECT:
+	    elementType = self._find_object_decl(arrayType)
+	    deserializer = self._validate_object
 
-		for idx, value in enumerate(contents):
-			if value is None:
-				if jArray.nullable:
-					contents[idx] = None
-					continue
+	  for idx, value in enumerate(contents):
+	    if value is None:
+	      if jArray.nullable:
+	        contents[idx] = None
+	        continue
 
-				return False, create_object_error(fieldName,
-					ErrorType.NULL_VALUE, field=fieldName)
+	      return False, create_object_error(fieldName,
+	        ErrorType.NULL_VALUE, field=fieldName)
 
-			success, processed = deserializer(fieldName, elementType, value)
+	    success, processed = deserializer(fieldName, elementType, value)
 
-			if not success:
-				processed.set_as_array_index(idx)
-				return False, processed
+	    if not success:
+	      processed.set_as_array_index(idx)
+	      return False, processed
 
-			contents[idx] = processed
+	    contents[idx] = processed
 
-		return True, contents
+	  return True, contents
 
 
 	def _validate_object(self, objectName, objectInstance, contents):
-		if not isinstance(contents, collections.abc.Mapping):
-			return False, create_object_error(objectName,
-				ErrorType.INVALID_OBJECT)
+	  if not isinstance(contents, collections.abc.Mapping):
+	    return False, create_object_error(objectName,
+	      ErrorType.INVALID_OBJECT)
 
-		for fieldName, fieldData in objectInstance.items():
-			if not fieldName in contents:
-				if fieldData.optional: continue
-				return False, create_object_error(objectName,
-					ErrorType.MISSING_FIELD, field=fieldName)
+	  for fieldName, fieldData in objectInstance.items():
+	    if not fieldName in contents:
+	      if fieldData.optional: continue
+	      return False, create_object_error(objectName,
+	        ErrorType.MISSING_FIELD, field=fieldName)
 
-			retrieved = contents[fieldName]
+	    retrieved = contents[fieldName]
 
-			if is_array(fieldData):
-				if retrieved is None:
-					if fieldData.nullableArray:
-						contents[fieldName] = None
-						continue
+	    if is_array(fieldData):
+	      if retrieved is None:
+	        if fieldData.nullableArray:
+	          contents[fieldName] = None
+	          continue
 
-					else:
-						return False, create_object_error(objectName,
-							ErrorType.NULL_VALUE, field=fieldName)
+	        else:
+	          return False, create_object_error(objectName,
+	            ErrorType.NULL_VALUE, field=fieldName)
 
-				success, processed = self._validate_array(fieldName, fieldData, retrieved)
-				if not success: return False, processed
-				continue
+	      success, processed = self._validate_array(fieldName, fieldData, retrieved)
+	      if not success: return False, processed
+	      continue
 
-			if retrieved is None:
-				if fieldData.nullable:
-					contents[fieldName] = None
-					continue
+	    if retrieved is None:
+	      if fieldData.nullable:
+	        contents[fieldName] = None
+	        continue
 
-				return False, create_object_error(objectName,
-					ErrorType.NULL_VALUE, field=fieldName)
+	      return False, create_object_error(objectName,
+	        ErrorType.NULL_VALUE, field=fieldName)
 
-			kind = fieldData.fieldKind
-			fieldType = fieldData.fieldType
+	    kind = fieldData.fieldKind
+	    fieldType = fieldData.fieldType
 
-			if kind == FieldType.OBJECT:
-				objectSpecs = self._find_object_decl(fieldType)
-				success, processed = self._validate_object(fieldName, objectSpecs, retrieved)
-				if not success: return False, processed
-				contents[fieldName] = processed
-				continue
+	    if kind == FieldType.OBJECT:
+	      objectSpecs = self._find_object_decl(fieldType)
+	      success, processed = self._validate_object(fieldName, objectSpecs, retrieved)
+	      if not success: return False, processed
+	      contents[fieldName] = processed
+	      continue
 
-			if kind == FieldType.ENUM:
-				success, processed = self._validate_enum(fieldName, fieldType, retrieved)
-				if not success: return False, processed
-				contents[fieldName] = processed
-				continue
+	    if kind == FieldType.ENUM:
+	      success, processed = self._validate_enum(fieldName, fieldType, retrieved)
+	      if not success: return False, processed
+	      contents[fieldName] = processed
+	      continue
 
-			success, processed = self._deserialize_field(fieldName, fieldType, retrieved)
-			if not success: return False, processed
-			contents[fieldName] = processed
+	    success, processed = self._deserialize_field(fieldName, fieldType, retrieved)
+	    if not success: return False, processed
+	    contents[fieldName] = processed
 
-		return True, contents
+	  return True, contents
 
 
 	def validate(self, rootContents):
-		if is_array(self.root):
-			if rootContents is not None:
-				return self._validate_array(None, self.root,
-					rootContents)
+	  if is_array(self.root):
+	    if rootContents is not None:
+	      return self._validate_array(None, self.root,
+	        rootContents)
 
-				if self.root.nullableArray:
-					return True, None
+	      if self.root.nullableArray:
+	        return True, None
 
-				else:
-					return False, create_object_error(None,
-						ErrorType.NULL_VALUE, field="root")
+	      else:
+	        return False, create_object_error(None,
+	          ErrorType.NULL_VALUE, field="root")
 
-		if None == rootContents:
-			if self.root.nullable:
-				return True, None
+	  if None == rootContents:
+	    if self.root.nullable:
+	      return True, None
 
-			else:
-				return False, create_object_error(None,
-					ErrorType.NULL_VALUE, field="root")
+	    else:
+	      return False, create_object_error(None,
+	        ErrorType.NULL_VALUE, field="root")
 
-		rootKind = self.root.fieldKind
-		rootType = self.root.fieldType
+	  rootKind = self.root.fieldKind
+	  rootType = self.root.fieldType
 
-		if rootKind == FieldType.OBJECT:
-			rootObject = self._find_object_decl(rootType)
-			return self._validate_object(None, rootObject,
-				rootContents)
+	  if rootKind == FieldType.OBJECT:
+	    rootObject = self._find_object_decl(rootType)
+	    return self._validate_object(None, rootObject,
+	      rootContents)
 
-		if rootKind == FieldType.ENUM:
-			rootEnum = self._find_enum_decl(rootType)
-			return self._validate_enum(None, rootType,
-				rootContents)
+	  if rootKind == FieldType.ENUM:
+	    rootEnum = self._find_enum_decl(rootType)
+	    return self._validate_enum(None, rootType,
+	      rootContents)
 
-		if rootKind == FieldType.SIMPLE:
-			return self._deserialize_field(None, rootType,
-				rootContents)
+	  if rootKind == FieldType.SIMPLE:
+	    return self._deserialize_field(None, rootType,
+	      rootContents)
 
 
 	def deserialize(self, contents):
+		"""Attempts to deserialize a JSON string into a Python object.
+		
+		The returned tuple's first element indicates whether the deserialization
+		was successful. When deserialization succeeds the respective Python data
+		will be the second element. Conversely, when a problem is found the first
+		element will be False and the second element will be an instance of
+		:class:`DeserializationError`.
+		
+		Args:
+		  contents (str): JSON string to deserialize into Python data.
+		
+		Returns:
+		  Tuple[bool, object]
+
+		"""
+		
 		if self.root is None:
-			msg = "No root defined for blueprint, unable to deserialize"
-			raise SchemaViolation(msg)
-
+		  msg = "No root defined for blueprint, unable to deserialize"
+		  raise SchemaViolation(msg)
+		
 		try:
-			identity = lambda x : x
-			unquote = lambda x : unquoted_str(x)
-
-			loaded = json.loads(contents,
-				object_pairs_hook=no_bool_converter,
-				parse_float=unquote, parse_int=unquote,
-				parse_constant=identity)
-
+		  identity = lambda x : x
+		  unquote = lambda x : unquoted_str(x)
+		
+		  loaded = json.loads(contents,
+		    object_pairs_hook=no_bool_converter,
+		    parse_float=unquote, parse_int=unquote,
+		    parse_constant=identity)
+		
 		except json.JSONDecodeError as e:
-			return False, create_root_error(ErrorType.JSON_PARSING,
-				line=e.lineno, column=e.colno, message=e.msg)
-
+		  return False, create_root_error(ErrorType.JSON_PARSING,
+		    line=e.lineno, column=e.colno, message=e.msg)
+		
 		return self.validate(loaded)
 
 	#----------------------------------------------------------------------------
 
 	def _collect_sources(self, collected=None):
-		collected = collected if None != collected else set()
-		collected.add(self)
+	  collected = collected if None != collected else set()
+	  collected.add(self)
 
-		for blueprint in self.includes:
-			blueprint._collect_sources(collected)
+	  for blueprint in self.includes:
+	    blueprint._collect_sources(collected)
 
-		return collected
+	  return collected
 
 
 	def _collect_types(self):
-		collected = list()
-		sources = self._collect_sources()
+	  collected = list()
+	  sources = self._collect_sources()
 
-		for source in sources:
-			collected.extend(source.derived_types.keys())
-			collected.extend(source.enums.keys())
-			collected.extend(source.objects.keys())
+	  for source in sources:
+	    collected.extend(source.derived_types.keys())
+	    collected.extend(source.enums.keys())
+	    collected.extend(source.objects.keys())
 
-		return collected
+	  return collected
 
 
 	def __hash__(self):
-		return hash(self.uuid)
+	  return hash(self.uuid)
 
 	#----------------------------------------------------------------------------
 
 	def _find_element_decl(self, typeName, checked=None):
-		if typeName in self.primitive_types: return self.primitive_types[typeName]['defaults']
-		if typeName in self.derived_types: return self.derived_types[typeName]
-		checked = checked or set()
-		checked.add(self)
+	  if typeName in self.primitive_types: return self.primitive_types[typeName]['defaults']
+	  if typeName in self.derived_types: return self.derived_types[typeName]
+	  checked = checked or set()
+	  checked.add(self)
 
-		for blueprint in self.includes:
-			if not blueprint in checked:
-				found = blueprint._find_element_decl(typeName, checked)
-				if None != found: return found
+	  for blueprint in self.includes:
+	    if not blueprint in checked:
+	      found = blueprint._find_element_decl(typeName, checked)
+	      if None != found: return found
 
-		return None
+	  return None
 
 
 	def _find_object_decl(self, objectName, checked=None):
-		if objectName in self.objects: return self.objects[objectName]
-		checked = checked or set()
-		checked.add(self)
+	  if objectName in self.objects: return self.objects[objectName]
+	  checked = checked or set()
+	  checked.add(self)
 
-		for blueprint in self.includes:
-			if not blueprint in checked:
-				found = blueprint._find_object_decl(objectName, checked)
-				if None != found: return found
+	  for blueprint in self.includes:
+	    if not blueprint in checked:
+	      found = blueprint._find_object_decl(objectName, checked)
+	      if None != found: return found
 
-		return None
+	  return None
 
 
 	def _find_enum_decl(self, enumName, checked=None):
-		if enumName in self.enums:
-			return self.enums[enumName]
+	  if enumName in self.enums:
+	    return self.enums[enumName]
 
-		checked = checked or set()
-		checked.add(self)
+	  checked = checked or set()
+	  checked.add(self)
 
-		for blueprint in self.includes:
-			if not blueprint in checked:
-				found = blueprint._find_enum_decl(enumName, checked)
-				if None != found: return found
+	  for blueprint in self.includes:
+	    if not blueprint in checked:
+	      found = blueprint._find_enum_decl(enumName, checked)
+	      if None != found: return found
 
-		return None
+	  return None
 
 	#----------------------------------------------------------------------------
 
 	def choose_root(self, rootType, asArray=False,
-		minArrayLength=None, maxArrayLength=None):
+	  minArrayLength=None, maxArrayLength=None):
 
-		lookups = [
-			(self._find_object_decl, FieldType.OBJECT),
-			(self._find_element_decl, FieldType.SIMPLE),
-			(self._find_enum_decl, FieldType.ENUM)
-		]
+	  lookups = [
+	    (self._find_object_decl, FieldType.OBJECT),
+	    (self._find_element_decl, FieldType.SIMPLE),
+	    (self._find_enum_decl, FieldType.ENUM)
+	  ]
 
-		foundRoot = None
-		rootKind = None
+	  foundRoot = None
+	  rootKind = None
 
-		for method, kind in lookups:
-			if candidate := method(rootType, set()):
-				foundRoot = candidate
-				rootKind = kind
-				break
+	  for method, kind in lookups:
+	    if candidate := method(rootType, set()):
+	      foundRoot = candidate
+	      rootKind = kind
+	      break
 
-		if foundRoot is None:
-			msg = f"No element found with name '{rootType}'"
-			raise SchemaViolation(msg)
+	  if foundRoot is None:
+	    msg = f"No element found with name '{rootType}'"
+	    raise SchemaViolation(msg)
 
-		rootField = create_field(rootKind, rootType)
-		newBp = JsonBlueprint(self.primitive_types)
-		newBp.root = (make_array(rootField) if asArray else
-			rootField)
+	  rootField = create_field(rootKind, rootType)
+	  newBp = JsonBlueprint(self.primitive_types)
+	  newBp.root = (make_array(rootField) if asArray else
+	    rootField)
 
-		if asArray:
-			if minArrayLength: newBp.root.apply_spec('minLength', minArrayLength)
-			if maxArrayLength: newBp.root.apply_spec('maxLength', maxArrayLength)
+	  if asArray:
+	    if minArrayLength: newBp.root.apply_spec('minLength', minArrayLength)
+	    if maxArrayLength: newBp.root.apply_spec('maxLength', maxArrayLength)
 
-		newBp.includes = self.includes
-		newBp.derived_types = self.derived_types
-		newBp.enums = self.enums
-		newBp.objects = self.objects
+	  newBp.includes = self.includes
+	  newBp.derived_types = self.derived_types
+	  newBp.enums = self.enums
+	  newBp.objects = self.objects
 
-		return newBp
+	  return newBp
 
 	#----------------------------------------------------------------------------
 
 	def _serialize_element(self, element, elementName, content):
-		contentKind = element.fieldKind
-		contentType = element.fieldType
+	  contentKind = element.fieldKind
+	  contentType = element.fieldType
 
-		method = {
-			FieldType.OBJECT: JsonBlueprint._serialize_object,
-			FieldType.ENUM: JsonBlueprint._serialize_enum,
-			FieldType.SIMPLE: JsonBlueprint._serialize_field
-		} [contentKind]
+	  method = {
+	    FieldType.OBJECT: JsonBlueprint._serialize_object,
+	    FieldType.ENUM: JsonBlueprint._serialize_enum,
+	    FieldType.SIMPLE: JsonBlueprint._serialize_field
+	  } [contentKind]
 
-		if is_array(element):
-			if content is None:
-				if element.nullableArray: return 'null'
-				msg = f"{elementName}: Array cannot be null"
-				raise SerializationException(msg)
+	  if is_array(element):
+	    if content is None:
+	      if element.nullableArray: return 'null'
+	      msg = f"{elementName}: Array cannot be null"
+	      raise SerializationException(msg)
 
-			try: iterator = iter(content)
+	    try: iterator = iter(content)
 
-			except TypeError:
-				content_type = type(content)
-				raise SerializationException(
-					f"{elementName}: Array content cannot be extracted "
-					f"from '{content_type}' value"
-				)
+	    except TypeError:
+	      content_type = type(content)
+	      raise SerializationException(
+	        f"{elementName}: Array content cannot be extracted "
+	        f"from '{content_type}' value"
+	      )
 
-			serialized = list()
-			for idx, item in enumerate(content):
-				if item is None:
-					if element.nullable:
-						serialized.append('null')
-						continue
+	    serialized = list()
+	    for idx, item in enumerate(content):
+	      if item is None:
+	        if element.nullable:
+	          serialized.append('null')
+	          continue
 
-					else:
-						msg = f"{elementName} is not nullable"
-						raise SerializationException(msg)
+	        else:
+	          msg = f"{elementName} is not nullable"
+	          raise SerializationException(msg)
 
-				idxName = f"{elementName} index {idx}"
-				processed = method(self, contentType, idxName, item)
-				serialized.append(processed)
+	      idxName = f"{elementName} index {idx}"
+	      processed = method(self, contentType, idxName, item)
+	      serialized.append(processed)
 
-			inner = ",".join(serialized)
-			return f"[{inner}]"
+	    inner = ",".join(serialized)
+	    return f"[{inner}]"
 
-		if content is None:
-			if element.nullable: return 'null'
-			msg = f"{elementName} is not nullable"
-			raise SerializationException(msg)
+	  if content is None:
+	    if element.nullable: return 'null'
+	    msg = f"{elementName} is not nullable"
+	    raise SerializationException(msg)
 
-		return method(self, contentType, elementName, content)
+	  return method(self, contentType, elementName, content)
 
 
 	def _serialize_object(self, objectType, objectName, content):
-		objectInstance = self._find_object_decl(objectType)
+	  objectInstance = self._find_object_decl(objectType)
 
-		if not isinstance(content, collections.abc.Mapping):
-			msg = f"{objectName} needs to receive a dict to serialize"
-			raise SerializationException(msg)
+	  if not isinstance(content, collections.abc.Mapping):
+	    msg = f"{objectName} needs to receive a dict to serialize"
+	    raise SerializationException(msg)
 
-		serialized = list()
-		for fieldName, fieldData in objectInstance.items():
-			if not fieldName in content:
-				if fieldData.optional:
-					continue
+	  serialized = list()
+	  for fieldName, fieldData in objectInstance.items():
+	    if not fieldName in content:
+	      if fieldData.optional:
+	        continue
 
-				msg = f"{objectName}: missing field {fieldName}"
-				raise SerializationException(msg)
+	      msg = f"{objectName}: missing field {fieldName}"
+	      raise SerializationException(msg)
 
-			fieldValue = content[fieldName]
-			processed = self._serialize_element(fieldData, fieldName, fieldValue)
-			serialized.append(f'"{fieldName}":{processed}')
+	    fieldValue = content[fieldName]
+	    processed = self._serialize_element(fieldData, fieldName, fieldValue)
+	    serialized.append(f'"{fieldName}":{processed}')
 
-		inner = ",".join(serialized)
-		return f"{{{inner}}}"
+	  inner = ",".join(serialized)
+	  return f"{{{inner}}}"
 
 
 	def _serialize_enum(self, enumType, fieldName, content):
-		possibleValues = self._find_enum_decl(enumType)
+	  possibleValues = self._find_enum_decl(enumType)
 
-		if not content in possibleValues:
-			msg = f"Value '{content}' is not valid for field '{fieldName}'"
-			raise SerializationException(msg)
+	  if not content in possibleValues:
+	    msg = f"Value '{content}' is not valid for field '{fieldName}'"
+	    raise SerializationException(msg)
 
-		return f'"{content}"'
+	  return f'"{content}"'
 
 
 	def _serialize_field(self, fieldType, fieldName, content):
-		if fieldType in self.primitive_types:
-			specs = self.primitive_types[fieldType]['defaults']
-			baseType = fieldType
+	  if fieldType in self.primitive_types:
+	    specs = self.primitive_types[fieldType]['defaults']
+	    baseType = fieldType
 
-		else:
-			specs = self._find_element_decl(fieldType)
-			baseType = specs['__baseType__']
+	  else:
+	    specs = self._find_element_decl(fieldType)
+	    baseType = specs['__baseType__']
 
-		serialize_method = self.primitive_types[baseType]['formatter']
-		return serialize_method(content, specs)
+	  serialize_method = self.primitive_types[baseType]['formatter']
+	  return serialize_method(content, specs)
 
 	#-------------------------------------------------------------------------------
 
 	def serialize(self, content):
-		if self.root is None:
-			msg = "No root defined for blueprint, unable to serialize"
-			raise SerializationException(msg)
+	  """Attempts to serialize a Python object into a JSON string.
 
-		if content is None:
-			if self.root.nullable:
-				return 'null'
+	    Args:
+	      content (object): Python data to be transformed into
+	        a JSON string.
 
-		return self._serialize_element(self.root,
-			"Root Level", content)
+	    Returns:
+	      the resulting JSON string
+
+	    Raises:
+	      SerializationException: when a field is missing in the
+	        Python object or some field has an incompatible type.
+
+	  """
+
+	  if self.root is None:
+	    msg = "No root defined for blueprint, unable to serialize"
+	    raise SerializationException(msg)
+
+	  if content is None:
+	    if self.root.nullable:
+	      return 'null'
+
+	  return self._serialize_element(
+	    self.root,
+	    "Root Level",
+	    content)
 

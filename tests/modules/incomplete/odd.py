@@ -9,7 +9,7 @@ def _parse(value, specs):
 	intValue = int(value)
 	if intValue % 2 == 0:
 		return False, {
-			"error": jsonbp.errorType.OUTSIDE_RANGE,
+			"error": jsonbp.ErrorType.OUTSIDE_RANGE,
 			"context": {"value": intValue}
 		}
 

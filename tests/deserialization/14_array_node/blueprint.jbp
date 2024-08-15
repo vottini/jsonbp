@@ -8,7 +8,7 @@ enum color {
 object point {
 	x: float,
 	y: float,
-	when: instant (format="%d/%m/%Y")
+	when: instant (iso=false, format="%d/%m/%Y")
 }
 
 root {

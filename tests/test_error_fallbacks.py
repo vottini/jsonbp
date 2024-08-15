@@ -9,7 +9,7 @@ def testLocaleEdges():
 	badInstance = ''' {"positions": [ 32, 12, "Wally"]}'''
 
 	success, outcome = blueprint.deserialize(badInstance)
-	print(outcome.format(["it_IT", "pt_BR", "en_US"]))
+	print(outcome.localize(["it_IT", "pt_BR", "en_US"]))
 	jsonbp.use_default_language('nonExistent')
 	print(str(outcome))
 

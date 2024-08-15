@@ -2,19 +2,14 @@
 from datetime import datetime
 
 _defaults = {
-	'iso': False,
-	'format': "%Y-%m-%dT%H:%M:%S%z",
-	'isoResolution': 'milliseconds'
+	'iso': True,
+	'isoResolution': 'milliseconds',
+	'format': "%Y-%m-%dT%H:%M:%S%z"
 }
 
-# https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat
 # allowed_resolutions:
-# - 'auto'
-# - 'hours'
-# - 'minutes'
-# - 'seconds'
-# - 'milliseconds'
-# - 'microseconds'
+# https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat
+
 
 def _format(value, specs):
 	if specs['iso']:

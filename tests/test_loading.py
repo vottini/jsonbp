@@ -10,10 +10,12 @@ modulesDir = 'modules'
 
 def testLoading():
 	blueprint = jsonbp.load_file(
-		os.path.join(modulesDir, 'blueprint.jbp'), [
-			os.path.join(modulesDir, 'valid'),
-			os.path.join(modulesDir, 'nonExistent')
-		])
+		os.path.join(modulesDir, 'blueprint.jbp'),
+			custom_types=[
+				os.path.join(modulesDir, 'valid'),
+				os.path.join(modulesDir, 'nonExistent')
+			]
+		)
 
 	jsonbp.invalidate_cache()
 
@@ -21,7 +23,7 @@ def testLoading():
 		with pytest.raises(jsonbp.SchemaViolation):
 			blueprint = jsonbp.load_file(
 				os.path.join(modulesDir, 'blueprint.jbp'),
-				[os.path.join(modulesDir, directory)])
+				custom_types=[os.path.join(modulesDir, directory)])
 
 
 if __name__ == "__main__":

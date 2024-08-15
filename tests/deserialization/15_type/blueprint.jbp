@@ -4,12 +4,12 @@
 
 type small : integer (max=10)
 type positive : small (min=1)
-type moment : instant (format="%Y-%m-%d %H:%M")
+type moment : instant (iso=false, format="%Y-%m-%d %H:%M")
 type thousandth : decimal (precision=3)
 
 root {
 	dummy1: positive,
-	dummy2: thousandth (decimal=","),
+	dummy2: thousandth (radix=","),
 	dummy3: moment
 }
 

@@ -1,4 +1,7 @@
 
 root {
-	some_datetime: instant (format="%Y-%m-%dT%H:%M:%S")
+	some_datetime: instant (
+		format="%Y-%m-%dT%H:%M:%S",
+		iso=false
+	)
 }

@@ -1,21 +1,21 @@
 
 # jsonbp
 
-**jsonbp** (JSON BluePrint) is a library to serialize and deserialize JSON
-from and to Python based on schemas. There is [json-schema][json_schema] and its
-implementations already if you want a more mature and more widely used technique,
-but I wanted a different approach so this library is the result.
+**jsonbp** (JSON BluePrint) is a library for serializing and deserializing JSON
+to and from Python based on schemas. While [json-schema][json_schema] and its
+implementations offer a more mature and widely used technique, I wanted a
+different approach, which led me to the development of this library.
 
 jsonbp's design main goals were:
 - schema reuse through import / type system
-- custom primitive types
+- custom user definable primitive types
 - built in numeric fixed precision type which deserializes into Python's Decimal
 - built in datetime type which deserializes into Python's datetime
 - error reporting with support for localization
 - support for enums
 - easy to integrate and use
 
-## Contents
+## Brief Introduction
  - [Schema definition](#schema-definition)
  - [Usage](#usage)
  - [Requirements and Dependencies](#requirements-and-dependencies)
@@ -111,37 +111,39 @@ enum color {
 
 ### Schema parsing
 
-- jsonbp.load\_file(\<schema file path>: str) => \<blueprint object>
-- jsonbp.load\_string(\<schema string>: str) => \<blueprint object>
+- jsonbp.load\_file(blueprint\_path: str) => JsonBlueprint
+- jsonbp.load\_string(blueprint\_string: str) => JsonBlueprint
 
-These functions are used for blueprint loading, one treats the sring parameter
+These functions are used for blueprint loading, one treats the string parameter
 as the path to the schema definition while the other interprets it as the content
-itself, as their name suggests.
-Whenever there's a problem with the supplied schema, an exception is thrown. More on this can
+itself, as their name suggest.
+Whenever there's a problem with the supplied schema, a **jsonbp.SchemaViolation**
+exception is thrown. More on this can
 be read on [`Error handling and error localization`](docs/error.md). These functions, when
 succeed loading the schema, return a blueprint instance that can then be used to
 serialize/deserialize JSON to and from Python.
 
 One caveat is that in the load\_file() function, the blueprint is stored in a cache and
-associated with the absolute path of that file. Then, request to load the same file twice
-won't make jsonbp parse it a second time, but instead return the previously obtained
-blueprint. To force the parsing of posterior calls, call *jsonbp.invalidateCache()*.
+associated with the absolute path of that file. Therefore, requests to load the same file
+twice will not cause jsonbp to parse it a second time, but instead return the
+previously obtained blueprint. To force re-parsing of subsequent calls,
+call *jsonbp.invalidate_cache()*.
 
 ### JSON deserialization
 
-- \<blueprint object>.deserialize(\<JSON string>) => (success: bool, outcome: object)
+- JsonBlueprint.deserialize(contents: str) => (success: bool, outcome: object)
 
 This function expects a string holding the JSON contents to be deserialized and
-returns a tuple in the form **(success, outcome)**. **success** being a boolean signalizing if
-the deserialization was successful or not. If successful, **outcome** will hold the Python data
-obtained from the JSON string, which can range from a single integer to a list of dictionaries,
-depending on what is expected to be received. On the other hand, if **success** is false
-**outcome** will have a localizable message explaining what was not compliant according
-to the schema.
+returns a tuple in the form **(success, outcome)**. **success** being a boolean indicating
+whether the deserialization was successful. If successful, **outcome** will contain the
+Python data obtained from the JSON string, which can range from a single integer to a list
+of dictionaries, depending on what is expected to be received. On the other hand,
+if **success** is false, **outcome** will contain a localizable message explaining what
+was not compliant according to the schema.
 
 ### Python serialization
 
-- \<blueprint object>.serialize(payload: object) => (success: bool, outcome: str)
+- JsonBlueprint.serialize(payload: object) => (success: bool, outcome: str)
 
 Similarly to *deserialize()*, the *serialize()* method returns a tuple in the form of
 **(success, outcome)** indicating whether all the constraints were met when building the
@@ -194,9 +196,7 @@ pip install jsonbp
 
 ## Documentation
 
-Here are some more detailed information about using jsonbp:
-- [`Schema definition`](docs/schema.md)
-- [`Error handling and error localization`](docs/error.md)
+- [`Full documentation`](https://jsonbp.readthedocs.io/en/latest/)
 - [`Sample of using jsonbp in Flask`](https://github.com/vottini/sample-jsonbp-flask)
 
 [//]: References

@@ -1,5 +1,7 @@
 
 root {
 	milli_datetime: instant (iso=true),
-	sec_datetime: instant (iso=true, isoResolution="seconds")
+	sec_datetime: instant (iso=true, isoResolution="seconds"),
+	formatted: instant (iso=false, format="%d/%m/%Y")
 }
+

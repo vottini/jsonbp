@@ -16,7 +16,7 @@ def _parse(value, specs):
 	intValue = int(value)
 	if not specs['min'] <= intValue <= specs['max']:
 		return False, {
-			"error": jsonbp.errorType.OUTSIDE_RANGE,
+			"error": jsonbp.ErrorType.OUTSIDE_RANGE,
 			"context": {"value": intValue}
 		}
 
