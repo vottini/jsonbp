@@ -15,7 +15,7 @@ node point2d {
 
 root {
   points: point2d[],
-  deltaTs: double (min=0.0) [minLength=2],
+  deltaTs: float (min=0.0) [minLength=2],
   conditions: {
     GOOD,
     REGULAR,
@@ -40,11 +40,25 @@ root {
 root point2d[]
 ```
 
-Arrays can have three "specificities". As ilustrated by the above examples,
-two of them are **minLength** and **maxLength** that respectively limits the
+Inside the brackets, arrays can have three "specificities" defined. As ilustrated by the above
+examples, two of them are **minLength** and **maxLength** that respectively limits the
 minimum and maximum number of elements the array may contain. **maxLength** must
 be equal or greater than **minLength**, or an exception will be raised during parsing.
 
-The third one is **nullableArray**, which as name implies, allows an array field to be
+The third one is **nullableArray** which, as name implies, allows an array field to be
 null. This is necessary to differentiate an array with possibly nullable items from
-an array field that itself can be null.
+an array field that it itself can be null. For example, given the following schema:
+
+```
+root {
+  case_a: double[],
+  case_b: nullable double[],
+  case_c: nullable double[nullableArray=true]
+}
+```
+
+The field **case_a** is not allowed to be null and should contain strictly non-null
+values. Similiarly, **case_b** must too be a non-null array, however it might contain
+null values. On the other hand, **case_c** can be potentially null, and if not null, it
+also can bear null values.
+

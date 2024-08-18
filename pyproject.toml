@@ -5,17 +5,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonbp"
-version = "1.1.0"
+version = "1.1.1"
 description = "Schema based JSON Parser/Serializer"
 authors = [
 	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 readme = { file = "README.md", content-type = "text/markdown" }
 keywords = ["JSON", "serialization", "deserialization"]
 license = {text = "MIT"}
 classifiers = [
-	"Development Status :: 2 - Pre-Alpha",
+	"Development Status :: 5 - Production/Stable",
 	"Intended Audience :: Developers",
 	"License :: OSI Approved :: MIT License",
 	"Operating System :: OS Independent",
@@ -24,4 +24,5 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/vottini/jsonbp"
+"Documentation" = "https://jsonbp.readthedocs.io/en/latest/"
 
