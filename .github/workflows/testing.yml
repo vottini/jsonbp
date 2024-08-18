@@ -27,9 +27,9 @@ jobs:
       run: |
         cd tests
         ./run_tests.sh
-		- name: Upload results to Codecov
-		  uses: codecov/codecov-action@v4
-			with:
-			  file: tests/.coverage
-			  token: ${{ secrets.CODECOV_TOKEN }}
+    - name: Upload results to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: tests/.coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
 
