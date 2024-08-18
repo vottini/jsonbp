@@ -64,51 +64,42 @@ def _format(value, specs):
 
 
 def _parse(value, specs):
-	try:
-		sanedValue = (value
-			.removeprefix(specs['prefix'])
-			.removesuffix(specs['suffix'])
-		)
+	sanedValue = (value
+		.removeprefix(specs['prefix'])
+		.removesuffix(specs['suffix'])
+	)
 
-		radix = specs['radix']
-		if radix in specialChars:
-			radix = f'\\{radix}'
+	radix = specs['radix']
+	if radix in specialChars:
+		radix = f'\\{radix}'
 
-		separator = specs['separator']
-		if separator in specialChars:
-			separator = f'\\{separator}'
+	separator = specs['separator']
+	if separator in specialChars:
+		separator = f'\\{separator}'
 
-		decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({radix}\\d+)?$'
-		if None == re.match(decimalPattern, sanedValue):
-			print(f"{value} => ERROR PARSING DECIMAL = DOESN'T MATCH")
-			return False, {
-				"error": jsonbp.ErrorType.VALUE_PARSING,
-				"context": {}
-			}
-
-		sanedStrValue = (sanedValue
-			.replace(specs['separator'], '')
-			.replace(specs['radix'], '.')
-		)
-
-		precision = f"1e-{specs['precision']}"
-		rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
-			context=roundingContext)
-
-		if specs['min'] > rawValue or rawValue > specs['max']:
-			return False, {
-				"error": jsonbp.ErrorType.OUTSIDE_RANGE,
-				"context": { "value": rawValue }
-			}
-
-		return True, rawValue
-
-	except Exception as e:
-		print(f"{value} => ERROR PARSING DECIMAL", repr(e))
+	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({radix}\\d+)?$'
+	if None == re.match(decimalPattern, sanedValue):
 		return False, {
 			"error": jsonbp.ErrorType.VALUE_PARSING,
-			"context": {"type": "decimal"}
+			"context": {}
 		}
+
+	sanedStrValue = (sanedValue
+		.replace(specs['separator'], '')
+		.replace(specs['radix'], '.')
+	)
+
+	precision = f"1e-{specs['precision']}"
+	rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
+		context=roundingContext)
+
+	if specs['min'] > rawValue or rawValue > specs['max']:
+		return False, {
+			"error": jsonbp.ErrorType.OUTSIDE_RANGE,
+			"context": { "value": rawValue }
+		}
+
+	return True, rawValue
 
 
 type_specs = {

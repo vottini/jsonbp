@@ -10,15 +10,22 @@ _defaults = {
 # allowed_resolutions:
 # https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat
 
-
 def _format(value, specs):
-	if specs['iso']:
-		resolution = specs['isoResolution']
-		result = value.isoformat(timespec=resolution)
+	try:
+		if specs['iso']:
+			resolution = specs['isoResolution']
+			result = value.isoformat(timespec=resolution)
+			return f'"{result}"'
+
+		result = value.strftime(specs['format'])
 		return f'"{result}"'
 
-	result = value.strftime(specs['format'])
-	return f'"{result}"'
+	except Exception as e:
+		print(f"{value} GAVE ERROR:", repr(e))
+		return False, {
+			"error": jsonbp.ErrorType.VALUE_PARSING,
+			"context": {}
+		}
 
 
 def _parse(value, specs):
