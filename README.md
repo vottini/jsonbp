@@ -1,10 +1,13 @@
 
 # jsonbp
 
+[![Documentation Status](https://readthedocs.org/projects/jsonbp/badge/?version=latest)](http://jsonbp.readthedocs.io/?badge=latest)
+[![codecov](https://codecov.io/github/vottini/jsonbp/graph/badge.svg?token=N2H2WJ0SC5)](https://codecov.io/github/vottini/jsonbp)
+
 **jsonbp** (JSON BluePrint) is a library for serializing and deserializing JSON
 to and from Python based on schemas. While [json-schema][json_schema] and its
-implementations offer a more mature and widely used technique, I wanted a
-different approach, which led me to the development of this library.
+implementations offer a more mature and widely used technique, a different
+approach was desired, which led to the development of this library.
 
 jsonbp's design main goals were:
 - schema reuse through import / type system
