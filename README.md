@@ -32,10 +32,10 @@ Here's a simple example:
 
 ```
 root {
-  x: float (min=0.0),
-  y: float (min=0.0, max=1.0),
+  x: Float (min=0.0),
+  y: Float (min=0.0, max=1.0),
 
-  optional color: {
+  optional Color: {
     RED,
     GOLD,
     GREEN
@@ -82,26 +82,26 @@ modular. In the above example, one could split the definitions and get
 something more reusable, like the following:
 
 ```
-type non_negative : float (min=0.0)
-type normalized : non_negative (max=1.0)
+type NonNegative : Float (min=0.0)
+type Normalized : NonNegative (max=1.0)
 
-object coordinates {
-  x: non_negative,
-  y: normalized
+object Coordinates {
+  x: NonNegative,
+  y: Normalized
 }
 
 include "color.jbp"
-object colored_coordinates extends coordinates {
-  optional color: color
+object ColoredCoordinates extends Coordinates {
+  optional color: Color
 }
 
-root colored_coordinates[minLength=2]
+root ColoredCoordinates[minLength=2]
 ```
 
 where the contents of file "color.jbp" would be:
 
 ```
-enum color {
+enum Color {
   RED,
   GOLD,
   GREEN
