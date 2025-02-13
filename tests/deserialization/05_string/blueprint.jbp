@@ -1,4 +1,4 @@
 
 root {
-	some_string: string (minLength=5, maxLength=10)
+	some_string: String (minLength=5, maxLength=10)
 }

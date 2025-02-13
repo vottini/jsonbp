@@ -14,7 +14,7 @@ Deserialization/Serialization
 +++++++++++++++++++++++++++++
 
 .. autoclass:: jsonbp.JsonBlueprint
-  :members: deserialize, serialize
+  :members: deserialize, serialize, choose_root
 
 .. autoclass:: jsonbp.DeserializationError
   :members: localize

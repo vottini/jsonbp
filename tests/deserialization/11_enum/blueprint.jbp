@@ -1,8 +1,8 @@
 
-enum color {
+enum Color {
 	RED,
 	GOLD,
 	GREEN
 }
 
-root color
+root Color

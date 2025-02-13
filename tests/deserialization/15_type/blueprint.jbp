@@ -2,14 +2,14 @@
 # this is a comment
 # and another one
 
-type small : integer (max=10)
-type positive : small (min=1)
-type moment : instant (iso=false, format="%Y-%m-%d %H:%M")
-type thousandth : decimal (precision=3)
+type Small : Integer (max=10)
+type Positive : Small (min=1)
+type Moment : Instant (iso=false, format="%Y-%m-%d %H:%M")
+type Thousandth : Decimal (precision=3)
 
 root {
-	dummy1: positive,
-	dummy2: thousandth (radix=","),
-	dummy3: moment
+	dummy1: Positive,
+	dummy2: Thousandth (radix=","),
+	dummy3: Moment
 }
 

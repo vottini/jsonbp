@@ -2,26 +2,26 @@
 # this is a comment
 # and another one
 
-type timestamp : integer (min=0)
+type Timestamp : Integer (min=0)
 
-object point {
-	x: float,
-	y: float,
-	moment: timestamp
+object Point {
+	x: Float,
+	y: Float,
+	moment: Timestamp
 }
 
-enum color {
+enum Color {
 	RED,
 	GOLD,
 	GREEN
 }
 
-object colored_point extends point {
-	color: color
+object ColoredPoint extends Point {
+	color: Color
 }
 
 root {
-	points: colored_point[],
-	optional path_color: color
+	points: ColoredPoint[],
+	optional path_color: Color
 }
 

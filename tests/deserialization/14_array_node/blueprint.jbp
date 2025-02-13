@@ -1,18 +1,18 @@
 
-enum color {
+enum Color {
 	RED,
 	GOLD,
 	GREEN
 }
 
-object point {
-	x: float,
-	y: float,
-	when: instant (iso=false, format="%d/%m/%Y")
+object Point {
+	x: Float,
+	y: Float,
+	when: Instant (iso=false, format="%d/%m/%Y")
 }
 
 root {
-	colors: color[maxLength=3],
-	points: point[minLength=2]
+	colors: Color[maxLength=3],
+	points: Point[minLength=2]
 }
 

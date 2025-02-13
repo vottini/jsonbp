@@ -3,20 +3,20 @@ import pytest
 
 blueprint_txt = """
 
-	enum origin {
+	enum Origin {
 		ACQUIRED,
 		RECEIVED,
 		GUESSED
 	}
 
-	object position {
-		latitude: float (atLeast=-90, atMost=+90),
-		longitude: float (atLeast=-180, atMost=+180)
+	object Position {
+		latitude: Float (atLeast=-90, atMost=+90),
+		longitude: Float (atLeast=-180, atMost=+180)
 	}
 
-	object payload {
-		position: position,
-		origin: origin
+	object Payload {
+		position: Position,
+		origin: Origin
 	}
 
 """
@@ -51,11 +51,11 @@ def testChooseRoot():
 		with pytest.raises(excepionType):
 			bad_call()
 
-	derived = blueprint.choose_root("payload")
+	derived = blueprint.choose_root("Payload")
 	success, _ = derived.deserialize(json_txt)
 	assert success
 
-	arrayDerived = blueprint.choose_root("payload", asArray=True,
+	arrayDerived = blueprint.choose_root("Payload", asArray=True,
 		minArrayLength=2, maxArrayLength=3)
 
 	outcome1, _ = arrayDerived.deserialize(f"[{json_txt}, {json_txt}]")

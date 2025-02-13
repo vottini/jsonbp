@@ -5,7 +5,7 @@ import jsonbp
 
 def testLocaleEdges():
 	jsonbp.load_translation("inexistentFile", "it_IT")
-	blueprint = jsonbp.load_string('''root { positions: integer(min=0) [maxLength=128] }''')
+	blueprint = jsonbp.load_string('''root { positions: Integer(min=0) [maxLength=128] }''')
 	badInstance = ''' {"positions": [ 32, 12, "Wally"]}'''
 
 	success, outcome = blueprint.deserialize(badInstance)

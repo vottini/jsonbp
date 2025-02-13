@@ -1,10 +1,10 @@
 
 root {
 	file: nullable {
-		path: string,
-		size: integer
+		path: String,
+		size: Integer
 	},
 
-	optional indexes: integer[]
+	optional indexes: Integer[]
 }
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonbp"
-version = "1.1.1"
+version = "1.2.0"
 description = "Schema based JSON Parser/Serializer"
 authors = [
 	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
@@ -24,5 +24,5 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/vottini/jsonbp"
-"Documentation" = "https://jsonbp.readthedocs.io/en/latest/"
+"Documentation" = "https://jsonbp.readthedocs.io/en/stable/"
 

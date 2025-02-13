@@ -1,18 +1,18 @@
 
-enum origin {
+enum Origin {
 	ACQUIRED,
 	RECEIVED,
 	GUESSED
 }
 
-object position {
-	latitude: float (atLeast=-90, atMost=+90),
-	longitude: float (atLeast=-180, atMost=+180)
+object Position {
+	latitude: Float (atLeast=-90, atMost=+90),
+	longitude: Float (atLeast=-180, atMost=+180)
 }
 
 root {
-	position: nullable position[nullableArray=false],
-	origin: nullable origin[minLength=false],
-    values: nullable integer[]
+	position: nullable Position[nullableArray=false],
+	origin: nullable Origin[minLength=false],
+	values: nullable Integer[]
 }
 

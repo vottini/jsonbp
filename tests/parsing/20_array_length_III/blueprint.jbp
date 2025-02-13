@@ -1,4 +1,4 @@
 
 root {
-	dummy: integer
+	dummy: Integer
 } [minLength=-2]

@@ -1,4 +1,4 @@
 
 root {
-	some_color: primes (min=0),
+	some_color: Primes (min=0),
 }

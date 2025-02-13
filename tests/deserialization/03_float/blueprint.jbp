@@ -1,5 +1,5 @@
 
 root {
-	some_float: float (allowNaN=true)
+	some_float: Float (allowNaN=true)
 }
 

@@ -1,4 +1,4 @@
 
 root {
-	some_integer: integer (min=-10, max=10)
+	some_integer: Integer (min=-10, max=10)
 }

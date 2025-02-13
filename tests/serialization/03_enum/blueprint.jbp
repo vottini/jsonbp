@@ -1,13 +1,13 @@
 
-enum color {
+enum Color {
 	RED,
 	GOLD,
 	GREEN
 }
 
 root {
-	foreground: color,
-	background: nullable color,
-	contents: string [nullableArray=true]
+	foreground: Color,
+	background: nullable Color,
+	contents: String [nullableArray=true]
 }
 

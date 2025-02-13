@@ -1,5 +1,5 @@
 
 root {
-	some_float: float (greaterThan=-Infinity, lessThan=+Infinity)
+	some_float: Float (greaterThan=-Infinity, lessThan=+Infinity)
 }
 

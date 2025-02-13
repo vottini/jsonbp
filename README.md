@@ -85,13 +85,13 @@ something more reusable, like the following:
 type non_negative : float (min=0.0)
 type normalized : non_negative (max=1.0)
 
-node coordinates {
+object coordinates {
   x: non_negative,
   y: normalized
 }
 
 include "color.jbp"
-node colored_coordinates extends coordinates {
+object colored_coordinates extends coordinates {
   optional color: color
 }
 
@@ -153,7 +153,7 @@ Outcome: {"success":"YES"}
 
 ## Requirements and Dependencies
 
-jsonbp requires Python 3.7+, that's it.
+jsonbp requires Python 3.11+, that's it.
 Under the hood, jsonbp uses [PLY][ply] for its schema parsing. PLY comes
 included with jsonbp already, there's no need to download it separately.
 

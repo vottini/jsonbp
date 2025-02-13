@@ -10,7 +10,8 @@ _defaults = {
 
 
 def _format(value, specs):
-	return f'"{value}"'
+	escaped = value.replace('"', '\\"')
+	return f'"{escaped}"'
 
 
 def _parse(value, specs):
@@ -35,7 +36,7 @@ def _parse(value, specs):
 
 
 type_specs = {
-	'name': 'string',
+	'name': 'String',
 	'parser': _parse,
 	'formatter': _format,
 	'defaults': _defaults

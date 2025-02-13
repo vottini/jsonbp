@@ -1,13 +1,13 @@
 
-type unsignedByte : integer(min=0, max=255)
+type UnsignedByte : Integer(min=0, max=255)
 
-object color extends undefinedNode {
-	red: unsignedByte,
-	green: unsignedByte,
-	blue: unsignedByte
+object Color extends UndefinedNode {
+	red: UnsignedByte,
+	green: UnsignedByte,
+	blue: UnsignedByte
 }
 
 root {
-	some_color: color,
+	some_color: Color,
 }
 

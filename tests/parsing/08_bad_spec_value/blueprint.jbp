@@ -1,6 +1,6 @@
 
-type positive : integer(min=0.5)
+type Positive : Integer(min=0.5)
 
 root {
-	some_positive: positive
+	some_positive: Positive
 }

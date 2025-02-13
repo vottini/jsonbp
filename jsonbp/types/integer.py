@@ -24,7 +24,7 @@ def _parse(value, specs):
 
 
 type_specs = {
-	'name': 'integer',
+	'name': 'Integer',
 	'parser': _parse,
 	'formatter': _format,
 	'defaults': _defaults

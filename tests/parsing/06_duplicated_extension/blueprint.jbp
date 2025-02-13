@@ -1,17 +1,17 @@
 
-type unsignedByte : integer(min=0, max=255)
+type UnsignedByte : Integer(min=0, max=255)
 
-object color {
-	red: unsignedByte,
-	green: unsignedByte,
-	blue: unsignedByte,
-	alpha: unsignedByte
+object Color {
+	red: UnsignedByte,
+	green: UnsignedByte,
+	blue: UnsignedByte,
+	alpha: UnsignedByte
 }
 
-object translucentColor extends color {
-	alpha: unsignedByte
+object TranslucentColor extends Color {
+	alpha: UnsignedByte
 }
 
 root {
-	some_color: color,
+	some_color: Color,
 }

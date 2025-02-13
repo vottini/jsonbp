@@ -1,4 +1,5 @@
 
-type celsius : float (atLeast=-273.15)
-type farenheit : float (atLeast=-459.67)
-type kelvin : float (atLeast=0.00)
+type Celsius : Float (atLeast=-273.15)
+type Farenheit : Float (atLeast=-459.67)
+type Kelvin : Float (atLeast=0.00)
+

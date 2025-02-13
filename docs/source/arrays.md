@@ -1,21 +1,21 @@
 # Arrays
 
 To make any field an array, just add brackets "[]" at the end of its
-declaration. The field can be either a simple type, an enum or a node.
+declaration. The field can be a simple type, an enum or a object.
 During deserialization, jsonbp will check if the value is, in fact, an **Array**,
-(even a empty one) and will reject the JSON instance otherwise. If it is
+(even a empty one) and will reject the JSON instance otherwise. If the field is
 correctly validated by jsonbp, the result will be a Python **list**.
 For example:
 
 ```
-node point2d {
-  x: float,
-  y: float
+object Point2d {
+  x: Float,
+  y: Float
 }
 
 root {
-  points: point2d[],
-  deltaTs: float (min=0.0) [minLength=2],
+  points: Point2d[],
+  deltaTs: Float (min=0.0) [minLength=2],
   conditions: {
     GOOD,
     REGULAR,
@@ -37,28 +37,28 @@ root {
 
 # or even
 
-root point2d[]
+root Point2d[]
 ```
 
-Inside the brackets, arrays can have three "specificities" defined. As ilustrated by the above
-examples, two of them are **minLength** and **maxLength** that respectively limits the
+Inside the brackets, arrays can have three "specificities" defined. As ilustrated by the
+examples above, two of these are **minLength** and **maxLength** that respectively limit the
 minimum and maximum number of elements the array may contain. **maxLength** must
-be equal or greater than **minLength**, or an exception will be raised during parsing.
+be equal to or greater than **minLength**, or an exception will be raised during parsing.
 
-The third one is **nullableArray** which, as name implies, allows an array field to be
+The third is **nullableArray** which, as name implies, allows an array field to be
 null. This is necessary to differentiate an array with possibly nullable items from
-an array field that it itself can be null. For example, given the following schema:
+an array field that itself can be null. For example, given the following schema:
 
 ```
 root {
-  case_a: double[],
-  case_b: nullable double[],
-  case_c: nullable double[nullableArray=true]
+  case_a: Float[],
+  case_b: nullable Float[],
+  case_c: nullable Float[nullableArray=true]
 }
 ```
 
 The field **case_a** is not allowed to be null and should contain strictly non-null
-values. Similiarly, **case_b** must too be a non-null array, however it might contain
-null values. On the other hand, **case_c** can be potentially null, and if not null, it
-also can bear null values.
+values. Similiarly, **case_b** must also be a non-null array, however it might contain
+null values. On the other hand, **case_c** can be potentially null, and if it's not null, it
+can also contain null values.
 

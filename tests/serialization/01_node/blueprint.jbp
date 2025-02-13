@@ -1,17 +1,17 @@
 
-enum origin {
+enum Origin {
 	ACQUIRED,
 	RECEIVED,
 	GUESSED
 }
 
-object position {
-	latitude: float (atLeast=-90, atMost=+90),
-	longitude: float (atLeast=-180, atMost=+180),
-	origin: origin
+object Position {
+	latitude: Float (atLeast=-90, atMost=+90),
+	longitude: Float (atLeast=-180, atMost=+180),
+	origin: Origin
 }
 
 root {
-	position: position,
-	moment: instant
+	position: Position,
+	moment: Instant
 }

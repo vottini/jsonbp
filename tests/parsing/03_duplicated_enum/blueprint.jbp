@@ -1,13 +1,13 @@
 
-type color : string
+type Color : String
 
-enum color {
+enum Color {
 	BLUE,
 	YELLOW,
 	VIOLET
 }
 
 root {
-	some_color: color,
+	some_color: Color,
 }
 

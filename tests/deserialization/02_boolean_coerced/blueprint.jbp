@@ -1,5 +1,5 @@
 
 root {
-	some_boolean: bool
+	some_boolean: Bool
 }
 

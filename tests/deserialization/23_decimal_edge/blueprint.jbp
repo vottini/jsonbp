@@ -1,2 +1,2 @@
 
-root decimal (precision=30)
+root Decimal (precision=30)

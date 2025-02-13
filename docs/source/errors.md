@@ -28,8 +28,8 @@ import jsonbp
 
 blueprint = '''
 root {
-  a: decimal,
-  b: decimal
+  a: Decimal,
+  b: Decimal
 }
 '''
 
@@ -55,13 +55,13 @@ payloads = [
 for received in payloads:
   print(received, end='')
   success, outcome = blueprint.deserialize(received)
-  
+
   if success:
     data = outcome
     processed = add(data)
     response = {'sum': processed}
     answer(200, response)
-  
+
   else:
     reason = outcome
     response = {'error': str(reason)}
@@ -73,8 +73,8 @@ Here's the output:
 
 ```
 {"a": 42, "b": 1337} => status: 200 | payload: {'sum': '1379.00'}
-{"a": 1.2e3, "b": 1337} => status: 400 | payload: {'error': 'Field "a": Unable to parse "1.2e3" as decimal'}
-{"a": 42, "b": "Hello"} => status: 400 | payload: {'error': 'Field "b": Unable to parse "Hello" as decimal'}
+{"a": 1.2e3, "b": 1337} => status: 400 | payload: {'error': 'Field "a": Unable to parse "1.2e3" as Decimal'}
+{"a": 42, "b": "Hello"} => status: 400 | payload: {'error': 'Field "b": Unable to parse "Hello" as Decimal'}
 {"a": 42, "c": "30"} => status: 400 | payload: {'error': 'At root level: Missing field "b"'}
 {"a": 42 "b": "30"} => status: 400 | payload: {'error': "At root level: Invalid JSON, error at line 1, column 10: Expecting ',' delimiter"}
 ```
@@ -103,8 +103,8 @@ we would have as output:
 
 ```
 {"a": 42, "b": 1337} => status: 200 | payload: {'sum': '1379.00'}
-{"a": 1.2e3, "b": 1337} => status: 400 | payload: {'error': 'Campo "a": Incapaz de interpretar "1.2e3" como um valor decimal'}
-{"a": 42, "b": "Hello"} => status: 400 | payload: {'error': 'Campo "b": Incapaz de interpretar "Hello" como um valor decimal'}
+{"a": 1.2e3, "b": 1337} => status: 400 | payload: {'error': 'Campo "a": Incapaz de interpretar "1.2e3" como um valor Decimal'}
+{"a": 42, "b": "Hello"} => status: 400 | payload: {'error': 'Campo "b": Incapaz de interpretar "Hello" como um valor Decimal'}
 {"a": 42, "c": "30"} => status: 400 | payload: {'error': 'Na raíz: Campo faltando "b"'}
 {"a": 42 "b": "30"} => status: 400 | payload: {'error': "Na raíz: JSON inválido, erro na linha 1, coluna 10: Expecting ',' delimiter"}
 ```
@@ -159,7 +159,7 @@ ROOT=At root level
 
 Serialization errors occur when a Python object doesn't fulfill all the required
 fields of a schema, or some of the values can't be mapped to the expected type during
-a call to the **serialize()** method of Blueprint instances. Generally arising from issues 
+a call to the **serialize()** method of Blueprint instances. Generally arising from issues
 in the developer's code, these type of errors simply raises a **jsonbp.SerializationException**
 exception, which can be catch and, for instance, logged somewhere for posterior analysis,
 returning a 500 status for a client.
@@ -185,7 +185,7 @@ root {
 try:
   jsonbp.load_string(blueprint)
   print("All good")
-	
+
 except jsonbp.SchemaViolation as e:
   print("Something bad occured: " + str(e))
 ```

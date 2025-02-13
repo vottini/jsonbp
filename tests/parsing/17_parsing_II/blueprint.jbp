@@ -1,4 +1,4 @@
 
 root
-	test: integer
+	test: Integer
 }

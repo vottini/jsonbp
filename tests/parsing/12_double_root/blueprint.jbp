@@ -1,6 +1,6 @@
 
 root {
-	age: integer (min=0)
+	age: Integer (min=0)
 }
 
-root float
+root Float

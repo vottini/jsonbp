@@ -1,4 +1,4 @@
 
 root {
-	some_float: float (atLeast=-1e3, atMost=1000.0)
+	some_float: Float (atLeast=-1e3, atMost=1000.0)
 }

@@ -1,9 +1,9 @@
 
-type positive : integer (min=0)
-type positive : float (min=0.0)
+type Positive : Integer (min=0)
+type Positive : Float (min=0.0)
 
 root {
-	some_integer_positive: positive,
-	some_float_positive: positive
+	some_integer_positive: Positive,
+	some_float_positive: Positive
 }
 

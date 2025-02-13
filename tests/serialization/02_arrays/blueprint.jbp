@@ -1,6 +1,6 @@
 
 root nullable {
-	latitude: float (atLeast=-90, atMost=+90),
-	longitude: float (atLeast=-180, atMost=+180)
+	latitude: Float (atLeast=-90, atMost=+90),
+	longitude: Float (atLeast=-180, atMost=+180)
 } []
 

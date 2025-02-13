@@ -1,8 +1,8 @@
 
-type indianCurrency: decimal (min=0.01, separator=",", indianFormat=true, prefix="₹ ")
+type IndianCurrency: Decimal (min=0.01, separator=",", indianFormat=true, prefix="₹ ")
 
 root {
-	income: indianCurrency,
-	expenses: indianCurrency
+	income: IndianCurrency,
+	expenses: IndianCurrency
 }
 

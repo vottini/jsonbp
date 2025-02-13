@@ -1,19 +1,19 @@
 
-enum color {
+enum Color {
 	BLUE,
 	YELLOW,
 	VIOLET
 }
 
-type unsignedByte : integer(min=0, max=255)
+type UnsignedByte : Integer(min=0, max=255)
 
-object color {
-	red: unsignedByte,
-	green: unsignedByte,
-	blue: unsignedByte
+object Color {
+	red: UnsignedByte,
+	green: UnsignedByte,
+	blue: UnsignedByte
 }
 
 root {
-	some_color: color,
+	some_color: Color,
 }
 

@@ -19,20 +19,20 @@ _defaults = {
 }
 
 
-roundingContext = decimal.Context(rounding=decimal.ROUND_DOWN)
-specialChars = r'.^$*+?|'
+rounding_context = decimal.Context(rounding=decimal.ROUND_DOWN)
+special_chars = r'.^$*+?|'
 
 def _format(value, specs):
 	radix = specs['radix']
 	separator = specs['separator']
 
-	rawString = str(value)
-	parts = rawString.split('.')
-	integerPart = parts[0]
+	raw_string = str(value)
+	parts = raw_string.split('.')
+	integer_part = parts[0]
 
-	if '' != separator and len(integerPart) > 3:
-		hundredths = integerPart[-3:]
-		thousandths = integerPart[:-3]
+	if '' != separator and len(integer_part) > 3:
+		hundredths = integer_part[-3:]
+		thousandths = integer_part[:-3]
 
 		groupSize = 3 if not specs['indianFormat'] else 2
 		leadingSize = len(thousandths) % groupSize
@@ -41,12 +41,12 @@ def _format(value, specs):
 		remaining = thousandths[leadingSize:]
 		separated = re.findall(".{" + str(groupSize) + "}", remaining)
 		thousandths = (leading, *separated) if leadingSize > 0 else separated
-		integerPart = separator.join((*thousandths, hundredths))
+		integer_part = separator.join((*thousandths, hundredths))
 
 	decimalPart = parts[1]
-	content = (radix.join([integerPart, decimalPart])
+	content = (radix.join([integer_part, decimalPart])
 		if len(parts) > 1
-		else integerPart)
+		else integer_part)
 
 	parts = ([ part
 		for part in [ specs['prefix'], content, specs['suffix'] ]
@@ -70,11 +70,11 @@ def _parse(value, specs):
 	)
 
 	radix = specs['radix']
-	if radix in specialChars:
+	if radix in special_chars:
 		radix = f'\\{radix}'
 
 	separator = specs['separator']
-	if separator in specialChars:
+	if separator in special_chars:
 		separator = f'\\{separator}'
 
 	decimalPattern = f'^[+-]?\\d+({separator}\\d+)*({radix}\\d+)?$'
@@ -91,7 +91,7 @@ def _parse(value, specs):
 
 	precision = f"1e-{specs['precision']}"
 	rawValue = Decimal(sanedStrValue).quantize(Decimal(precision),
-		context=roundingContext)
+		context=rounding_context)
 
 	if specs['min'] > rawValue or rawValue > specs['max']:
 		return False, {
@@ -103,7 +103,7 @@ def _parse(value, specs):
 
 
 type_specs = {
-	'name': 'decimal',
+	'name': 'Decimal',
 	'parser': _parse,
 	'formatter': _format,
 	'defaults': _defaults

@@ -42,41 +42,41 @@ Field types can be simple types (primitive or derived types), enums, objects
 or even arrays of those. For example:
 
 ```
-object car {
-  model: string,
-  brand: string,
-  year: integer
+object Car {
+  model: String,
+  brand: String,
+  year: Integer
 }
 ```
 
-Objects can be nested. The "car" object above could be used in a
-"car_sale" object declaration, like this:
+Objects can be nested. The "Car" object above could be used in a
+"CarSale" object declaration, like this:
 
 ```
-object car_sale {
-  description: car,
-  price: decimal,
-  discount: decimal,
-  installments: integer
+object CarSale {
+  description: Car,
+  price: Decimal,
+  discount: Decimal,
+  installments: Integer
 }
 ```
 
 Nesting can also appear as an inline definition. That is, it's not strictly
 necessary to register an object beforehand in order to use it in the middle of
 another object's definition (if that is the only place that it occurs, for example).
-The "car" example above could very well be defined like the following:
+The "Car" example above could very well be defined like the following:
 
 ```
-object car_sale {
+object CarSale {
   description: {
-    model: string,
-    brand: string,
-    year: integer
+    model: String,
+    brand: String,
+    year: Integer
   },
-  
-  price: decimal,
-  discount: decimal,
-  installments: integer
+
+  price: Decimal,
+  discount: Decimal,
+  installments: Integer
 }
 ```
 
@@ -86,11 +86,11 @@ serialized, an error will be flagged. If a field is to be optional, just prefix
 the field definition with the **"optional"** directive, like this:
 
 ```
-object address {
-  street: string,
-  number: integer,
-  zipCode: string,
-  optional complement: string
+object Address {
+  street: String,
+  number: Integer,
+  zipCode: String,
+  optional complement: String
 }
 ```
 
@@ -100,9 +100,9 @@ null values, prefix it's type as **nullable**, like this:
 
 ```
 object order {
-  itemId: integer,
-  value: decimal,
-  shipping: nullable address
+  itemId: Integer,
+  value: Decimal,
+  shipping: nullable Address
 }
 
 ```
@@ -128,13 +128,13 @@ object <child object name> extends <parent object name> {
 For example:
 
 ```
-object point2d {
-  x: float,
-  y: float
+object Point2d {
+  x: Float,
+  y: Float
 }
 
-object point3d extends point2d {
-  z: float
+object Point3d extends Point2d {
+  z: Float
 }
 ```
 
@@ -153,13 +153,13 @@ Once defined, a derived type can be used do specify a field content just like
 a primitive type. For example:
 
 ```
-type percent : decimal (min=0.00, max=100.00)
-type unitRange : double (min=-1, max=+1)
-type normalized : unitRange (min=0)
+type Percent : Decimal (min=0.00, max=100.00)
+type UnitRange : Float (min=-1, max=+1)
+type Normalized : UnitRange (min=0)
 
 object values {
-  increase: percent,
-  cosine: normalized
+  increase: Percent,
+  cosine: Normalized
 }
 ```
 
@@ -169,11 +169,11 @@ be it during the declaration of a new type as well directly in the field declara
 like in the following scenario:
 
 ```
-type broadScale : float (min=0, max=999)
-type narrowScale : broadScale (max=99)
+type BroadScale : Float (min=0, max=999)
+type NarrowScale : BroadScale (max=99)
 
 object scaled {
-  restrictedScale : narrowScale (max=9)
+  restrictedScale : NarrowScale (max=9)
 }
 ```
 
@@ -207,8 +207,8 @@ enum months {
 And just like objects, their definition can be inlined:
 
 ```
-object sale {
-  amount: decimal (min=0.00),
+object Sale {
+  amount: Decimal (min=0.00),
   status: {
     AWAITING,
     PAID,
@@ -227,12 +227,12 @@ an enum or an object, either through a named type or an inline definition:
 
 Example 1
 ```
-root integer
+root Integer
 ```
 
 Example 2
 ```
-root string (maxLength=128)
+root String (maxLength=128)
 ```
 
 Example 3
@@ -243,19 +243,19 @@ root { IDLE, BUSY }
 Example 4
 ```
 root {
-  username: string(minLength=3),
-  password: string(minLength=8)
+  username: String(minLength=3),
+  password: String(minLength=8)
 }
 ```
 
 Example 5
 ```
-object credentials {
-  username: string(minLength=3),
-  password: string(minLength=8)
+object Credentials {
+  username: String(minLength=3),
+  password: String(minLength=8)
 }
 
-root credentials
+root Credentials
 ```
 
 Only one root can be declared by schema file. Declaring two or more roots
@@ -271,7 +271,7 @@ definions present in them. The syntax is:
 include <path to schema file inside quotes including extension>
 ```
 
-The search path is relative to the schema file that has the "import" directive.  
+The search path is relative to the schema file that has the "import" directive.
 So, for example, if we have this file structure:
 
 ```

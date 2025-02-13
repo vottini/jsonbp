@@ -32,7 +32,7 @@ def _parse(value, specs):
 
 
 type_specs = {
-	'name': 'instant',
+	'name': 'Instant',
 	'parser': _parse,
 	'formatter': _format,
 	'defaults': _defaults

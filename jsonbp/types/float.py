@@ -67,7 +67,7 @@ def _parse(value, specs):
 
 
 type_specs = {
-	'name': 'float',
+	'name': 'Float',
 	'parser': _parse,
 	'formatter': _format,
 	'defaults': _defaults
