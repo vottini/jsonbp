@@ -376,12 +376,10 @@ class JsonBlueprint:
 
     """Selects or changes the root element of a blueprint.
 
-      This function allows you to select or overwrite the root
-      type of a blueprint file when no root is defined, or when you want
-      to use a different root for serializing/deserializing data with a
-      JsonBlueprint instance. The original JsonBlueprint instance remains
-      unchanged; instead, a new instance is created with the same context,
-      but with the modified root type.
+      This function allows you to create a derivative JsonBlueprint
+      instance, overwriting the root type (or selecting one, if none
+      is defined). The original source JsonBlueprint instance remains
+      unchanged.
 
       Args:
         root_type (str): name of the type to be used as root.
