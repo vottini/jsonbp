@@ -3,6 +3,9 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["jsonbp"]
+
 [project]
 name = "jsonbp"
 version = "1.2.0"
@@ -13,11 +16,10 @@ authors = [
 requires-python = ">=3.11"
 readme = { file = "README.md", content-type = "text/markdown" }
 keywords = ["JSON", "serialization", "deserialization"]
-license = {text = "MIT"}
+license = "BSD-3-Clause"
 classifiers = [
 	"Development Status :: 5 - Production/Stable",
 	"Intended Audience :: Developers",
-	"License :: OSI Approved :: MIT License",
 	"Operating System :: OS Independent",
 	"Programming Language :: Python :: 3 :: Only",
 ]

@@ -3,7 +3,7 @@
 ## Built-in primitive types
 
 These are the built-in primitive types accepted by jsonbp and the corresponding Python
-types that they map to:
+types that they map to/from:
 
 | jsonbp   | Python |
 | ------   | ------ |
@@ -21,7 +21,7 @@ specificities.
 
 For example:
 ```
-object weekInstant {
+object WeekInstant {
   hours: Integer (min=0, max=12),
   minutes : Integer (min=0, max=59),
   seconds : Integer (min=0, max=59),
@@ -43,12 +43,12 @@ The following is a list of all possible specificities by primitive type:
 
 Some of the specificities may warrant an explanation:
 
-**Float**
+**Float**  
 *atLeast* and *atMost*: Defines closed intervals  
 *greaterThan* and *lessThan*: Defines open intervals  
 *format*: Format for serializing floats in a desired way. [More Info](https://docs.python.org/3/library/string.html#format-specification-mini-language)
 
-**Decimal**
+**Decimal**  
 *precision*: Number of digits after the radix  
 *radix*: Character that represents the radix  
 *separator*: Character used to organize and simplify reading large numbers  
@@ -56,18 +56,18 @@ Some of the specificities may warrant an explanation:
 *prefix*: Leading text to strip during deserialization or add during serialization  
 *suffix*: Trailing text to strip during deserialization or add during serialization
 
-**Bool**
+**Bool**  
 *coerce*: If set to false, only **true** and **false** are acceptable boolean values.
 Otherwise (if "coerce" is true) during deserialization, truthy values will
 be accepted as **true** and falsy values will be accepted as **false**.
 
-**Instant**
+**Instant**  
 *iso*: Whether to use ISO 8601 format or not  
 *isoResolution*: When *iso* is true, defines which resolution to use. Possible values can be found [here](https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat)  
 *format*: Defines which format to use when *iso* is false. The format will be directy passed to
 [strftime() and strptime()](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
 
-**String**
+**String**  
 *format*: Regular expression defining the pattern a string must conform to in order to be accepted as valid input.
 
 ## Custom primitive types

@@ -25,7 +25,7 @@ def _parse(value, specs):
 			"context": { "length": strLength }
 		}
 
-	fullFormat = fr"^{specs['format']}$"
+	fullFormat = f"^{specs['format']}$"
 	if re.search(fullFormat, value) is None:
 		return False, {
 			"error": jsonbp.ErrorType.INVALID_FORMAT,

@@ -55,8 +55,8 @@ def testChooseRoot():
 	success, _ = derived.deserialize(json_txt)
 	assert success
 
-	arrayDerived = blueprint.choose_root("Payload", asArray=True,
-		minArrayLength=2, maxArrayLength=3)
+	arrayDerived = blueprint.choose_root("Payload", as_array=True,
+		min_array_length=2, max_array_length=3)
 
 	outcome1, _ = arrayDerived.deserialize(f"[{json_txt}, {json_txt}]")
 	outcome2, _ = arrayDerived.deserialize(f"[{json_txt}, {json_txt}, {json_txt}, {json_txt}]")
