@@ -4,11 +4,11 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["jsonbp"]
+packages = ["jsonbp", "jsonbp.ply", "jsonbp.types", "jsonbp.localization"]
 
 [project]
 name = "jsonbp"
-version = "1.2.1"
+version = "1.2.2"
 description = "Schema based JSON Parser/Serializer"
 authors = [
 	{ name = "Gustavo Venturini", email = "gustavo.c.venturini@gmail.com" }
