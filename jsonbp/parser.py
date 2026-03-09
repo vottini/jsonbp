@@ -536,7 +536,7 @@ def _load(contents, contentPath, contentName, typeDirs):
 	parser = plyYacc.yacc()
 
 	ownPath = os.path.dirname(os.path.realpath(__file__))
-	primitivesPath = os.path.join(ownPath, "types")
+	primitivesPath = os.path.join(ownPath, "basetypes")
 	loaded, notLoaded = load_types(primitivesPath)
 
 	primitive_types = dict()
