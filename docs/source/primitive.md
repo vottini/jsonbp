@@ -64,7 +64,7 @@ be accepted as **true** and falsy values will be accepted as **false**.
 **Instant**  
 *iso*: Whether to use ISO 8601 format or not  
 *isoResolution*: When *iso* is true, defines which resolution to use. Possible values can be found [here](https://docs.python.org/3/library/datetime.html#datetime.datetime.isoformat)  
-*format*: Defines which format to use when *iso* is false. The format will be directy passed to
+*format*: Defines which format to use when *iso* is false. The format will be directly passed to
 [strftime() and strptime()](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
 
 **String**  
@@ -72,8 +72,8 @@ be accepted as **true** and falsy values will be accepted as **false**.
 
 ## Custom primitive types
 
-It's possible to load and use custom primitive types or even overwrite the builtin ones offered by jsonbp.
-This can be achieved writing a Python script with a dictionary named **type_specs** in which the following
+It's possible to load and use custom primitive types or even override the built-in ones offered by jsonbp.
+This can be achieved by writing a Python script with a dictionary named **type_specs** in which the following
 fields need to be defined:
 
 **name**: name of the primitive type
@@ -84,11 +84,11 @@ and returns a string
 **defaults**: dictionary with the specificities allowed for the type and its default values
 
 *parser* and *formatter* functions should return a tuple in the form *(success, outcome)* where **success**
-indicates whether the operation succeed. If **success** is true, outcome needs to be the resulting
+indicates whether the operation succeeded. If **success** is true, outcome needs to be the resulting
 value. If **success** is false, outcome should be a dictionary with the following contents:
 
 **error**: type of error that was caught
-**context**: dicionary holding the context with the values which led to the error
+**context**: dictionary holding the context with the values which led to the error
 
 The possible errors types are exported in **jsonbp.ErrorType**.
 They are listed below:

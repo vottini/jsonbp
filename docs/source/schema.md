@@ -8,7 +8,7 @@ A jsonbp schema can be composed of the following directives:
 - [root](#root)
 - [import](#import)
 
-Comments are done using the sharp (#) character
+Comments are written using the hash (#) character
 
 ```
 # This is a comment
@@ -31,7 +31,7 @@ object <object name> {
 ```
 
 where field declarations are separated by a comma.
-Field declaration themselves are composed of a field name followed by its type
+Field declarations themselves are composed of a field name followed by its type
 separated by a colon:
 
 ```
@@ -96,7 +96,7 @@ object Address {
 
 Optional fields, when present, must obey the type and specialization defined for them.
 Also, by default, no fields can be assigned null values. To allow specific fields to be allowed
-null values, prefix it's type as **nullable**, like this:
+null values, prefix its type as **nullable**, like this:
 
 ```
 object order {
@@ -114,8 +114,8 @@ or in the Python object (serialization), and if present, it can also be null.
 Objects can be extended, which means you can define a new object type based on an
 existing one. It'll inherit all the fields defined in its parent or that the parent itself
 inherited. It's not possible, however, to redefine fields using the same field name in
-child objects that are already present in any of its ancestors, an error will happen during
-schema parsing if you inadvertently do that. The syntax is as follows:
+child objects that are already present in any of its ancestors, an error will be raised during
+schema parsing if you inadvertently do so. The syntax is as follows:
 
 ```
 object <child object name> extends <parent object name> {
@@ -149,7 +149,7 @@ type <derived type> : <parent type> (<specificity>, <specificity>, ...)
 ```
 
 Derived types can be a further specialization of an already derived type.
-Once defined, a derived type can be used do specify a field content just like
+Once defined, a derived type can be used to specify a field's content just like
 a primitive type. For example:
 
 ```
@@ -182,8 +182,8 @@ object scaled {
 
 Enums can be employed to define types whose values are part of a limited set. They
 need to be JavaScript **string** and will be deserialized into Python's **str** and vice
-versa. As one might expect, if some enum field during serialization/deserialization holds a value
-that is not present in the set of values allowed of an enum, an error will be flagged.
+versa. As one might expect, if an enum field holds a value that is not in the allowed set during
+serialization/deserialization, an error will be flagged.
 Note that values in enums are **case sensitive**. Enums can be registered through the
 **"enum"** directive:
 
@@ -220,7 +220,7 @@ object Sale {
 
 ## Root
 
-**root** defines the contents that need to be present in an JSON string for it to be
+**root** defines the contents that need to be present in a JSON string for it to be
 validated and further deserialized, and conversely, the contents that need to be present
 in a Python object for it to be serialized. The **root** directive can receive a simple type,
 an enum or an object, either through a named type or an inline definition:
@@ -265,7 +265,7 @@ schema parsing.
 ## Import
 
 Schema files can be imported by other schema files in order to reuse the
-definions present in them. The syntax is:
+definitions present in them. The syntax is:
 
 ```
 include <path to schema file inside quotes including extension>

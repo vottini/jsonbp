@@ -16,8 +16,8 @@ whether the operation was successful or not. If the operation failed,
 the second value holds an object that can be used to generate a message explaining
 why the given input was not accepted.
 
-Here's a full example ilustrating error reporting: we define a blueprint to accept
-fields **'a'** and **'b'**, both of which must be stricly decimal. We then do some processing
+Here's a full example illustrating error reporting: we define a blueprint to accept
+fields **'a'** and **'b'**, both of which must be strictly decimal. We then do some processing
 on them and return the result with status 200 (success). If, however, the JSON input
 is invalid, we return status 400 (bad request) along with the reason for the failure:
 
@@ -112,8 +112,8 @@ we would have as output:
 By default, if none of the languages queried in **localize()** are
 available, the fallback localization is American English ('en_US'). To use a different
 language as fallback, invoke the function **jsonbp.use_default_language** somewhere
-in your initialization code with the desired language. For example, the snipped
-bellow sets Brazilian Portuguese as the fallback localization:
+in your initialization code with the desired language. For example, the snippet
+below sets Brazilian Portuguese as the fallback localization:
 
 ```py
 import jsonbp
@@ -160,13 +160,13 @@ ROOT=At root level
 Serialization errors occur when a Python object doesn't fulfill all the required
 fields of a schema, or some of the values can't be mapped to the expected type during
 a call to the **serialize()** method of Blueprint instances. Generally arising from issues
-in the developer's code, these type of errors simply raises a **jsonbp.SerializationException**
-exception, which can be catch and, for instance, logged somewhere for posterior analysis,
+in the developer's code, these types of errors simply raise a **jsonbp.SerializationException**
+exception, which can be caught and, for instance, logged somewhere for later analysis,
 returning a 500 status for a client.
 
 ## Schema Parsing
 
-These kind of errors are related to issues with the schema itself. They can happen when
+These kinds of errors are related to issues with the schema itself. They can happen when
 calling the **jsonbp.load_file()** or **jsonbp.load_string()** functions. These functions
 will throw a **jsonbp.SchemaViolation** exception when the internal parser finds something
 that doesn't seem right. Since these errors are intended to the developers themselves
@@ -196,7 +196,7 @@ Something bad occured: Error parsing line 3: token 'dda' misplaced
 
 **Note**: This specific exception is **not really meant to be caught**, that is,
 it's not advisable to wrap **load_file()** or **load_string()** calls in a try block
-to catch **json.SchemaViolation**. In fact, it is just a means to end execution
+to catch **jsonbp.SchemaViolation**. In fact, it is just a means to end execution
 immediately and provide feedback why the schema failed to be parsed, but this
 should be done during development stage.
 
