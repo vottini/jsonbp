@@ -589,9 +589,9 @@ def load_file(filepath, **kwargs):
 
 	'''Loads a :class:`JsonBlueprint` from a file.
 
-	On success, the  returned instance is associated with the
-	absolute path of the argument file, and subsequent calls of this
-	function to the same file will be presented with the same instance,
+	On success, the returned instance is associated with the
+	absolute path of the argument file, and subsequent calls to this
+	function with the same file path will return the same cached instance,
 	unless :func:`invalidate_cache` is invoked.
 
 	Args:
@@ -651,7 +651,7 @@ def invalidate_cache():
 	'''Clears associations between files and existing JsonBlueprint instances.
 
 	This forces new :func:`load_file` invocations to effectively parse the files instead
-	of returning a cached result (Useful when your schema file changed and needs
+	of returning a cached result (useful when the schema file has changed and needs
 	to be refreshed).
 
 	'''

@@ -30,8 +30,8 @@ def use_default_language(language):
 
 		This language will be applied when no languages are
 		specified in the :func:`DeserializationError.localize` method. When
-		jsonbp starts, this language is set to American English (en-US). If 
-		he language code passed is not available, it'll also fallback to
+		jsonbp starts, this language is set to American English (en-US). If
+		the language code passed is not available, it will also fall back to
 		American English.
 
 		Args:
@@ -57,7 +57,7 @@ def load_translation(filename, language):
 
 		Args:
 			filename (str): path to the ini file.
-			language (str): language code that that file corresponds to.
+			language (str): language code that the file corresponds to.
 
 		Raises:
 			IOError: When `filename` cannot be opened for reading.
@@ -139,7 +139,7 @@ class DeserializationError:
 					:func:`use_default_language`.
 
 			Returns:
-				the localized issue with the JSON string.
+				the localized error message describing the issue.
 				
 		"""
 

@@ -28,7 +28,7 @@ unquote = lambda x : unquoted_str(x)
 
 class JsonBlueprint:
   """
-    Class to serialize Python objects to JSON strings and vice-versa.
+    Class to serialize Python objects to JSON strings and vice versa.
   """
 
   def __init__(self, primitive_types):
@@ -269,7 +269,7 @@ class JsonBlueprint:
     """Attempts to deserialize a JSON string into a Python object.
 
     The returned tuple's first element indicates whether the deserialization
-    was successful. When deserialization succeeds the respective Python data
+    was successful. When deserialization succeeds the resulting Python data
     will be the second element. Conversely, when a problem is found the first
     element will be False and the second element will be an instance of
     :class:`DeserializationError`.
@@ -377,15 +377,15 @@ class JsonBlueprint:
     """Selects or changes the root element of a blueprint.
 
       This function allows you to create a derivative JsonBlueprint
-      instance, overwriting the root type (or selecting one, if none
+      instance, overriding the root type (or selecting one, if none
       is defined). The original source JsonBlueprint instance remains
       unchanged.
 
       Args:
         root_type (str): name of the type to be used as root.
-		    as_array (bool): whether the chosen root is an array or not of the selected type.
-        min_array_length (int): if set as array, minimum size that the root must be.
-        max_array_length (int): if set as array, maximum size that the root can be.
+		    as_array (bool): whether the root should be an array of the selected type.
+        min_array_length (int): if `as_array` is True, the minimum number of elements the root array must contain.
+        max_array_length (int): if `as_array` is True, the maximum number of elements the root array can contain.
 
       Returns:
         A new blueprint, with the root selected or replaced.
