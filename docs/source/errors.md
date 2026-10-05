@@ -131,7 +131,7 @@ The error messages are rather few and can be easily translated should you want t
 version. They are composed of a prefix (indicating which level the error happened) followed
 by an explanation of what caused it. The messages are specified in a simple properties (ini) file.
 
-For example, here's the full english translation that comes with jsonbp:
+For example, here's the full English translation that comes with jsonbp:
 
 ```ini
 [Messages]
@@ -187,11 +187,11 @@ try:
   print("All good")
 
 except jsonbp.SchemaViolation as e:
-  print("Something bad occured: " + str(e))
+  print("Something bad occurred: " + str(e))
 ```
 would output:
 ```
-Something bad occured: Error parsing line 3: token 'dda' misplaced
+Something bad occurred: Error parsing line 3: token 'dda' misplaced
 ```
 
 **Note**: This specific exception is **not really meant to be caught**, that is,

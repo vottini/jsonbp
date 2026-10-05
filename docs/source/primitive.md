@@ -11,7 +11,7 @@ types that they map to/from:
 | Float    | float |
 | Decimal  | decimal.Decimal |
 | Bool     | bool |
-| instant | datetime.datetime |
+| Instant | datetime.datetime |
 | String   |  str |
 
 When used in declarations, primitive types can be customized through

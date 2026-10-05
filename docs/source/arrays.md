@@ -3,7 +3,7 @@
 To make any field an array, just add brackets "[]" at the end of its
 declaration. The field can be a simple type, an enum or an object.
 During deserialization, jsonbp will check if the value is, in fact, an **Array**,
-(even a empty one) and will reject the JSON instance otherwise. If the field is
+(even an empty one) and will reject the JSON instance otherwise. If the field is
 correctly validated by jsonbp, the result will be a Python **list**.
 For example:
 

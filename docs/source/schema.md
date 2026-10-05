@@ -95,7 +95,7 @@ object Address {
 ```
 
 Optional fields, when present, must obey the type and specialization defined for them.
-Also, by default, no fields can be assigned null values. To allow specific fields to be allowed
+Also, by default, no fields can be assigned null values. To allow specific fields to accept
 null values, prefix its type as **nullable**, like this:
 
 ```
@@ -181,7 +181,7 @@ object scaled {
 ## Enums
 
 Enums can be employed to define types whose values are part of a limited set. They
-need to be JavaScript **string** and will be deserialized into Python's **str** and vice
+need to be JavaScript **strings** and will be deserialized into Python's **str** and vice
 versa. As one might expect, if an enum field holds a value that is not in the allowed set during
 serialization/deserialization, an error will be flagged.
 Note that values in enums are **case sensitive**. Enums can be registered through the
@@ -271,7 +271,7 @@ definitions present in them. The syntax is:
 include <path to schema file inside quotes including extension>
 ```
 
-The search path is relative to the schema file that has the "import" directive.
+The search path is relative to the schema file that has the "include" directive.
 So, for example, if we have this file structure:
 
 ```
@@ -290,7 +290,7 @@ So, for example, if we have this file structure:
 
 The following imports are all valid:
 
-- Inside **schema00.jpb**
+- Inside **schema00.jbp**
 ```
 import "schema01.jbp"
 import "dir1/schema10.jbp"

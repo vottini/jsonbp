@@ -9,7 +9,7 @@ to and from Python based on schemas. While [json-schema][json_schema] and its
 implementations offer a more mature and widely used technique, a different
 approach was desired, which led to the development of this library.
 
-jsonbp's design main goals were:
+jsonbp's main design goals were:
 - schema reuse through import / type system
 - custom user definable primitive types
 - built in numeric fixed precision type which deserializes into Python's Decimal
