@@ -1,0 +1,2 @@
+Template with object, enum and simple type args | ok.js | OK | ok.py
+Catch invalid value type inside template array | bad_array.js | KO | VALUE_PARSING

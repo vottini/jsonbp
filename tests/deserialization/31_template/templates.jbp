@@ -1,0 +1,10 @@
+
+object Pageable wraps T {
+	contents: T[],
+	hasNext: Bool,
+	total: Integer
+}
+
+object Box wraps T {
+	item: T
+}

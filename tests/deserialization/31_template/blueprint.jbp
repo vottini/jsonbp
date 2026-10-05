@@ -1,0 +1,16 @@
+
+include "templates.jbp"
+
+object User {
+	id: Integer,
+	name: String
+}
+
+enum Status { ACTIVE, INACTIVE }
+
+root {
+	userPage: Pageable<User>,
+	userPage2: Pageable<User>,
+	statusBox: Box<Status>,
+	intBox: Box<Integer>
+}

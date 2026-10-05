@@ -1,0 +1,1 @@
+Trailing comma in object and enum definitions | ok.js | OK | ok.py

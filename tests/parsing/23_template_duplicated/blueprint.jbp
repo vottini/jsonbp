@@ -1,0 +1,12 @@
+
+object Pageable wraps T {
+	contents: T[],
+	total: Integer
+}
+
+object Pageable wraps U {
+	items: U[],
+	count: Integer
+}
+
+root { id: Integer }

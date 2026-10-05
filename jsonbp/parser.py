@@ -9,8 +9,8 @@ from .error import print_warning, print_error
 from .loader import load_types
 from .blueprint import JsonBlueprint
 from .declaration import create_declaration
-from .field import create_field
-from .array import make_array
+from .field import create_field, JsonField
+from .array import make_array, is_array
 
 reserved = (
 	'root',
@@ -20,7 +20,8 @@ reserved = (
 	'optional',
 	'nullable',
 	'extends',
-	'include'
+	'include',
+	'wraps'
 )
 
 literals = (
@@ -32,7 +33,9 @@ literals = (
 	']',
 	',',
 	'=',
-	':'
+	':',
+	'<',
+	'>'
 )
 
 # List of tokens
@@ -134,6 +137,8 @@ def getNextAdhoc():
 	adhoc_counter += 1
 	return adhoc_counter
 
+currentTypeParam = None
+
 #---------------- general structure -----------------------------
 
 def p_schema(p):
@@ -191,11 +196,38 @@ def p_root(p):
 	currentBlueprint.root = p[2]
 
 
+def p_generic_header(p):
+	'''
+	  generic_header : OBJECT IDENTIFIER WRAPS IDENTIFIER
+	'''
+
+	global currentTypeParam
+	currentTypeParam = p[4]
+	p[0] = p[2]
+
+
 def p_object(p):
 	'''
-	  object : OBJECT IDENTIFIER EXTENDS IDENTIFIER object_declaration
+	  object : generic_header object_declaration
+	         | OBJECT IDENTIFIER EXTENDS IDENTIFIER object_declaration
 	         | OBJECT IDENTIFIER object_declaration
 	'''
+
+	global currentTypeParam
+
+	if len(p) == 3:
+	  templateName = p[1]
+	  paramName = currentTypeParam
+	  currentTypeParam = None
+
+	  if typeExists(templateName) or currentBlueprint._find_template_decl(templateName) is not None:
+	    raise SchemaViolation(f"Duplicated type '{templateName}'")
+
+	  currentBlueprint.templates[templateName] = {
+	    'param': paramName,
+	    'fields': p[2]
+	  }
+	  return
 
 	objectName = p[2]
 	if typeExists(objectName):
@@ -296,10 +328,12 @@ def p_type(p):
 def p_attributes(p):
 	'''
 	  attributes : attributes ',' attribute
+	             | attributes ','
 	             | attribute
 	'''
 
 	if len(p) == 4: p[1].append(p[3])
+	if len(p) == 3: p[0] = p[1]; return
 	if len(p) == 2: p[1] = [p[1]]
 	p[0] = p[1]
 
@@ -358,11 +392,66 @@ def p_single_declaration(p):
 	p[0] = p[1]
 
 
+def instantiateTemplate(templateName, argType):
+	template = currentBlueprint._find_template_decl(templateName)
+	if template is None:
+	  raise SchemaViolation(f"Template '{templateName}' is not defined")
+
+	if not typeExists(argType):
+	  raise SchemaViolation(f"Type not declared: '{argType}'")
+
+	concreteName = f'{templateName}__{argType}'
+	if currentBlueprint._find_object_decl(concreteName) is not None:
+	  return concreteName
+
+	if currentBlueprint._find_object_decl(argType) is not None:
+	  argKind = FieldType.OBJECT
+	elif currentBlueprint._find_enum_decl(argType) is not None:
+	  argKind = FieldType.ENUM
+	else:
+	  argKind = FieldType.SIMPLE
+
+	paramName = template['param']
+	concreteFields = dict()
+
+	for fieldName, field in template['fields'].items():
+	  if field.fieldType != paramName:
+	    concreteFields[fieldName] = field
+	    continue
+
+	  if is_array(field):
+	    newBase = create_field(argKind, argType)
+	    newBase.nullable = field.nullable
+	    newField = make_array(newBase)
+	    newField.minLength = field.minLength
+	    newField.maxLength = field.maxLength
+	    newField.nullableArray = field.nullableArray
+	  else:
+	    newField = create_field(argKind, argType)
+	    newField.nullable = field.nullable
+	    newField.optional = field.optional
+
+	  concreteFields[fieldName] = newField
+
+	currentBlueprint.objects[concreteName] = concreteFields
+	return concreteName
+
+
+def p_template_declaration(p):
+	'''
+	  template_declaration : IDENTIFIER '<' IDENTIFIER '>'
+	'''
+
+	concreteName = instantiateTemplate(p[1], p[3])
+	p[0] = create_field(FieldType.OBJECT, concreteName)
+
+
 def p_atomic_declaration(p):
 	'''
 	  atomic_declaration : object_declaration
 	                     | enum_declaration
 	                     | element_declaration
+	                     | template_declaration
 	'''
 
 	declaration = p[1]
@@ -377,6 +466,10 @@ def p_atomic_declaration(p):
 	  currentBlueprint.enums[adhoc_enum] = declaration
 	  kind = FieldType.ENUM
 	  fieldId = adhoc_enum
+
+	elif isinstance(declaration, JsonField):
+	  p[0] = declaration
+	  return
 
 	else:
 	  declType = declaration.typeName
@@ -427,7 +520,7 @@ def p_element_declaration(p):
 	  specs = p[3]
 
 	else:
-	  if not typeExists(typeName):
+	  if typeName != currentTypeParam and not typeExists(typeName):
 	    msg = f"Type not declared: '{typeName}'"
 	    raise SchemaViolation(msg)
 
@@ -492,11 +585,15 @@ def p_enum_declaration(p):
 def p_constants(p):
 	'''
 	    constants : constants ',' IDENTIFIER
+	              | constants ','
 	              | IDENTIFIER
 	'''
 
 	if len(p) == 4:
 	  p[1].append(p[3])
+	  p[0] = p[1]
+
+	elif len(p) == 3:
 	  p[0] = p[1]
 
 	else:

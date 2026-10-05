@@ -7,6 +7,7 @@ A jsonbp schema can be composed of the following directives:
 - [enum](#enums)
 - [root](#root)
 - [import](#import)
+- [wraps](#object-templates)
 
 Comments are written using the hash (#) character
 
@@ -312,4 +313,81 @@ type, an enum or an object), jsonbp will complain and throw an error during
 schema parsing. However, a single schema can be imported from multiple schemas
 with no problem (internally jsonbp stores the full paths that have been
 imported, and won't even load the same file twice)
+
+## Object Templates
+
+Object templates allow you to define a reusable object structure with a single
+type parameter. The **wraps** directive declares the parameter name, which can
+then be used as a field type anywhere inside the object body:
+
+```
+object <template name> wraps <parameter> {
+  <field declaration>,
+  ...
+}
+```
+
+For example, a generic pageable wrapper can be defined once and reused with any
+content type:
+
+```
+object Pageable wraps T {
+  contents: T[],
+  hasNext: Bool,
+  page: Integer,
+  total: Integer
+}
+```
+
+To use a template, provide a concrete type in angle brackets at the use site:
+
+```
+object User {
+  id: Integer,
+  name: String
+}
+
+root Pageable<User>
+```
+
+This creates a concrete type `Pageable<User>` whose `contents` field holds an
+array of `User` objects. The concrete type is stamped out once at parse time and
+reused if the same combination appears again.
+
+The type argument can be any named type — an object, an enum, or a primitive type:
+
+```
+enum Status { ACTIVE, INACTIVE }
+
+root {
+  userPage: Pageable<User>,
+  statusPage: Pageable<Status>,
+  numberPage: Pageable<Integer>
+}
+```
+
+Template definitions can be placed in a separate schema file and imported:
+
+```
+# pageable.jbp
+object Pageable wraps T {
+  contents: T[],
+  hasNext: Bool,
+  total: Integer
+}
+```
+
+```
+# main.jbp
+include "pageable.jbp"
+
+object User { id: Integer, name: String }
+
+root Pageable<User>
+```
+
+Caveats:
+- Only a single type parameter is supported per template.
+- Template names share the same namespace as objects, types, and enums — duplicates will raise a schema error.
+- A template cannot be used as a root or field type directly; it must always be instantiated with a concrete type argument.
 

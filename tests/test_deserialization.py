@@ -4,7 +4,7 @@ import os.path
 import sys
 
 from decimal import Decimal
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 import pytest
 
 verificationDir = 'deserialization'

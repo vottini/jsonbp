@@ -38,6 +38,7 @@ class JsonBlueprint:
     self.derived_types = dict()
     self.enums = dict()
     self.objects = dict()
+    self.templates = dict()
     self.root = None
 
   def __str__(self): # pragma: no cover
@@ -318,6 +319,7 @@ class JsonBlueprint:
       collected.extend(source.derived_types.keys())
       collected.extend(source.enums.keys())
       collected.extend(source.objects.keys())
+      collected.extend(source.templates.keys())
 
     return collected
 
@@ -365,6 +367,22 @@ class JsonBlueprint:
       if not blueprint in checked:
         found = blueprint._find_enum_decl(enum_name, checked)
         if None != found:
+          return found
+
+    return None
+
+
+  def _find_template_decl(self, template_name, checked=None):
+    if template_name in self.templates:
+      return self.templates[template_name]
+
+    checked = checked or set()
+    checked.add(self)
+
+    for blueprint in self.includes:
+      if blueprint not in checked:
+        found = blueprint._find_template_decl(template_name, checked)
+        if found is not None:
           return found
 
     return None

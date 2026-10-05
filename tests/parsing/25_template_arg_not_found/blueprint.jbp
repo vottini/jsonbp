@@ -1,0 +1,6 @@
+
+object Box wraps T {
+	item: T
+}
+
+root Box<Unknown>

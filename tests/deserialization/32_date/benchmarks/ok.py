@@ -1,0 +1,3 @@
+benchmark['result'] = {
+	"birthday": date(year=2024, month=8, day=5)
+}
