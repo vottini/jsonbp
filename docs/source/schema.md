@@ -8,6 +8,7 @@ A jsonbp schema can be composed of the following directives:
 - [root](#root)
 - [import](#import)
 - [wraps](#object-templates)
+- [union](#tagged-unions)
 
 Comments are written using the hash (#) character
 
@@ -390,4 +391,76 @@ Caveats:
 - Only a single type parameter is supported per template.
 - Template names share the same namespace as objects, types, and enums — duplicates will raise a schema error.
 - A template cannot be used as a root or field type directly; it must always be instantiated with a concrete type argument.
+
+
+## Tagged Unions
+
+The **union** directive defines a type whose shape depends on the value of a
+designated **discriminator** field. This is sometimes called a discriminated
+union or a tagged union, and is common in APIs that return payloads of different
+shapes depending on a type tag. The syntax is:
+
+```
+union <union name> on "<discriminator field>" {
+  "<tag value>" => <branch type>,
+  "<tag value>" => <branch type>,
+  ...
+}
+```
+
+Each branch maps a quoted tag value to a concrete object type. Branch types can
+be either a named object or an inline object definition (including `extends`):
+
+```
+object Base {
+  from: String,
+  id: String,
+  timestamp: String
+}
+
+object TextMessage extends Base {
+  body: String
+}
+
+object ReactionMessage extends Base {
+  emoji: String,
+  message_id: String
+}
+
+union Message on "type" {
+  "text"     => TextMessage,
+  "reaction" => ReactionMessage,
+  "image"    => extends Base { url: String, optional caption: String }
+}
+```
+
+When deserializing, jsonbp reads the discriminator field and dispatches to the
+matching branch. The discriminator value is preserved in the resulting Python
+dict alongside the branch fields:
+
+```python
+success, result = blueprint.deserialize('{"type": "text", "from": "Alice", "id": "1", "timestamp": "t", "body": "hello"}')
+# result == {"type": "text", "from": "Alice", "id": "1", "timestamp": "t", "body": "hello"}
+```
+
+Unions can be used as field types or as root:
+
+```
+root Message
+
+# or inside an object
+
+root {
+  event: Message,
+  events: Message[]
+}
+```
+
+The discriminator field name must be quoted as a string because common names
+such as `type` are reserved keywords in the DSL.
+
+Caveats:
+- Union names share the same namespace as objects, types, and enums — duplicates will raise a schema error.
+- A branch must reference a named object or provide an inline object definition; enums and primitive types are not valid branch types.
+- Trailing commas are allowed after the last branch.
 

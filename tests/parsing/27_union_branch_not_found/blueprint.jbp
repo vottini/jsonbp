@@ -1,0 +1,6 @@
+
+union Message on "type" {
+	"text" => UnknownObject
+}
+
+root { id: Integer }

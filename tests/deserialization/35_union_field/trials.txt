@@ -1,0 +1,2 @@
+Union as plain object field | ok.js | OK | ok.py
+Union field fails with unknown tag | bad_union_field.js | KO | UNKNOWN_LITERAL

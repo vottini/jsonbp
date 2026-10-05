@@ -1,0 +1,20 @@
+
+object TextMsg {
+	id: String,
+	body: String
+}
+
+object ImageMsg {
+	id: String,
+	url: String,
+	optional caption: String
+}
+
+union Message on "type" {
+	"text"  => TextMsg,
+	"image" => ImageMsg
+}
+
+root {
+	message: Message
+}

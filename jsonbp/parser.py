@@ -21,7 +21,9 @@ reserved = (
 	'nullable',
 	'extends',
 	'include',
-	'wraps'
+	'wraps',
+	'union',
+	'on'
 )
 
 literals = (
@@ -47,11 +49,16 @@ types = (
 	'FLOAT_CONST',
 	'INTEGER_AMOUNT',
 	'IDENTIFIER',
+	'ARROW',
 )
 
 tokens = list(types) + [token.upper() for token in reserved]
 
 #------------------------------------------------------------
+
+def t_ARROW(t):
+	r'=>'
+	return t
 
 def t_STRING(t):
 	r'"[^"]*"'
@@ -120,7 +127,8 @@ def typeExists(typeName, excluded=None):
 	lookups = (
 	  currentBlueprint._find_object_decl,
 	  currentBlueprint._find_element_decl,
-	  currentBlueprint._find_enum_decl
+	  currentBlueprint._find_enum_decl,
+	  currentBlueprint._find_union_decl,
 	)
 
 	for method in lookups:
@@ -154,6 +162,7 @@ def p_construction(p):
 	                 | object
 	                 | root
 	                 | include
+	                 | union
 	'''
 
 #---------------- constructs -----------------------------
@@ -261,13 +270,30 @@ def p_object(p):
 def p_object_specs(p):
 	'''
 	  object_declaration : '{' attributes '}'
+	                     | EXTENDS IDENTIFIER '{' attributes '}'
 	'''
 
-	decls = p[2]
+	if len(p) == 4:
+	  decls = p[2]
+	  baseFields = {}
+
+	else:
+	  baseObject = p[2]
+	  baseFields = currentBlueprint._find_object_decl(baseObject)
+	  if baseFields is None:
+	    raise SchemaViolation(f"Object '{baseObject}' is not defined")
+	  decls = p[4]
+
 	newObject = dict()
 	for decl in decls:
-	  newObject[decl[0]] = decl[1]
+	  fieldName = decl[0]
+	  if fieldName in baseFields:
+	    raise SchemaViolation(
+	      f"Field '{fieldName}' already defined in '{baseObject}'"
+	    )
+	  newObject[fieldName] = decl[1]
 
+	newObject.update(baseFields)
 	p[0] = newObject
 
 
@@ -488,6 +514,10 @@ def p_atomic_declaration(p):
 	    kind = FieldType.ENUM
 	    fieldId = declType
 
+	  elif currentBlueprint._find_union_decl(declType):
+	    kind = FieldType.UNION
+	    fieldId = declType
+
 	  else:
 	    kind = FieldType.OBJECT
 	    fieldId = declType
@@ -558,6 +588,65 @@ def p_specified_value(p):
 	'''
 
 	p[0] = p[1]
+
+#---------------- unions ----------------------------
+
+def p_union(p):
+	'''
+	  union : UNION IDENTIFIER ON STRING '{' union_branches '}'
+	'''
+
+	union_name = p[2]
+	if typeExists(union_name) or currentBlueprint._find_template_decl(union_name) is not None:
+	  raise SchemaViolation(f"Duplicated type '{union_name}'")
+
+	currentBlueprint.unions[union_name] = {
+	  'discriminator': p[4],
+	  'branches': p[6]
+	}
+
+
+def p_union_branches(p):
+	'''
+	  union_branches : union_branches ',' union_branch
+	                 | union_branches ','
+	                 | union_branch
+	'''
+
+	if len(p) == 4:
+	  p[1].update(p[3])
+	  p[0] = p[1]
+	elif len(p) == 3:
+	  p[0] = p[1]
+	else:
+	  p[0] = p[1]
+
+
+def p_union_branch(p):
+	'''
+	  union_branch : STRING ARROW branch_declaration
+	'''
+
+	p[0] = {p[1]: p[3]}
+
+
+def p_branch_declaration(p):
+	'''
+	  branch_declaration : object_declaration
+	                     | IDENTIFIER
+	'''
+
+	if isinstance(p[1], dict):
+	  adhoc_name = '_union_branch_' + str(getNextAdhoc()) + '_'
+	  currentBlueprint.objects[adhoc_name] = p[1]
+	  p[0] = adhoc_name
+
+	else:
+	  type_name = p[1]
+	  if currentBlueprint._find_object_decl(type_name) is None:
+	    raise SchemaViolation(f"Object '{type_name}' is not defined")
+	  p[0] = type_name
+
 
 #---------------- enums -----------------------------
 

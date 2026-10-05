@@ -1,0 +1,10 @@
+
+object Base {
+	id: String
+}
+
+union Message on "type" {
+	"text" => extends Base { id: String, body: String }
+}
+
+root { id: Integer }

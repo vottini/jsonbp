@@ -1,0 +1,25 @@
+
+object Base {
+	from: String,
+	id: String,
+	timestamp: String
+}
+
+object TextBranch extends Base {
+	body: String
+}
+
+object ReactionBranch extends Base {
+	emoji: String,
+	message_id: String
+}
+
+union Message on "type" {
+	"text"     => TextBranch,
+	"reaction" => ReactionBranch,
+	"image"    => extends Base { url: String, optional caption: String }
+}
+
+root {
+	messages: Message[]
+}

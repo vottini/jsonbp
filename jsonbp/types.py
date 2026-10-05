@@ -17,6 +17,7 @@ class FieldType:
 	SIMPLE = 0
 	ENUM   = 1
 	OBJECT = 2
+	UNION  = 3
 
 
 class unquoted_str(str):

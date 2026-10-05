@@ -1,0 +1,19 @@
+
+object Base {
+	from: String,
+	id: String
+}
+
+object TextBranch extends Base {
+	body: String
+}
+
+union Message on "type" {
+	"text" => TextBranch
+}
+
+union Message on "type" {
+	"image" => TextBranch
+}
+
+root { id: Integer }

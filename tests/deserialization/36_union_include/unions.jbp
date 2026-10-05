@@ -1,0 +1,9 @@
+
+object TextMsg {
+	id: String,
+	body: String
+}
+
+union Message on "type" {
+	"text" => TextMsg
+}

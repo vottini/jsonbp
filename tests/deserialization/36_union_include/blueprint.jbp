@@ -1,0 +1,3 @@
+include "unions.jbp"
+
+root { event: Message }

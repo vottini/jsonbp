@@ -1,0 +1,6 @@
+Union with named and inline branches | ok.js | OK | ok.py
+Union element missing discriminator field | bad_no_discriminator.js | KO | MISSING_FIELD
+Union element with unknown tag value | bad_unknown_tag.js | KO | UNKNOWN_LITERAL
+Union element is not an object | bad_not_object.js | KO | INVALID_OBJECT
+Union branch field with wrong type | bad_branch_field.js | KO | VALUE_PARSING
+Union with boolean discriminator value | bad_bool_discriminator.js | KO | INVALID_ENUM

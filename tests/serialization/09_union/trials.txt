@@ -1,0 +1,7 @@
+Serialize union text branch | ok_text.py | OK
+Serialize union image branch without optional field | ok_image_no_optional.py | OK
+Serialize union image branch with optional field | ok_image_optional.py | OK
+Serialize union missing discriminator | bad_missing_discriminator.py | KO
+Serialize union unknown tag value | bad_unknown_tag.py | KO
+Serialize union not a dict | bad_not_dict.py | KO
+Serialize union missing required branch field | bad_missing_field.py | KO

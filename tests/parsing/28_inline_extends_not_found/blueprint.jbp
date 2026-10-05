@@ -1,0 +1,6 @@
+
+union Message on "type" {
+	"text" => extends NonExistentBase { body: String }
+}
+
+root { id: Integer }

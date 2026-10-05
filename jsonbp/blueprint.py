@@ -39,6 +39,7 @@ class JsonBlueprint:
     self.enums = dict()
     self.objects = dict()
     self.templates = dict()
+    self.unions = dict()
     self.root = None
 
   def __str__(self): # pragma: no cover
@@ -91,6 +92,35 @@ class JsonBlueprint:
     return True, value
 
 
+  def _validate_union(self, field_name, unionDef, contents):
+    if not isinstance(contents, collections.abc.Mapping):
+      return False, create_field_error(field_name,
+        ErrorType.INVALID_OBJECT)
+
+    discriminator = unionDef['discriminator']
+    if discriminator not in contents:
+      return False, create_field_error(field_name,
+        ErrorType.MISSING_FIELD, field=discriminator)
+
+    tag_value = contents[discriminator]
+    if isinstance(tag_value, unquoted_str):
+      return False, create_field_error(field_name,
+        ErrorType.INVALID_ENUM)
+
+    branch_name = unionDef['branches'].get(tag_value)
+    if branch_name is None:
+      return False, create_field_error(field_name,
+        ErrorType.UNKNOWN_LITERAL)
+
+    branch_fields = self._find_object_decl(branch_name)
+    success, outcome = self._validate_object(field_name, branch_fields, contents)
+    if not success:
+      return False, outcome
+
+    outcome[discriminator] = tag_value
+    return True, outcome
+
+
   def _validate_array(self, field_name, jArray, contents):
     if not isinstance(contents, collections.abc.Sequence):
       return False, create_field_error(field_name,
@@ -111,6 +141,10 @@ class JsonBlueprint:
     if array_kind == FieldType.OBJECT:
       element_type = self._find_object_decl(array_type)
       deserializer = self._validate_object
+
+    if array_kind == FieldType.UNION:
+      element_type = self._find_union_decl(array_type)
+      deserializer = self._validate_union
 
     result = list()
     for idx, value in enumerate(contents):
@@ -214,6 +248,18 @@ class JsonBlueprint:
         result[field_name] = processed
         continue
 
+      if field_kind == FieldType.UNION:
+        unionDef = self._find_union_decl(field_type)
+        success, outcome = self._validate_union(
+          field_name, unionDef,
+          retrieved)
+
+        if not success:
+          return False, outcome
+
+        result[field_name] = outcome
+        continue
+
       success, outcome = self._validate_field(
         field_name, field_type,
         retrieved)
@@ -264,6 +310,10 @@ class JsonBlueprint:
     if root_kind == FieldType.SIMPLE:
       return self._validate_field(None, root_type,
         root_contents)
+
+    if root_kind == FieldType.UNION:
+      unionDef = self._find_union_decl(root_type)
+      return self._validate_union(None, unionDef, root_contents)
 
 
   def deserialize(self, contents):
@@ -320,6 +370,7 @@ class JsonBlueprint:
       collected.extend(source.enums.keys())
       collected.extend(source.objects.keys())
       collected.extend(source.templates.keys())
+      collected.extend(source.unions.keys())
 
     return collected
 
@@ -372,6 +423,22 @@ class JsonBlueprint:
     return None
 
 
+  def _find_union_decl(self, union_name, checked=None):
+    if union_name in self.unions:
+      return self.unions[union_name]
+
+    checked = checked or set()
+    checked.add(self)
+
+    for blueprint in self.includes:
+      if blueprint not in checked:
+        found = blueprint._find_union_decl(union_name, checked)
+        if found is not None:
+          return found
+
+    return None
+
+
   def _find_template_decl(self, template_name, checked=None):
     if template_name in self.templates:
       return self.templates[template_name]
@@ -417,7 +484,8 @@ class JsonBlueprint:
     lookups = [
       (self._find_object_decl, FieldType.OBJECT),
       (self._find_element_decl, FieldType.SIMPLE),
-      (self._find_enum_decl, FieldType.ENUM)
+      (self._find_enum_decl, FieldType.ENUM),
+      (self._find_union_decl, FieldType.UNION),
     ]
 
     found_root = None
@@ -446,10 +514,43 @@ class JsonBlueprint:
     result.derived_types = self.derived_types
     result.enums = self.enums
     result.objects = self.objects
+    result.unions = self.unions
 
     return result
 
   #----------------------------------------------------------------------------
+
+  def _serialize_union(self, union_type, field_name, content):
+    unionDef = self._find_union_decl(union_type)
+    discriminator = unionDef['discriminator']
+
+    if not isinstance(content, collections.abc.Mapping):
+      raise SerializationException(f"{field_name} needs a dict to serialize")
+
+    if discriminator not in content:
+      raise SerializationException(
+        f"{field_name}: missing discriminator field '{discriminator}'")
+
+    tag_value = content[discriminator]
+    branch_name = unionDef['branches'].get(tag_value)
+    if branch_name is None:
+      raise SerializationException(
+        f"{field_name}: unknown tag value '{tag_value}'")
+
+    serialized = [f'"{discriminator}":"{tag_value}"']
+    branch_fields = self._find_object_decl(branch_name)
+
+    for fname, fdata in branch_fields.items():
+      if fname not in content:
+        if fdata.optional:
+          continue
+        raise SerializationException(f"{field_name}: missing field '{fname}'")
+
+      processed = self._serialize_element(fdata, fname, content[fname])
+      serialized.append(f'"{fname}":{processed}')
+
+    return "{" + ",".join(serialized) + "}"
+
 
   def _serialize_element(self, element, elementName, content):
     contentKind = element.fieldKind
@@ -458,7 +559,8 @@ class JsonBlueprint:
     method = {
       FieldType.OBJECT: JsonBlueprint._serialize_object,
       FieldType.ENUM: JsonBlueprint._serialize_enum,
-      FieldType.SIMPLE: JsonBlueprint._serialize_field
+      FieldType.SIMPLE: JsonBlueprint._serialize_field,
+      FieldType.UNION: JsonBlueprint._serialize_union,
     } [contentKind]
 
     if is_array(element):

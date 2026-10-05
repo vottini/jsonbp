@@ -1,0 +1,17 @@
+
+object TextMsg {
+	id: String,
+	body: String
+}
+
+object ImageMsg {
+	id: String,
+	url: String
+}
+
+union Message on "type" {
+	"text"  => TextMsg,
+	"image" => ImageMsg,
+}
+
+root { event: Message }
