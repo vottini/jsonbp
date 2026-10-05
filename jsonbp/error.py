@@ -149,6 +149,9 @@ class DeserializationError:
 
 		for candidate in localization_priority:
 			translation = translations.get(candidate)
+			if translation is None:
+				prefix = candidate + '_'
+				translation = next((translations[k] for k in translations if k.startswith(prefix)), None)
 			if translation is not None:
 				break
 
